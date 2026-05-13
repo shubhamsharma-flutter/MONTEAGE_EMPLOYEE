@@ -22,7 +22,7 @@ class PendingAttendanceModelAdapter
       latitude: fields[1] as String,
       longitude: fields[2] as String,
       imagePath: fields[3] as String,
-      token: fields[4] as String,
+     
       savedAt: fields[5] as DateTime,
     );
   }
@@ -39,8 +39,7 @@ class PendingAttendanceModelAdapter
       ..write(obj.longitude)
       ..writeByte(3)
       ..write(obj.imagePath)
-      ..writeByte(4)
-      ..write(obj.token)
+     
       ..writeByte(5)
       ..write(obj.savedAt);
   }

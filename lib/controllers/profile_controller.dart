@@ -20,20 +20,27 @@ class EmployeeProfileController extends GetxController {
   final isLoading = false.obs;
   final Rxn<ProfileModel> profile = Rxn<ProfileModel>();
 
-  String get _accessToken =>
-      (box.read("access_token") ?? "").toString().trim();
+  String get _accessToken => (box.read("access_token") ?? "").toString().trim();
   String get _refreshToken =>
       (box.read("refresh_token") ?? "").toString().trim();
+  String get _employeeId => (box.read("employee_id") ?? "").toString().trim();
+  String get _employeeCode =>
+      (box.read("employee_code") ?? "").toString().trim();
+
+  Uri get _profileUri {
+    final identifier = _employeeCode.isNotEmpty ? _employeeCode : _employeeId;
+    if (identifier.isEmpty) return Uri.parse(profileApi);
+    return Uri.parse(
+      profileApi,
+    ).replace(queryParameters: {'employee_id': identifier});
+  }
 
   @override
-void onInit() {
-  super.onInit();
-  print('=== TOKEN CHECK ===');
-  print('Access: ${box.read("access_token")}');
-  print('Refresh: ${box.read("refresh_token")}');
-  print('All storage: ${box.getValues()}');
-  fetchProfile();
-}
+  void onInit() {
+    super.onInit();
+
+    fetchProfile();
+  }
 
   void resetProfileState() {
     profile.value = null;
@@ -48,27 +55,30 @@ void onInit() {
   }
 
   void _snackSuccess(String title, String msg) {
-    Get.snackbar(title, msg,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white);
+    Get.snackbar(
+      title,
+      msg,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+    );
   }
 
   void _snackError(String title, String msg) {
-    Get.snackbar(title, msg,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white);
+    Get.snackbar(
+      title,
+      msg,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
   }
 
   Future<void> fetchProfile({bool showSuccess = false}) async {
     profile.value = null;
     isLoading.value = true;
     try {
-      print('ACCESS TOKEN: $_accessToken'); 
-      final res = await _authorizedGet(Uri.parse(profileApi));
-      print('PROFILE STATUS: ${res.statusCode}'); // ← add this
-      print('PROFILE BODY: ${res.body}');
+      final res = await _authorizedGet(_profileUri);
 
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body) as Map<String, dynamic>;
@@ -76,8 +86,10 @@ void onInit() {
         profile.value = p;
 
         if (p.user.isFaceRegistered == false) {
-          _snackError("Face Not Registered",
-              "Register face first, then profile will be shown.");
+          _snackError(
+            "Face Not Registered",
+            "Register face first, then profile will be shown.",
+          );
         } else {
           if (showSuccess)
             _snackSuccess("Success", "Profile loaded successfully.");
@@ -85,10 +97,8 @@ void onInit() {
         return;
       }
 
-      
       if (res.statusCode == 401) {
-        _snackError("Error",
-            "Unable to load profile. Please try again later.");
+        _snackError("Error", "Unable to load profile. Please try again later.");
         return;
       }
 
@@ -101,27 +111,14 @@ void onInit() {
   }
 
   Future<http.Response> _authorizedGet(Uri uri) async {
-    final res = await http.get(
-      uri,
-      headers: {
-        "Authorization": "Bearer $_accessToken",
-        "Accept": "application/json",
-      },
-    );
+    final res = await http.get(uri, headers: {"Accept": "application/json"});
 
     if (res.statusCode != 401) return res;
 
     final refreshed = await _refreshAccessToken();
     if (!refreshed) return res;
 
-    return http.get(
-      uri,
-      headers: {
-        "Authorization":
-            "Bearer ${(box.read("access_token") ?? "").toString()}",
-        "Accept": "application/json",
-      },
-    );
+    return http.get(uri, headers: {"Accept": "application/json"});
   }
 
   Future<bool> _refreshAccessToken() async {
@@ -159,9 +156,11 @@ void onInit() {
     return s
         .split(RegExp(r"\s+"))
         .where((w) => w.isNotEmpty)
-        .map((w) =>
-            w[0].toUpperCase() +
-            (w.length > 1 ? w.substring(1).toLowerCase() : ""))
+        .map(
+          (w) =>
+              w[0].toUpperCase() +
+              (w.length > 1 ? w.substring(1).toLowerCase() : ""),
+        )
         .join(" ");
   }
 

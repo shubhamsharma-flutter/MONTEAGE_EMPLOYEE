@@ -197,8 +197,8 @@ class LoginController extends GetxController {
 
   final GetStorage box = GetStorage();
 
-  final TextEditingController userIdController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController userIdController = TextEditingController(text: "");
+  final TextEditingController passwordController = TextEditingController(text: "");
 
   Future<void> login() async {
     final userId = userIdController.text.trim();

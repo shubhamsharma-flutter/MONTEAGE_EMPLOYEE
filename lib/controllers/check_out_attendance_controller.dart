@@ -288,6 +288,27 @@ class CheckOutAttendanceController extends GetxController {
   final String profileApi =
       "http://att.monteage.co.in/attendance/api/auth/profile/";
 
+  // Employee identifiers
+  String get _employeeId => (box.read("employee_id") ?? "").toString().trim();
+  String get _employeeCode => (box.read("employee_code") ?? "").toString().trim();
+
+  Uri get _profileUri {
+    final identifier = _employeeCode.isNotEmpty ? _employeeCode : _employeeId;
+    if (identifier.isEmpty) return Uri.parse(profileApi);
+    return Uri.parse(profileApi).replace(
+      queryParameters: {
+        'employee_id': identifier,
+      },
+    );
+  }
+
+  Uri get _checkoutUri {
+    if (_employeeCode.isEmpty) return Uri.parse(checkoutAttendanceUrl);
+    return Uri.parse(checkoutAttendanceUrl).replace(
+      queryParameters: {'employee_code': _employeeCode},
+    );
+  }
+
   // ---------- Snackbars ----------
   void _snackSuccess(String msg) {
     Get.snackbar(
@@ -307,15 +328,6 @@ class CheckOutAttendanceController extends GetxController {
       backgroundColor: Colors.red,
       colorText: Colors.white,
     );
-  }
-
-  // ---------- Token ----------
-  String _tokenOrThrow() {
-    final token = (box.read("access_token") ?? "").toString().trim();
-    if (token.isEmpty) {
-      throw Exception("Access token missing. Save token in GetStorage as 'access_token'.");
-    }
-    return token;
   }
 
   bool _isValidLatLng(String v) => double.tryParse(v) != null;
@@ -427,12 +439,9 @@ class CheckOutAttendanceController extends GetxController {
   // -----------------------------
   Future<bool> _ensureFaceRegistered() async {
     try {
-      final token = _tokenOrThrow();
-
       final res = await http.get(
-        Uri.parse(profileApi),
+        _profileUri,
         headers: {
-          "Authorization": "Bearer $token",
           "Accept": "application/json",
         },
       );
@@ -469,10 +478,7 @@ class CheckOutAttendanceController extends GetxController {
     required Map<String, String> fields,
     required File imageFile,
   }) async {
-    final token = _tokenOrThrow();
-
     final req = http.MultipartRequest("POST", Uri.parse(url));
-    req.headers["Authorization"] = "Bearer $token";
     req.headers["Accept"] = "application/json";
     req.fields.addAll(fields);
 
@@ -525,7 +531,7 @@ class CheckOutAttendanceController extends GetxController {
         latitude: lat,
         longitude: lng,
         imagePath: img.path,
-        token: (box.read("access_token") ?? "").toString().trim(),
+      
       );
 
       Get.snackbar(
@@ -540,11 +546,27 @@ class CheckOutAttendanceController extends GetxController {
     }
 
     // ── Online: submit normally ───────────────────────────────────────
+    final url = _checkoutUri.toString();
+    final fields = {
+      "latitude": lat,
+      "longitude": lng,
+      "employee_id ": _employeeCode,
+    };
+
+    debugPrint("── CHECKOUT SUBMIT ────────────────────");
+    debugPrint("URL       : $url");
+    debugPrint("Fields    : $fields");
+    debugPrint("Image     : ${img.path}");
+    debugPrint("────────────────────────────────────────");
+
     final result = await _postMultipart(
-      url: checkoutAttendanceUrl,
-      fields: {"latitude": lat, "longitude": lng},
+      url: url,
+      fields: fields,
       imageFile: img,
     );
+
+    debugPrint("STATUS    : ${result.statusCode}");
+    debugPrint("RESPONSE  : ${result.rawBody}");
 
     if (result.statusCode == 200 || result.statusCode == 201) {
       _snackSuccess("Checkout successful!");
@@ -557,6 +579,7 @@ class CheckOutAttendanceController extends GetxController {
       _snackError("Failed", "(${result.statusCode}) $msg");
     }
   } catch (e) {
+    debugPrint("EXCEPTION : $e");
     // ── On any error save offline ─────────────────────────────────────
     try {
       await AttendanceSyncService.savePending(
@@ -564,7 +587,7 @@ class CheckOutAttendanceController extends GetxController {
         latitude: lat,
         longitude: lng,
         imagePath: img.path,
-        token: (box.read("access_token") ?? "").toString().trim(),
+       
       );
       Get.snackbar(
         "Saved Offline",

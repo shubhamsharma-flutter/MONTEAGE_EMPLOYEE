@@ -45,6 +45,20 @@ class AttendanceHistoryController extends GetxController {
       (box.read("access_token") ?? "").toString().trim();
   String get _refreshToken =>
       (box.read("refresh_token") ?? "").toString().trim();
+  String get _employeeId =>
+      (box.read("employee_id") ?? "").toString().trim();
+  String get _employeeCode =>
+      (box.read("employee_code") ?? "").toString().trim();
+
+  Uri get _historyUri {
+    final identifier = _employeeCode.isNotEmpty ? _employeeCode : _employeeId;
+    if (identifier.isEmpty) return Uri.parse(historyApi);
+    return Uri.parse(historyApi).replace(
+      queryParameters: {
+        'employee_id': identifier,
+      },
+    );
+  }
 
   void setMonth(String monthKey) {
     selectedMonth.value = monthKey;
@@ -80,9 +94,9 @@ class AttendanceHistoryController extends GetxController {
   Future<void> fetchHistory() async {
     isLoading.value = true;
     try {
-      final res = await _authorizedGet(Uri.parse(historyApi));
+      final res = await _authorizedGet(_historyUri);
       print(res);
-      print(historyApi);
+      print(_historyUri.toString());
 
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body) as Map<String, dynamic>;

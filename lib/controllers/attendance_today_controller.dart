@@ -20,6 +20,18 @@ class AttendanceTodayController extends GetxController {
 
   String get _access => (box.read("access_token") ?? "").toString().trim();
   String get _refresh => (box.read("refresh_token") ?? "").toString().trim();
+  String get _employeeId => (box.read("employee_id") ?? "").toString().trim();
+  String get _employeeCode => (box.read("employee_code") ?? "").toString().trim();
+
+  Uri get _todayUri {
+    final identifier = _employeeCode.isNotEmpty ? _employeeCode : _employeeId;
+    if (identifier.isEmpty) return Uri.parse(todayApi);
+    return Uri.parse(todayApi).replace(
+      queryParameters: {
+        'employee_id': identifier,
+      },
+    );
+  }
 
   @override
   void onInit() {
@@ -30,7 +42,7 @@ class AttendanceTodayController extends GetxController {
   Future<void> fetchToday() async {
     isLoading.value = true;
     try {
-      final res = await _authorizedGet(Uri.parse(todayApi));
+      final res = await _authorizedGet(_todayUri);
 
       if (res.statusCode == 200) {
         final decoded = Map<String, dynamic>.from(jsonDecode(res.body));

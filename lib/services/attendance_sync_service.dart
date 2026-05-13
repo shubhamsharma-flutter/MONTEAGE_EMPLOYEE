@@ -17,8 +17,17 @@ class AttendanceSyncService {
   // ── Initialize Hive ───────────────────────────────────────────────────
   static Future<void> init() async {
     await Hive.initFlutter();
-    Hive.registerAdapter(PendingAttendanceModelAdapter());
-    await Hive.openBox<PendingAttendanceModel>(boxName);
+    if (!Hive.isAdapterRegistered(PendingAttendanceModelAdapter().typeId)) {
+      Hive.registerAdapter(PendingAttendanceModelAdapter());
+    }
+
+    try {
+      await Hive.openBox<PendingAttendanceModel>(boxName);
+    } catch (e) {
+      await Hive.deleteBoxFromDisk(boxName);
+      await Hive.openBox<PendingAttendanceModel>(boxName);
+      debugPrint('Recovered corrupted Hive box "$boxName": $e');
+    }
   }
 
   // ── Save to Hive when offline ─────────────────────────────────────────
@@ -27,17 +36,18 @@ class AttendanceSyncService {
     required String latitude,
     required String longitude,
     required String imagePath,
-    required String token,
   }) async {
     final box = Hive.box<PendingAttendanceModel>(boxName);
-    await box.add(PendingAttendanceModel(
-      type: type,
-      latitude: latitude,
-      longitude: longitude,
-      imagePath: imagePath,
-      token: token,
-      savedAt: DateTime.now(),
-    ));
+    await box.add(
+      PendingAttendanceModel(
+        type: type,
+        latitude: latitude,
+        longitude: longitude,
+        imagePath: imagePath,
+
+        savedAt: DateTime.now(),
+      ),
+    );
   }
 
   // ── Check internet ────────────────────────────────────────────────────
@@ -77,12 +87,13 @@ class AttendanceSyncService {
 
       try {
         final req = http.MultipartRequest('POST', Uri.parse(url));
-        req.headers['Authorization'] = 'Bearer ${record.token}';
+
         req.headers['Accept'] = 'application/json';
         req.fields['latitude'] = record.latitude;
         req.fields['longitude'] = record.longitude;
         req.files.add(
-            await http.MultipartFile.fromPath('image', record.imagePath));
+          await http.MultipartFile.fromPath('image', record.imagePath),
+        );
 
         final res = await req.send();
 

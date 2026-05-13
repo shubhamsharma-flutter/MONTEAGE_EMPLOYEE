@@ -8,7 +8,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-
 class MarkFaceAttendanceController extends GetxController {
   final ImagePicker _picker = ImagePicker();
   final box = GetStorage();
@@ -214,16 +213,17 @@ Future<void> fetchLocationAll() async {
       isSubmittingAttendance.value = true;
 
       final result = await _postMultipart(
-        url: attendanceUrl,
+        url: _attendanceUri.toString(),
         fields: {
           "latitude": lat,
           "longitude": lng,
+          "employee_id": _employeeCode.isNotEmpty ? _employeeCode : _employeeId,
         },
         imageFile: img,
       );
-print(result.rawBody);
-print(attendanceUrl);
-print(img.path);
+debugPrint(result.rawBody);
+debugPrint(_attendanceUri.toString());
+debugPrint(img.path);
       if (result.statusCode == 200 || result.statusCode == 201) {
         Get.snackbar("Success", "Today's attendance saved successfully!",
             snackPosition: SnackPosition.TOP);
@@ -231,7 +231,7 @@ print(img.path);
         final msg = result.json?["message"] ?? result.rawBody;
         Get.snackbar("Failed", "(${result.statusCode}) $msg",
             snackPosition: SnackPosition.TOP);
-            print("Attendance submit failed: ${result.rawBody}");
+            debugPrint("Attendance submit failed: ${result.rawBody}");
       }
     } catch (e) {
       Get.snackbar("Error", "Submit failed: $e",
@@ -289,6 +289,26 @@ class MarkFaceAttendanceController extends GetxController {
   final String profileApi =
       "http://att.monteage.co.in/attendance/api/auth/profile/";
 
+  // Employee Identifiers
+  String get _employeeId => (box.read("employee_id") ?? "").toString().trim();
+  String get _employeeCode =>
+      (box.read("employee_code") ?? "").toString().trim();
+
+  Uri get _attendanceUri {
+    if (_employeeCode.isEmpty) return Uri.parse(attendanceUrl);
+    return Uri.parse(
+      attendanceUrl,
+    ).replace(queryParameters: {'employee_code': _employeeCode});
+  }
+
+  Uri get _profileUri {
+    final identifier = _employeeCode.isNotEmpty ? _employeeCode : _employeeId;
+    if (identifier.isEmpty) return Uri.parse(profileApi);
+    return Uri.parse(
+      profileApi,
+    ).replace(queryParameters: {'employee_id': identifier});
+  }
+
   // ---------- Snackbars ----------
   void _snackSuccess(String msg) {
     Get.snackbar(
@@ -308,15 +328,6 @@ class MarkFaceAttendanceController extends GetxController {
       backgroundColor: Colors.red,
       colorText: Colors.white,
     );
-  }
-
-  // ---------- Token ----------
-  String _tokenOrThrow() {
-    final token = (box.read("access_token") ?? "").toString().trim();
-    if (token.isEmpty) {
-      throw Exception("Access token missing. Save token in GetStorage as 'access_token'.");
-    }
-    return token;
   }
 
   bool _isValidLatLng(String v) => double.tryParse(v) != null;
@@ -358,7 +369,7 @@ class MarkFaceAttendanceController extends GetxController {
         latText.value = "SETTINGS";
         lngText.value = "SETTINGS";
         addressText.value =
-        "Location permission permanently denied. Enable from Settings.";
+            "Location permission permanently denied. Enable from Settings.";
         return;
       }
 
@@ -428,16 +439,11 @@ class MarkFaceAttendanceController extends GetxController {
   // -----------------------------
   Future<bool> _ensureFaceRegistered() async {
     try {
-      final token = _tokenOrThrow();
-
       final res = await http.get(
-        Uri.parse(profileApi),
-        headers: {
-          "Authorization": "Bearer $token",
-          "Accept": "application/json",
-        },
+        _profileUri,
+        headers: {"Accept": "application/json"},
       );
-
+      debugPrint(_profileUri.toString());
       if (res.statusCode != 200) {
         _snackError("Error", "Profile check failed (HTTP ${res.statusCode})");
         return false;
@@ -446,11 +452,15 @@ class MarkFaceAttendanceController extends GetxController {
       final decoded = jsonDecode(res.body) as Map<String, dynamic>;
       final user = decoded["user"] as Map<String, dynamic>?;
 
-      final bool isFaceRegistered = (user?["is_face_registered"] == true) ||
+      final bool isFaceRegistered =
+          (user?["is_face_registered"] == true) ||
           (user?["isFaceRegistered"] == true);
 
       if (!isFaceRegistered) {
-        _snackError("Face Not Registered", "Register face first, then mark attendance.");
+        _snackError(
+          "Face Not Registered",
+          "Register face first, then mark attendance.",
+        );
         Get.toNamed("/face-register"); // ✅ route must exist
         return false;
       }
@@ -470,10 +480,7 @@ class MarkFaceAttendanceController extends GetxController {
     required Map<String, String> fields,
     required File imageFile,
   }) async {
-    final token = _tokenOrThrow();
-
     final req = http.MultipartRequest("POST", Uri.parse(url));
-    req.headers["Authorization"] = "Bearer $token";
     req.headers["Accept"] = "application/json";
     req.fields.addAll(fields);
     req.files.add(await http.MultipartFile.fromPath("image", imageFile.path));
@@ -488,98 +495,77 @@ class MarkFaceAttendanceController extends GetxController {
       jsonBody = null;
     }
 
-    return _ApiResult(statusCode: res.statusCode, rawBody: body, json: jsonBody);
+    return _ApiResult(
+      statusCode: res.statusCode,
+      rawBody: body,
+      json: jsonBody,
+    );
   }
 
   // -----------------------------
   // Submit Attendance (face match must happen on backend)
   // -----------------------------
   Future<void> submitAttendance() async {
-  final ok = await _ensureFaceRegistered();
-  if (!ok) return;
-
-  final img = selectedImage.value;
-  if (img == null) {
-    _snackError("Missing Photo", "Please take/upload a photo first.");
-    return;
-  }
-
-  final lat = latText.value.trim();
-  final lng = lngText.value.trim();
-
-  if (!_isValidLatLng(lat) || !_isValidLatLng(lng)) {
-    _snackError("Location Required", "Please enable location and refresh.");
-    return;
-  }
-
-  try {
-    isSubmittingAttendance.value = true;
-
-    // ── Check internet first ──────────────────────────────────────────
-    final connected = await AttendanceSyncService.isConnected();
-
-    if (!connected) {
-      // ── Save to Hive cache ────────────────────────────────────────
-      await AttendanceSyncService.savePending(
-        type: 'checkin',
-        latitude: lat,
-        longitude: lng,
-        imagePath: img.path,
-        token: (box.read("access_token") ?? "").toString().trim(),
-      );
-
-      Get.snackbar(
-        "Saved Offline",
-        "No internet. Attendance saved and will sync automatically when connected.",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFFF59E0B),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
+    final img = selectedImage.value;
+    if (img == null) {
+      _snackError("Missing Photo", "Please take/upload a photo first.");
       return;
     }
 
-    // ── Online: submit normally ───────────────────────────────────────
-    final result = await _postMultipart(
-      url: attendanceUrl,
-      fields: {"latitude": lat, "longitude": lng},
-      imageFile: img,
-    );
+    final lat = latText.value.trim();
+    final lng = lngText.value.trim();
 
-    if (result.statusCode == 200 || result.statusCode == 201) {
-      _snackSuccess("Attendance marked successfully!");
-    } else {
-      final msg = (result.json?["message"] ??
-              result.json?["detail"] ??
-              result.json?["error"] ??
-              result.rawBody)
-          .toString();
-      _snackError("Failed", "(${result.statusCode}) $msg");
+    if (!_isValidLatLng(lat) || !_isValidLatLng(lng)) {
+      _snackError("Location Required", "Please enable location and refresh.");
+      return;
     }
-  } catch (e) {
-    // ── On any error save offline ─────────────────────────────────────
+
     try {
-      await AttendanceSyncService.savePending(
-        type: 'checkin',
-        latitude: lat,
-        longitude: lng,
-        imagePath: img.path,
-        token: (box.read("access_token") ?? "").toString().trim(),
+      isSubmittingAttendance.value = true;
+
+      final ok = await _ensureFaceRegistered();
+      if (!ok) return;
+
+      final url = _attendanceUri.toString();
+      final fields = {
+        "latitude": lat,
+        "longitude": lng,
+        "employee_id ": _employeeCode,
+      };
+
+      debugPrint("── ATTENDANCE SUBMIT ──────────────────");
+      debugPrint("URL       : $url");
+      debugPrint("Fields    : $fields");
+      debugPrint("Image     : ${img.path}");
+      debugPrint("────────────────────────────────────────");
+
+      final result = await _postMultipart(
+        url: url,
+        fields: fields,
+        imageFile: img,
       );
-      Get.snackbar(
-        "Saved Offline",
-        "Network error. Attendance saved and will sync when connected.",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFFF59E0B),
-        colorText: Colors.white,
-      );
-    } catch (_) {
+
+      debugPrint("STATUS    : ${result.statusCode}");
+      debugPrint("RESPONSE  : ${result.rawBody}");
+
+      if (result.statusCode == 200 || result.statusCode == 201) {
+        _snackSuccess("Attendance marked successfully!");
+      } else {
+        final msg =
+            (result.json?["message"] ??
+                    result.json?["detail"] ??
+                    result.json?["error"] ??
+                    result.rawBody)
+                .toString();
+        _snackError("Failed", "(${result.statusCode}) $msg");
+      }
+    } catch (e) {
+      debugPrint("EXCEPTION : $e");
       _snackError("Error", "Submit failed: $e");
+    } finally {
+      isSubmittingAttendance.value = false;
     }
-  } finally {
-    isSubmittingAttendance.value = false;
   }
-}
 }
 
 class _ApiResult {
@@ -587,5 +573,9 @@ class _ApiResult {
   final String rawBody;
   final Map<String, dynamic>? json;
 
-  _ApiResult({required this.statusCode, required this.rawBody, required this.json});
+  _ApiResult({
+    required this.statusCode,
+    required this.rawBody,
+    required this.json,
+  });
 }

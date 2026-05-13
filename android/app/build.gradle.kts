@@ -35,8 +35,8 @@ android {
         applicationId = "com.myattendance.monteage"
         minSdk = 26
         targetSdk = 35
-        versionCode = flutterVersionCode.toInt()
-        versionName = flutterVersionName
+        versionCode = 5
+        versionName = "1.0.5"
         multiDexEnabled = true
     }
 

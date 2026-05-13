@@ -16,8 +16,7 @@ class PendingAttendanceModel extends HiveObject {
   @HiveField(3)
   String imagePath;
 
-  @HiveField(4)
-  String token;
+  
 
   @HiveField(5)
   DateTime savedAt;
@@ -27,7 +26,7 @@ class PendingAttendanceModel extends HiveObject {
     required this.latitude,
     required this.longitude,
     required this.imagePath,
-    required this.token,
+   
     required this.savedAt,
   });
 }
