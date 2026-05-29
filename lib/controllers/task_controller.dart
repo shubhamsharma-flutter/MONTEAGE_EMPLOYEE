@@ -441,8 +441,19 @@ class TaskController extends GetxController {
 
   List<Data> get givenTasks => allTasks.where((t) {
     if (isRegularEmployee) return false;
-    return t.assignedById == myId ||
-        t.assignedByName.trim().toLowerCase() == myName.trim().toLowerCase();
+    // Standard: assigner fields (Createdby / UpdateByy)
+    if (t.assignedById.isNotEmpty && t.assignedById != '0' && t.assignedById == myId) return true;
+    if (myName.isNotEmpty &&
+        t.assignedByName.trim().toLowerCase() == myName.trim().toLowerCase()) {
+      return true;
+    }
+    // MObProjectGivenWorkTL stores the assigner in EmployeeName1 when EmployeeId1 == 0
+    if ((t.employeeId1 == null || t.employeeId1 == 0) &&
+        myName.isNotEmpty &&
+        (t.employeeName1 ?? '').trim().toLowerCase() == myName.trim().toLowerCase()) {
+      return true;
+    }
+    return false;
   }).toList();
 
   List<Data> get receivedTasks => allTasks.where((t) {
@@ -481,12 +492,21 @@ class TaskController extends GetxController {
 
   bool canPMApprove(Data t) {
     if (!isProjectManager) return false;
-    final isPMTheAssigner = t.assignedById == myId ||
-        t.assignedByName.trim().toLowerCase() == myName.trim().toLowerCase();
+    final myNameLower = myName.trim().toLowerCase();
+    final isPMTheAssigner = (t.assignedById == myId && myId.isNotEmpty && myId != '0') ||
+        (myName.isNotEmpty && t.assignedByName.trim().toLowerCase() == myNameLower) ||
+        // MObProjectGivenWorkTL: assigner is in EmployeeName1 when EmployeeId1 == 0
+        ((t.employeeId1 == null || t.employeeId1 == 0) &&
+            myName.isNotEmpty &&
+            (t.employeeName1 ?? '').trim().toLowerCase() == myNameLower);
     final is3Way = taskIs3Way(t);
     return t.effectiveStatus == TaskStatus.awaitingPM ||
         (t.effectiveStatus == TaskStatus.submitted && isPMTheAssigner && !is3Way) ||
-        (t.effectiveStatus == 'AwaitingAssignerApproval' && isPMTheAssigner);
+        (t.effectiveStatus == 'AwaitingAssignerApproval' && isPMTheAssigner) ||
+        // API "Done" / "InProgress" = employee submitted, awaiting PM review
+        (isPMTheAssigner &&
+            (t.aStatus == 'Done' || t.aStatus == 'InProgress') &&
+            t.overrideStatus == null);
   }
 
   bool _isWorker(Data t) {
@@ -884,8 +904,11 @@ class TaskController extends GetxController {
             .timeout(const Duration(seconds: 12));
         debugPrint('📋 $label [$url] auth=$useAuth → ${res.statusCode}');
         if (res.statusCode == 200) {
+
           final items = _parseDataList(res.body);
+              print(res.body);
           if (items.isNotEmpty) return items;
+
         }
       } catch (e) { debugPrint('$label fetch error: $e'); }
     }

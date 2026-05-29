@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:get_storage/get_storage.dart';
+import 'package:get_storage/get_storage.dart' hide Data;
 import '../controllers/task_controller.dart';
 import '../controllers/project_controller.dart' hide Data;
 import '../models/project_model.dart';
@@ -1601,16 +1601,19 @@ class _TaskCardState extends State<_TaskCard>
   bool _needsAction(TaskController c) {
     final t = widget.task;
     final s = t.effectiveStatus;
+    final isApiPendingReview =
+        (t.aStatus == 'Done' || t.aStatus == 'InProgress') && t.overrideStatus == null;
     if (_isProjectManager) {
       final isGiven = c.givenTasks.any((g) => g.uniqueId == t.uniqueId);
       return isGiven &&
           (s == 'Submitted' ||
               s == 'AwaitingPMApproval' ||
-              s == 'AwaitingAssignerApproval');
+              s == 'AwaitingAssignerApproval' ||
+              isApiPendingReview);
     }
     if (_isTeamLeader) {
       final isGiven = c.givenTasks.any((g) => g.uniqueId == t.uniqueId);
-      return isGiven && s == 'AwaitingLeadApproval';
+      return isGiven && (s == 'AwaitingLeadApproval' || isApiPendingReview);
     }
     return false;
   }
@@ -1789,9 +1792,16 @@ class _ExpandedTaskBody extends StatelessWidget {
       final isEmp = _isRegularEmployee;
       final currentTab = c.effectiveTab;
 
-      final approved = _isApproved(status);
-      final rejected = _isRejected(status);
       final isGiven = _isGivenByMe(live);
+
+      // API returns "Done"/"InProgress" to mean "employee submitted, awaiting review".
+      // Don't treat these as fully approved when they're in the given list.
+      final isApiPendingReview = isGiven &&
+          (live.aStatus == 'Done' || live.aStatus == 'InProgress') &&
+          live.overrideStatus == null;
+
+      final approved = _isApproved(status) && !isApiPendingReview;
+      final rejected = _isRejected(status);
 
       final hasJunior =
           (live.juniorId ?? '').trim().isNotEmpty && live.juniorId != '0';
@@ -1807,13 +1817,15 @@ class _ExpandedTaskBody extends StatelessWidget {
           currentTab == 0 &&
           isGiven &&
           (status == TaskStatus.awaitingTL ||
-              (status == TaskStatus.submitted && is3Way));
+              (status == TaskStatus.submitted && is3Way) ||
+              isApiPendingReview);
 
       final pmShouldReview = isPM &&
           currentTab == 0 &&
           isGiven &&
           (status == TaskStatus.awaitingPM ||
-              (status == TaskStatus.submitted && !is3Way));
+              (status == TaskStatus.submitted && !is3Way) ||
+              isApiPendingReview);
 
       final canLApprove = c.canLeadApprove(live) || tlShouldReview;
       final canPApprove = c.canPMApprove(live) || pmShouldReview;
