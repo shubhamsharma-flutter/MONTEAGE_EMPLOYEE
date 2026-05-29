@@ -119,15 +119,36 @@ SizedBox(height: 10.h),
                     onTap: () =>
                         _openRoute(context, AdminRoutes.leaveManagement),
                   ),
+                  if (employeeC.isHrManager) ...[
+                    SizedBox(height: 10.h),
+                    _DrawerNavItem(
+                      title: 'Employee Registration',
+                      subtitle: 'Register new employees',
+                      icon: Icons.person_add_rounded,
+                      accent: const Color(0xFF6A3027),
+                      isActive: currentRoute == AdminRoutes.registerScreen,
+                      onTap: () => _openRoute(context, AdminRoutes.registerScreen),
+                    ),
+                  ],
                   SizedBox(height: 10.h),
-                  _DrawerNavItem(
-                    title: 'Manage Tasks',
-                    subtitle: 'Monitor and update your assigned tasks',
-                    icon: Icons.assignment_rounded,
-                    accent: const Color.fromARGB(255, 111, 233, 231),
-                    isActive: currentRoute == AdminRoutes.task,
-                    onTap: () => _openRoute(context, AdminRoutes.task),
-                  ),
+                  if (employeeC.isHrManager)
+                    _DrawerNavItem(
+                      title: 'All Employee Attendance',
+                      subtitle: 'View attendance for all employees',
+                      icon: Icons.people_rounded,
+                      accent: const Color.fromARGB(255, 111, 233, 231),
+                      isActive: currentRoute == AdminRoutes.allEmployeeAttendance,
+                      onTap: () => _openRoute(context, AdminRoutes.allEmployeeAttendance),
+                    )
+                  else
+                    _DrawerNavItem(
+                      title: 'Manage Tasks',
+                      subtitle: 'Monitor and update your assigned tasks',
+                      icon: Icons.assignment_rounded,
+                      accent: const Color.fromARGB(255, 111, 233, 231),
+                      isActive: currentRoute == AdminRoutes.task,
+                      onTap: () => _openRoute(context, AdminRoutes.task),
+                    ),
                  SizedBox(height: 10.h),
                   // _DrawerNavItem(
                   //   title: 'Check Out',

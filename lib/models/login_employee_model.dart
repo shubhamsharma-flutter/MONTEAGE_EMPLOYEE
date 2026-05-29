@@ -38,6 +38,7 @@ class LoginEmployeeModel {
       'ContactNo': contactNo,
       'Designation': designation,
       'Photo': photo,
+      
     };
   }
 }

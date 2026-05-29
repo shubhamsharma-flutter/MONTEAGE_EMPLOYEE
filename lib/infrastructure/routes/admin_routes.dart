@@ -29,15 +29,9 @@ import '../../screens/mark_face_attendance_screen.dart';
 import '../../screens/register_screen.dart';
 import '../../bindings/leave_management_binding.dart';
 import '../../screens/leave_management_screen.dart';
-import '../../bindings/task_binding.dart';
+import '../../bindings/totalattendanceview_binding.dart';
+import '../../screens/totalattendanceview.dart';
 
-
-
-// Import task screens and bindings
-import '../../screens/task_given_screen.dart';
-import '../../screens/task_received_screen.dart';
-import '../../bindings/task_given_binding.dart';
-import '../../bindings/task_received_binding.dart';
 import '../../bindings/task_binding.dart';
 import '../../screens/task_screen.dart';
 import '../../screens/main_screen.dart';
@@ -67,6 +61,7 @@ class AdminRoutes {
   static const attendance = '/attendance';
   static const mainScreen = '/main';
   static const projects = '/projects';
+  static const allEmployeeAttendance = '/all-employee-attendance';
   
 
   // New Task Routes
@@ -188,20 +183,10 @@ class AdminRoutes {
     ),
 
     // ---------- TASKS GIVEN ----------
-    GetPage(
-      name: taskGiven,
-      page: () => TaskGivenScreen(),
-      transition: Transition.rightToLeft,
-      binding: TaskGivenBinding(),
-    ),
+   
 
     // ---------- TASKS RECEIVED ----------
-    GetPage(
-      name: taskReceived,
-      page: () => TaskReceivedScreen(),
-      transition: Transition.rightToLeft,
-      binding: TaskReceivedBinding(),
-    ),
+    
 
     GetPage(
       name: task,
@@ -233,6 +218,13 @@ GetPage(
     TaskBinding(),
     EmployeeProfileBinding(),
   ],
+),
+
+GetPage(
+  name: allEmployeeAttendance,
+  page: () =>  Totalattendanceview(),
+  transition: Transition.rightToLeft,
+  binding: TotalAttendanceViewBinding(),
 ),
 
 

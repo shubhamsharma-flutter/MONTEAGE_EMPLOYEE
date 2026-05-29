@@ -7,6 +7,7 @@ import '../screens/home_screen.dart';
 import '../screens/task_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/employee_profile_screen.dart';
+import 'totalattendanceview.dart';
 import '../bindings/task_binding.dart';
 import '../bindings/profile_binding.dart';
 import '../controllers/task_controller.dart';
@@ -14,6 +15,7 @@ import '../controllers/profile_controller.dart';
 import '../bindings/home_binding.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/employee_data_controller.dart';
+import '../controllers/totalattendanceview_controller.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -35,16 +37,30 @@ void initState() {
   if (!Get.isRegistered<EmployeeProfileController>()) Get.put(EmployeeProfileController(), permanent: true);
   if (!Get.isRegistered<HomeController>()) Get.put(HomeController());
   if (!Get.isRegistered<EmployeeDataController>()) Get.put(EmployeeDataController());
+   
+   if (!Get.isRegistered<TotalAttendanceViewController>()) {
+    Get.put(TotalAttendanceViewController());
+  }
 
-  // Build screens after controllers
-  _screens = [
-    
-    HomeScreen(),
-    TaskScreen(),
-    CalendarScreen(),
-    EmployeeProfileScreen(),
-];
-  
+  // Get employee controller to check role
+  final employeeC = Get.find<EmployeeDataController>();
+
+  // Build screens based on role
+  if (employeeC.isHrManager) {
+    _screens = [
+      HomeScreen(),
+      Totalattendanceview(),
+      CalendarScreen(),
+      EmployeeProfileScreen(),
+    ];
+  } else {
+    _screens = [
+      HomeScreen(),
+      TaskScreen(),
+      CalendarScreen(),
+      EmployeeProfileScreen(),
+    ];
+  }
 
   // Check if a specific tab was requested
   final args = Get.arguments;
@@ -60,6 +76,9 @@ void initState() {
   @override
   Widget build(BuildContext context) {
     debugPrint("MAIN SCREEN LOADED");
+    final employeeC = Get.find<EmployeeDataController>();
+    final isHr = employeeC.isHrManager;
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -89,23 +108,31 @@ void initState() {
                   isActive: _currentIndex == 0,
                   onTap: () => setState(() => _currentIndex = 0),
                 ),
-                _NavItem(
-                  icon: Icons.task_rounded,
-                  label: 'Tasks',
-                  isActive: _currentIndex == 1,
-                  onTap: () => setState(() => _currentIndex = 1),
-                ),
+                if (isHr)
+                  _NavItem(
+                    icon: Icons.people_rounded,
+                    label: 'All Attendance',
+                    isActive: _currentIndex == 1,
+                    onTap: () => setState(() => _currentIndex = 1),
+                  )
+                else
+                  _NavItem(
+                    icon: Icons.task_rounded,
+                    label: 'Tasks',
+                    isActive: _currentIndex == 1,
+                    onTap: () => setState(() => _currentIndex = 1),
+                  ),
                 _NavItem(
                   icon: Icons.calendar_month_rounded,
                   label: 'Calendar',
-                  isActive: _currentIndex == 2,
-                  onTap: () => setState(() => _currentIndex = 2),
+                  isActive: isHr ? _currentIndex == 2 : _currentIndex == 2,
+                  onTap: () => setState(() => _currentIndex = isHr ? 2 : 2),
                 ),
                 _NavItem(
                   icon: Icons.person_rounded,
                   label: 'Profile',
-                  isActive: _currentIndex == 3,
-                  onTap: () => setState(() => _currentIndex = 3),
+                  isActive: isHr ? _currentIndex == 3 : _currentIndex == 3,
+                  onTap: () => setState(() => _currentIndex = isHr ? 3 : 3),
                 ),
               ],
             ),

@@ -320,21 +320,21 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                               ],
                             ),
                           ),
-                          Material(
-                            color: Colors.white.withOpacity(0.14),
-                            borderRadius: BorderRadius.circular(16.r),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16.r),
-                              onTap: controller.goToFaceRegister,
-                              child: Padding(
-                                padding: EdgeInsets.all(10.w),
-                                child: const Icon(
-                                  Icons.edit_rounded,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
+                          // Material(
+                          //   color: Colors.white.withOpacity(0.14),
+                          //   borderRadius: BorderRadius.circular(16.r),
+                          //   child: InkWell(
+                          //     borderRadius: BorderRadius.circular(16.r),
+                          //     onTap: controller.goToFaceRegister,
+                          //     child: Padding(
+                          //       padding: EdgeInsets.all(10.w),
+                          //       child: const Icon(
+                          //         Icons.edit_rounded,
+                          //         color: Colors.white,
+                          //       ),
+                          //     ),
+                          //   ),
+                         // ),
                         ],
                       ),
                       SizedBox(height: 16.h),
@@ -379,7 +379,7 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                 SizedBox(height: 12.h),
                 _infoTile(
                   icon: Icons.badge_rounded,
-                  title: 'Employee ID',
+                  title: 'Employee Code',
                   value: u.employeeId,
                   accentColor: const Color(0xFF2563EB),
                 ),
@@ -404,13 +404,13 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   value: u.email,
                   accentColor: const Color(0xFF4F46E5),
                 ),
-                SizedBox(height: 12.h),
-                _infoTile(
-                  icon: Icons.tag_rounded,
-                  title: 'User ID',
-                  value: u.id.toString(),
-                  accentColor: const Color(0xFF7C3AED),
-                ),
+                // SizedBox(height: 12.h),
+                // _infoTile(
+                //   icon: Icons.tag_rounded,
+                //   title: 'User ID',
+                //   value: u.id.toString(),
+                //   accentColor: const Color(0xFF7C3AED),
+                // ),
                 SizedBox(height: 24.h),
                 Text(
                   'Verification Details',
