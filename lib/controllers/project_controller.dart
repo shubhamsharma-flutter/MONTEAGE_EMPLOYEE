@@ -364,6 +364,52 @@ class TLTeamMember {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TL ALLOCATE PROJECT MODEL  (MobProjectAllocateTL response item)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class TLAllocateProject {
+  final int sProjectId;
+  final String projectName;
+  final int employeeId;
+  final String employeeName;
+  final String assignBy;
+  final int assignById;
+  final DateTime? assignDate;
+
+  TLAllocateProject({
+    required this.sProjectId,
+    required this.projectName,
+    required this.employeeId,
+    required this.employeeName,
+    required this.assignBy,
+    required this.assignById,
+    this.assignDate,
+  });
+
+  factory TLAllocateProject.fromJson(Map<String, dynamic> j) {
+    DateTime? parseDate(dynamic v) {
+      if (v == null) return null;
+      try {
+        final dt = DateTime.parse(v.toString());
+        return dt.year <= 1 ? null : dt;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return TLAllocateProject(
+      sProjectId:   int.tryParse(j['SProjectId']?.toString() ?? '') ?? 0,
+      projectName:  j['ProjectName']?.toString() ?? '',
+      employeeId:   int.tryParse(j['EmployeeId']?.toString() ?? '') ?? 0,
+      employeeName: j['EmployeeName']?.toString() ?? '',
+      assignBy:     j['AssignBy']?.toString() ?? '',
+      assignById:   int.tryParse(j['AssignById']?.toString() ?? '') ?? 0,
+      assignDate:   parseDate(j['AssignDate']),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CONTROLLER
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -385,6 +431,7 @@ class ProjectController extends GetxController {
   final tlProjects = <TLProjectItem>[].obs;
   final tlGivenProjects = <TLProjectItem>[].obs;
   final tlTeamMembers = <TLTeamMember>[].obs;
+  final tlAllocateProjects = <TLAllocateProject>[].obs;
 
   // ── UI state ──────────────────────────────────────────────────────────────
   final selectedFilter = 'All'.obs;
@@ -447,6 +494,9 @@ class ProjectController extends GetxController {
   String get tlTeamListApi =>
       '$_apiBase/MObTeamLeaderTeamList/$_employeeId';
 
+  String get tlAllocateProjectsApi =>
+      '$_apiBase/MobProjectAllocateTL/$_employeeId';
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   String get _accessToken => (box.read('access_token') ?? '').toString().trim();
 
@@ -462,9 +512,10 @@ class ProjectController extends GetxController {
     debugPrint('🔧 ProjectController.onInit | role: "$userRole" | isManager: $isManager | isTeamLeader: $isTeamLeader | employeeId: "$_employeeId"');
     if (isManager) fetchProjects();
     if (isTeamLeader) {
-      fetchTLProjects();        // received projects
-      fetchTLGivenProjects();   // given projects
-      fetchTLTeamMembers();     // team members for employee selector
+      fetchTLProjects();           // received projects
+      fetchTLGivenProjects();      // given projects
+      fetchTLTeamMembers();        // team members for employee selector
+      fetchTLAllocateProjects();   // all allocated projects (MobProjectAllocateTL)
     }
     fetchProjectTaskWorks();
   }
@@ -775,6 +826,7 @@ class ProjectController extends GetxController {
       if (isTeamLeader) fetchTLProjects(),
       if (isTeamLeader) fetchTLGivenProjects(),
       if (isTeamLeader) fetchTLTeamMembers(),
+      if (isTeamLeader) fetchTLAllocateProjects(),
       fetchProjectTaskWorks(),
     ]);
   }
@@ -873,5 +925,64 @@ class ProjectController extends GetxController {
     } catch (e) {
       debugPrint('fetchTLTeamMembers error: $e');
     }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FETCH  –  TL allocate projects (MobProjectAllocateTL)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Future<void> fetchTLAllocateProjects() async {
+    if (!isTeamLeader) return;
+    try {
+      debugPrint('📡 fetchTLAllocateProjects → $tlAllocateProjectsApi');
+      for (final useAuth in [false, true]) {
+        try {
+          final res = await http
+              .get(
+                Uri.parse(tlAllocateProjectsApi),
+                headers: useAuth ? _headers : {'Accept': 'application/json'},
+              )
+              .timeout(const Duration(seconds: 12));
+          debugPrint('   TL Allocate Projects auth=$useAuth → ${res.statusCode}');
+          if (res.statusCode == 200) {
+            final decoded = jsonDecode(res.body);
+            List<dynamic>? raw;
+            if (decoded is List) {
+              raw = decoded;
+            } else if (decoded is Map) {
+              raw = decoded['data'] as List? ?? decoded['Data'] as List?;
+            }
+            if (raw != null && raw.isNotEmpty) {
+              tlAllocateProjects.value = raw
+                  .whereType<Map<String, dynamic>>()
+                  .map(TLAllocateProject.fromJson)
+                  .toList();
+              debugPrint('✅ Loaded ${tlAllocateProjects.length} TL allocate projects');
+              return;
+            }
+          }
+        } catch (e) {
+          debugPrint('   ⚠️ TL Allocate Projects auth=$useAuth error: $e');
+        }
+      }
+      tlAllocateProjects.clear();
+    } catch (e) {
+      debugPrint('fetchTLAllocateProjects error: $e');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FILTERED  –  TL allocate projects
+  // ─────────────────────────────────────────────────────────────────────────
+
+  List<TLAllocateProject> get filteredTLAllocateProjects {
+    final q = tlSearchQuery.value.toLowerCase().trim();
+    if (q.isEmpty) return tlAllocateProjects.toList();
+    return tlAllocateProjects
+        .where((p) =>
+            p.projectName.toLowerCase().contains(q) ||
+            p.employeeName.toLowerCase().contains(q) ||
+            p.assignBy.toLowerCase().contains(q))
+        .toList();
   }
 }

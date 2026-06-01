@@ -629,18 +629,15 @@ class _Body extends StatelessWidget {
       }
       final pc = Get.find<ProjectController>();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (pc.tlProjects.isEmpty && !pc.isLoading.value) pc.fetchTLProjects();
-        if (pc.tlGivenProjects.isEmpty && !pc.isLoading.value)
-          pc.fetchTLGivenProjects();
+        if (pc.tlAllocateProjects.isEmpty && !pc.isLoading.value)
+          pc.fetchTLAllocateProjects();
       });
       return Obx(() {
-        if (pc.isLoading.value &&
-            pc.tlProjects.isEmpty &&
-            pc.tlGivenProjects.isEmpty) {
+        if (pc.isLoading.value && pc.tlAllocateProjects.isEmpty) {
           return const Center(
               child: CircularProgressIndicator(color: Color(0xFF6A3027)));
         }
-        final projects = pc.filteredTLProjects;
+        final projects = pc.filteredTLAllocateProjects;
         if (projects.isEmpty) {
           return Center(
             child: Column(
@@ -650,20 +647,14 @@ class _Body extends StatelessWidget {
                     size: 58.sp, color: const Color(0xFF8B7D77)),
                 SizedBox(height: 12.h),
                 Text(
-                  pc.tlSelectedFilter.value == 'All'
-                      ? 'No projects found'
-                      : 'No ${pc.tlSelectedFilter.value.toLowerCase()} projects',
+                  'No projects found',
                   style: GoogleFonts.manrope(
                       fontSize: 15.sp, color: const Color(0xFF8B7D77)),
                 ),
                 SizedBox(height: 16.h),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    pc.fetchTLProjects();
-                    pc.fetchTLGivenProjects();
-                  },
-                  icon:
-                      Icon(Icons.refresh_rounded, size: 16.sp, color: Colors.white),
+                  onPressed: () => pc.fetchTLAllocateProjects(),
+                  icon: Icon(Icons.refresh_rounded, size: 16.sp, color: Colors.white),
                   label: Text('Retry',
                       style: GoogleFonts.manrope(
                           fontSize: 13.sp,
@@ -683,7 +674,7 @@ class _Body extends StatelessWidget {
         return ListView.builder(
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           itemCount: projects.length,
-          itemBuilder: (_, i) => _TLProjectCard(project: projects[i]),
+          itemBuilder: (_, i) => _TLAllocateProjectCard(project: projects[i]),
         );
       });
     }
@@ -1180,28 +1171,11 @@ class _TLProjectStatsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final current = pc.tlSelectedFilter.value;
-      final received = pc.tlProjects;
-      final given = pc.tlGivenProjects;
-      final all = [...received, ...given];
-      final pending = all
-          .where((p) =>
-              p.data?.firstWhereOrNull(
-                      (d) => d.aStatus?.toLowerCase() == 'pending') !=
-                  null)
-          .length;
-      final done = all
-          .where((p) =>
-              p.data?.firstWhereOrNull(
-                      (d) => d.aStatus?.toLowerCase() == 'done') !=
-                  null ||
-              p.data?.firstWhereOrNull(
-                      (d) => d.aStatus?.toLowerCase() == 'complete') !=
-                  null ||
-              p.data?.firstWhereOrNull(
-                      (d) => d.aStatus?.toLowerCase() == 'approved') !=
-                  null)
-          .length;
+      final all = pc.tlAllocateProjects;
+      final uniqueProjects =
+          all.map((p) => p.sProjectId).toSet().length;
+      final uniqueMembers =
+          all.map((p) => p.employeeId).toSet().length;
 
       return Container(
         padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
@@ -1216,50 +1190,26 @@ class _TLProjectStatsCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _pTile(
-                pc: pc,
-                label: 'All',
-                value: '${all.length}',
-                icon: Icons.folder_outlined,
-                color: const Color(0xFF6A3027),
-                filter: 'All',
-                current: current),
+            _statTile(
+              label: 'Total',
+              value: '${all.length}',
+              icon: Icons.folder_outlined,
+              color: const Color(0xFF6A3027),
+            ),
             _divider(),
-            _pTile(
-                pc: pc,
-                label: 'Received',
-                value: '${received.length}',
-                icon: Icons.call_received_rounded,
-                color: Colors.blue,
-                filter: 'Received',
-                current: current),
+            _statTile(
+              label: 'Projects',
+              value: '$uniqueProjects',
+              icon: Icons.work_outline_rounded,
+              color: Colors.blue,
+            ),
             _divider(),
-            _pTile(
-                pc: pc,
-                label: 'Given',
-                value: '${given.length}',
-                icon: Icons.call_made_rounded,
-                color: Colors.green,
-                filter: 'Given',
-                current: current),
-            _divider(),
-            _pTile(
-                pc: pc,
-                label: 'Pending',
-                value: '$pending',
-                icon: Icons.hourglass_top_rounded,
-                color: Colors.orange,
-                filter: 'Pending',
-                current: current),
-            _divider(),
-            _pTile(
-                pc: pc,
-                label: 'Done',
-                value: '$done',
-                icon: Icons.check_circle_outline_rounded,
-                color: Colors.teal,
-                filter: 'Done',
-                current: current),
+            _statTile(
+              label: 'Members',
+              value: '$uniqueMembers',
+              icon: Icons.people_outline_rounded,
+              color: Colors.green,
+            ),
           ],
         ),
       );
@@ -1269,48 +1219,28 @@ class _TLProjectStatsCard extends StatelessWidget {
   Widget _divider() =>
       Container(height: 38.h, width: 1, color: const Color(0xFFE8DDD9));
 
-  Widget _pTile({
-    required ProjectController pc,
+  Widget _statTile({
     required String label,
     required String value,
     required IconData icon,
     required Color color,
-    required String filter,
-    required String current,
   }) {
-    final active = current == filter;
-    return GestureDetector(
-      onTap: () => pc.setTLFilter(filter),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: active ? color.withOpacity(0.10) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.r),
-          border: active
-              ? Border.all(color: color.withOpacity(0.40), width: 1.2)
-              : Border.all(color: Colors.transparent, width: 1.2),
-        ),
-        child: Column(
-          children: [
-            Icon(icon,
-                size: 22.sp,
-                color: active ? color : color.withOpacity(0.40)),
-            SizedBox(height: 5.h),
-            Text(value,
-                style: GoogleFonts.manrope(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w800,
-                    color: active ? color : const Color(0xFF241917))),
-            SizedBox(height: 2.h),
-            Text(label,
-                style: GoogleFonts.inter(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w600,
-                    color: active ? color : const Color(0xFF8B7D77))),
-          ],
-        ),
-      ),
+    return Column(
+      children: [
+        Icon(icon, size: 22.sp, color: color),
+        SizedBox(height: 5.h),
+        Text(value,
+            style: GoogleFonts.manrope(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF241917))),
+        SizedBox(height: 2.h),
+        Text(label,
+            style: GoogleFonts.inter(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF8B7D77))),
+      ],
     );
   }
 }
@@ -3096,12 +3026,14 @@ class _TaskFormState extends State<_TaskForm> {
     final isTL = _isTeamLeader;
     final projectOptions = <Map<String, String>>[];
     if (isTL) {
-      for (final p in pc.tlProjects) {
-        final firstData = p.data?.firstWhereOrNull((d) => d.sProjectId != null);
-        projectOptions.add({
-          'id': firstData?.sProjectId?.toString() ?? '',
-          'name': firstData?.projectName ?? '',
-        });
+      final seen = <int>{};
+      for (final p in pc.tlAllocateProjects) {
+        if (p.sProjectId != 0 && seen.add(p.sProjectId)) {
+          projectOptions.add({
+            'id': p.sProjectId.toString(),
+            'name': p.projectName,
+          });
+        }
       }
     } else {
       for (final p in pc.allProjects) {
@@ -4014,6 +3946,114 @@ class _TLProjectCardState extends State<_TLProjectCard>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TL ALLOCATE PROJECT CARD  (MobProjectAllocateTL item)
+// ─────────────────────────────────────────────────────────────────────────
+
+class _TLAllocateProjectCard extends StatelessWidget {
+  final TLAllocateProject project;
+  const _TLAllocateProjectCard({required this.project});
+
+  @override
+  Widget build(BuildContext context) {
+    final fmt = DateFormat('dd MMM yyyy');
+    final dateLabel = project.assignDate != null
+        ? fmt.format(project.assignDate!)
+        : '—';
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 4))
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(14.w),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 4.w,
+              height: 56.h,
+              decoration: BoxDecoration(
+                  color: const Color(0xFF6A3027),
+                  borderRadius: BorderRadius.circular(4.r)),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    project.projectName.isNotEmpty
+                        ? project.projectName
+                        : 'Unnamed Project',
+                    style: GoogleFonts.manrope(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF241917)),
+                  ),
+                  SizedBox(height: 6.h),
+                  Row(
+                    children: [
+                      Icon(Icons.person_outline_rounded,
+                          size: 12.sp, color: const Color(0xFF8B7D77)),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          project.employeeName.isNotEmpty
+                              ? project.employeeName
+                              : '—',
+                          style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF241917)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Icon(Icons.assignment_ind_outlined,
+                          size: 12.sp, color: const Color(0xFF8B7D77)),
+                      SizedBox(width: 4.w),
+                      Expanded(
+                        child: Text(
+                          project.assignBy.isNotEmpty
+                              ? 'By ${project.assignBy}'
+                              : '—',
+                          style: GoogleFonts.inter(
+                              fontSize: 11.sp,
+                              color: const Color(0xFF8B7D77)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(Icons.calendar_today_outlined,
+                          size: 11.sp, color: const Color(0xFF8B7D77)),
+                      SizedBox(width: 3.w),
+                      Text(
+                        dateLabel,
+                        style: GoogleFonts.inter(
+                            fontSize: 11.sp,
+                            color: const Color(0xFF8B7D77)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
