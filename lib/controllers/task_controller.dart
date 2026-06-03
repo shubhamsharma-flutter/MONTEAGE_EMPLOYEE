@@ -439,28 +439,22 @@ class TaskController extends GetxController {
 
   // ── Derived lists ─────────────────────────────────────────────────────
 
-  List<Data> get givenTasks => allTasks.where((t) {
-    if (isRegularEmployee) return false;
-    // Standard: assigner fields (Createdby / UpdateByy)
-    if (t.assignedById.isNotEmpty && t.assignedById != '0' && t.assignedById == myId) return true;
-    if (myName.isNotEmpty &&
-        t.assignedByName.trim().toLowerCase() == myName.trim().toLowerCase()) {
-      return true;
-    }
-    // MObProjectGivenWorkTL stores the assigner in EmployeeName1 when EmployeeId1 == 0
-    if ((t.employeeId1 == null || t.employeeId1 == 0) &&
-        myName.isNotEmpty &&
-        (t.employeeName1 ?? '').trim().toLowerCase() == myName.trim().toLowerCase()) {
-      return true;
-    }
-    return false;
-  }).toList();
+  List<Data> get givenTasks => _sortNewestFirst(allTasks.where((t) {
+  if (isRegularEmployee) return false;
+  if (t.assignedById.isNotEmpty && t.assignedById != '0' && t.assignedById == myId) return true;
+  if (myName.isNotEmpty &&
+      t.assignedByName.trim().toLowerCase() == myName.trim().toLowerCase()) return true;
+  if ((t.employeeId1 == null || t.employeeId1 == 0) &&
+      myName.isNotEmpty &&
+      (t.employeeName1 ?? '').trim().toLowerCase() == myName.trim().toLowerCase()) return true;
+  return false;
+}).toList());
 
-  List<Data> get receivedTasks => allTasks.where((t) {
-    if (t.assignedById == myId || t.assignedByName == myName) return false;
-    return t.teamLeadId == myId || t.teamLeadName == myName ||
-        t.juniorId == myId || t.juniorName == myName;
-  }).toList();
+  List<Data> get receivedTasks => _sortNewestFirst(allTasks.where((t) {
+  if (t.assignedById == myId || t.assignedByName == myName) return false;
+  return t.teamLeadId == myId || t.teamLeadName == myName ||
+      t.juniorId == myId || t.juniorName == myName;
+}).toList());
 
   List<Data> get _activeTasks {
     if (isRegularEmployee) return receivedTasks;
@@ -1668,4 +1662,25 @@ class TaskController extends GetxController {
     }
     return 0;
   }
+  // ── Sort helper ────────────────────────────────────────────────────────
+List<Data> _sortNewestFirst(List<Data> list) {
+  final sorted = List<Data>.from(list);
+  sorted.sort((a, b) {
+    DateTime? parseDate(Data t) {
+      for (final d in [t.createdDate, t.allocateDate, t.date, t.modifiedDate]) {
+        if (d != null && d.isNotEmpty) {
+          try { return DateTime.parse(d); } catch (_) {}
+        }
+      }
+      return null;
+    }
+    final da = parseDate(a);
+    final db = parseDate(b);
+    if (da == null && db == null) return 0;
+    if (da == null) return 1;
+    if (db == null) return -1;
+    return db.compareTo(da); // newest first
+  });
+  return sorted;
+}
 }

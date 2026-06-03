@@ -1,79 +1,3 @@
-/*import 'dart:io';
-import 'dart:convert';
-import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'package:get_storage/get_storage.dart';
-
-class FaceRegisterController extends GetxController {
-  var selectedImage = Rx<File?>(null);
-  var isSubmitting = false.obs;
-
-  final String faceRegisterUrl = "http://103.251.143.196/attendance/api/face/register/";
-
-  // To pick the image from the camera
-  Future<void> takePhoto() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.camera);
-
-    if (image != null) {
-      selectedImage.value = File(image.path);
-    }
-  }
-
-  // To clear the selected image
-  void clearPhoto() {
-    selectedImage.value = null;
-  }
-
-  // To submit the face registration
-  Future<void> submitRegistration() async {
-    if (selectedImage.value == null) {
-      Get.snackbar('Error', 'Please upload your face image first.');
-      return;
-    }
-
-    isSubmitting.value = true;
-
-    try {
-      // Prepare the multipart request
-      final request = http.MultipartRequest('POST', Uri.parse(faceRegisterUrl));
-      final token = _getToken();  // Get the saved token
-
-      // Add the headers and image file
-      request.headers['Authorization'] = 'Bearer $token';
-      request.files.add(await http.MultipartFile.fromPath('image', selectedImage.value!.path));
-
-      // Send the request
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar('Success', 'Face registered successfully!');
-        isSubmitting.value = false;
-        // Navigate to HomeScreen after successful registration
-        Get.offAllNamed('/home');
-      } else {
-        Get.snackbar('Error', 'Failed to register face: $responseBody');
-        isSubmitting.value = false;
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Face registration failed: $e');
-      isSubmitting.value = false;
-    }
-  }
-
-  // Function to get the access token
-  String _getToken() {
-    final token = GetStorage().read('access_token') ?? '';
-    if (token.isEmpty) {
-      throw Exception('Access token missing');
-    }
-    return token;
-  }
-}
-*/
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -93,8 +17,16 @@ class FaceRegisterController extends GetxController {
   final Rx<File?> selectedImage = Rx<File?>(null);
   final RxBool isSubmitting = false.obs;
 
-  final String faceRegisterUrl = "http://att.monteage.co.in/attendance/api/face/register/";
-  final String refreshApi = "http://att.monteage.co.in/attendance/api/auth/refresh/";
+  // ✅ Text controller for employee code input
+  String get _employeeCode =>
+    (Get.arguments?["employee_code"] ?? "").toString().trim();
+
+  final String faceRegisterUrl =
+      "http://att.monteage.co.in/attendance/api/face/register/";
+  final String refreshApi =
+      "http://att.monteage.co.in/attendance/api/auth/refresh/";
+
+  
 
   // ---------- Snackbars ----------
   void _snackSuccess(String msg) {
@@ -118,8 +50,10 @@ class FaceRegisterController extends GetxController {
   }
 
   // ---------- Token ----------
-  String get _accessToken => (box.read("access_token") ?? "").toString().trim();
-  String get _refreshToken => (box.read("refresh_token") ?? "").toString().trim();
+  String get _accessToken =>
+      (box.read("access_token") ?? "").toString().trim();
+  String get _refreshToken =>
+      (box.read("refresh_token") ?? "").toString().trim();
 
   // ---------- Pick/Clear ----------
   Future<void> takePhoto() async {
@@ -165,25 +99,30 @@ class FaceRegisterController extends GetxController {
   Future<void> submitRegistration() async {
     final img = selectedImage.value;
     if (img == null) {
-      _snackError("Please upload your face image first.");
+      _snackError("Please capture your face image first.");
       return;
     }
 
-    if (_accessToken.isEmpty) {
-      _snackError("Access token missing. Please login again.");
-      return;
-    }
+    // ✅ Validate employee code entered by HR
+    final empCode = _employeeCode;
+if (empCode.isEmpty) {
+  _snackError("Employee code not found. Please go back and try again.");
+  return;
+}
 
     isSubmitting.value = true;
 
     try {
       // 1st attempt
-      final first = await _uploadFace(img, token: _accessToken);
+      final first = await _uploadFace(img, empCode);
+      print("First attempt: ${first.statusCode} - ${first.message}");
 
       if (first.statusCode == 200 || first.statusCode == 201) {
         _snackSuccess("Face registered successfully!");
-          await  PrefManager().writeValue(key: PrefConst.isregistered, value: "true");
-         Get.offAllNamed(AdminRoutes.mainScreen);
+        await PrefManager()
+            .writeValue(key: PrefConst.isregistered, value: "true");
+        Get.offAllNamed(AdminRoutes.mainScreen);
+        return;
       }
 
       // If unauthorized -> refresh token -> retry once
@@ -195,21 +134,24 @@ class FaceRegisterController extends GetxController {
           return;
         }
 
-        final retryToken = (box.read("access_token") ?? "").toString().trim();
-        final second = await _uploadFace(img, token: retryToken);
+        final second = await _uploadFace(img, empCode);
+        print("Retry attempt: ${second.statusCode} - ${second.message}");
 
         if (second.statusCode == 200 || second.statusCode == 201) {
           _snackSuccess("Face registered successfully!");
-        await  PrefManager().writeValue(key: PrefConst.isregistered, value: "true");
-         Get.offAllNamed(AdminRoutes.mainScreen);// ✅ go to home screen after successful registration
-         
+          await PrefManager()
+              .writeValue(key: PrefConst.isregistered, value: "true");
+          Get.offAllNamed(AdminRoutes.mainScreen);
+          return;
         }
 
-        _snackError("Failed to register face: (${second.statusCode}) ${second.message}");
+        _snackError(
+            "Failed to register face: (${second.statusCode}) ${second.message}");
         return;
       }
 
-      _snackError("Failed to register face: (${first.statusCode}) ${first.message}");
+      _snackError(
+          "Failed to register face: (${first.statusCode}) ${first.message}");
     } catch (e) {
       _snackError("Face registration failed: $e");
     } finally {
@@ -218,22 +160,35 @@ class FaceRegisterController extends GetxController {
   }
 
   // ---------- Actual Multipart Upload ----------
-  Future<_UploadResult> _uploadFace(File img, {required String token}) async {
+  Future<_UploadResult> _uploadFace(File img, String empCode) async {
     final req = http.MultipartRequest("POST", Uri.parse(faceRegisterUrl));
-    req.headers["Authorization"] = "Bearer $token";
+
+    
     req.headers["Accept"] = "application/json";
 
-    // backend expects "image" (you already used it)
+    // ✅ Send employee_code as form field
+    req.fields["employee_id"] = empCode;
+
     req.files.add(await http.MultipartFile.fromPath("image", img.path));
+
+    print("===== UPLOAD DEBUG =====");
+    print("Token: $_accessToken");
+    print("Employee Code: '$empCode'");
+    print("Fields: ${req.fields}");
+    print("========================");
 
     final res = await req.send();
     final body = await res.stream.bytesToString();
+
+    print("Response: ${res.statusCode} - $body");
 
     String msgFromServer = body;
     try {
       final decoded = body.isNotEmpty ? jsonDecode(body) : null;
       if (decoded is Map<String, dynamic>) {
-        msgFromServer = (decoded["message"] ?? decoded["detail"] ?? decoded["error"] ?? body).toString();
+        msgFromServer =
+            (decoded["message"] ?? decoded["detail"] ?? decoded["error"] ?? body)
+                .toString();
       }
     } catch (_) {}
 

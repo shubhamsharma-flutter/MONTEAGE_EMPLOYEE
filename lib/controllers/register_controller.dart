@@ -151,7 +151,10 @@ class RegisterController extends GetxController {
         colorText: Colors.white,
       );
 
-      Get.to(() => const FaceRegisterScreen());
+      Get.to(
+  () => const FaceRegisterScreen(),
+  arguments: {"employee_code": employeeIdController.text.trim()},
+);
     } catch (error) {
       Get.snackbar(
         'Registration Failed',

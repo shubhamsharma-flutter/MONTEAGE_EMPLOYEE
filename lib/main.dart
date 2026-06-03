@@ -28,6 +28,7 @@ class AdminApp extends StatelessWidget {
       initialRoute: AdminRoutes.ADMIN_SPLASH,
 
       theme: ThemeData(useMaterial3: true),
+      
 
       builder: (context, child) {
         return ScreenUtilInit(
