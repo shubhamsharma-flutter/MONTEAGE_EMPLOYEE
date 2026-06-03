@@ -1178,28 +1178,28 @@ class TaskController extends GetxController {
     }
   }
 
-  Future<void> deleteTask(String taskId) async {
-    try {
-      allTasks.removeWhere((t) => t.uniqueId == taskId);
-      final res = await http.delete(
-          Uri.parse('$_taskDeleteUrl/$taskId'),
-          headers: _noAuthHeaders);
-      if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
-        if ((decoded['statuscode'] as int? ?? 0) == 200) {
-          Get.snackbar('Deleted', 'Task removed successfully',
-              snackPosition: SnackPosition.BOTTOM);
-        } else {
-          fetchAll();
-          Get.snackbar('Failed',
-              decoded['message']?.toString() ?? 'Could not delete task',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: const Color(0xFFE53935),
-              colorText: Colors.white);
-        }
-      } else { fetchAll(); }
-    } catch (e) { fetchAll(); }
-  }
+  // Future<void> deleteTask(String taskId) async {
+  //   try {
+  //     allTasks.removeWhere((t) => t.uniqueId == taskId);
+  //     final res = await http.delete(
+  //         Uri.parse('$_taskDeleteUrl/$taskId'),
+  //         headers: _noAuthHeaders);
+  //     if (res.statusCode == 200) {
+  //       final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+  //       if ((decoded['statuscode'] as int? ?? 0) == 200) {
+  //         Get.snackbar('Deleted', 'Task removed successfully',
+  //             snackPosition: SnackPosition.BOTTOM);
+  //       } else {
+  //         fetchAll();
+  //         Get.snackbar('Failed',
+  //             decoded['message']?.toString() ?? 'Could not delete task',
+  //             snackPosition: SnackPosition.BOTTOM,
+  //             backgroundColor: const Color(0xFFE53935),
+  //             colorText: Colors.white);
+  //       }
+  //     } else { fetchAll(); }
+  //   } catch (e) { fetchAll(); }
+  // }
 
   // ─────────────────────────────────────────────────────────────────────
   // STATUS ACTIONS

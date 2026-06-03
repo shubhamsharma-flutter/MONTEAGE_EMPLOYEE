@@ -2128,73 +2128,73 @@ class _ExpandedTaskBody extends StatelessWidget {
                   ],
 
                   // ── Edit / Delete ────────────────────────────────────
-                  if (!approved && isGiven) ...[
-                    SizedBox(height: 4.h),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _IconTextBtn(
-                          icon: Icons.edit_outlined,
-                          label: 'Edit',
-                          color: const Color(0xFF6A3027),
-                          bg: const Color(0xFFE8DDD9),
-                          onTap: () => Get.bottomSheet(
-                            _TaskForm(c: c, existing: live),
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                          ),
-                        ),
-                        SizedBox(width: 8.w),
-                        _IconTextBtn(
-                          icon: Icons.delete_outline_rounded,
-                          label: 'Delete',
-                          color: Colors.red,
-                          bg: Colors.red.withOpacity(0.10),
-                          onTap: () => showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              backgroundColor: const Color(0xFFF6F1ED),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18.r)),
-                              title: Text('Delete task?',
-                                  style: GoogleFonts.manrope(
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF241917))),
-                              content: Text('This cannot be undone.',
-                                  style: GoogleFonts.inter(
-                                      fontSize: 13.sp,
-                                      color: const Color(0xFF8B7D77))),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: Text('Cancel',
-                                      style: GoogleFonts.manrope(
-                                          color: const Color(0xFF8B7D77))),
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10.r)),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    c.deleteTask(live.uniqueId);
-                                  },
-                                  child: Text('Delete',
-                                      style: GoogleFonts.manrope(
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  // if (!approved && isGiven) ...[
+                  //   SizedBox(height: 4.h),
+                  //   Row(
+                  //     mainAxisAlignment: MainAxisAlignment.end,
+                  //     children: [
+                  //       _IconTextBtn(
+                  //         icon: Icons.edit_outlined,
+                  //         label: 'Edit',
+                  //         color: const Color(0xFF6A3027),
+                  //         bg: const Color(0xFFE8DDD9),
+                  //         onTap: () => Get.bottomSheet(
+                  //           _TaskForm(c: c, existing: live),
+                  //           isScrollControlled: true,
+                  //           backgroundColor: Colors.transparent,
+                  //         ),
+                  //       ),
+                  //       SizedBox(width: 8.w),
+                  //       _IconTextBtn(
+                  //         icon: Icons.delete_outline_rounded,
+                  //         label: 'Delete',
+                  //         color: Colors.red,
+                  //         bg: Colors.red.withOpacity(0.10),
+                  //         onTap: () => showDialog(
+                  //           context: context,
+                  //           builder: (ctx) => AlertDialog(
+                  //             backgroundColor: const Color(0xFFF6F1ED),
+                  //             shape: RoundedRectangleBorder(
+                  //                 borderRadius: BorderRadius.circular(18.r)),
+                  //             title: Text('Delete task?',
+                  //                 style: GoogleFonts.manrope(
+                  //                     fontWeight: FontWeight.w800,
+                  //                     color: const Color(0xFF241917))),
+                  //             content: Text('This cannot be undone.',
+                  //                 style: GoogleFonts.inter(
+                  //                     fontSize: 13.sp,
+                  //                     color: const Color(0xFF8B7D77))),
+                  //             actions: [
+                  //               TextButton(
+                  //                 onPressed: () => Navigator.pop(ctx),
+                  //                 child: Text('Cancel',
+                  //                     style: GoogleFonts.manrope(
+                  //                         color: const Color(0xFF8B7D77))),
+                  //               ),
+                  //               ElevatedButton(
+                  //                 style: ElevatedButton.styleFrom(
+                  //                   backgroundColor: Colors.red,
+                  //                   shape: RoundedRectangleBorder(
+                  //                       borderRadius:
+                  //                           BorderRadius.circular(10.r)),
+                  //                   elevation: 0,
+                  //                 ),
+                  //                 onPressed: () {
+                  //                   Navigator.pop(ctx);
+                  //                   c.deleteTask(live.uniqueId);
+                  //                 },
+                  //                 child: Text('Delete',
+                  //                     style: GoogleFonts.manrope(
+                  //                         fontWeight: FontWeight.w700,
+                  //                         color: Colors.white)),
+                  //               ),
+                  //             ],
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ],
                 ],
               ],
             ),
