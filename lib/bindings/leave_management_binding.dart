@@ -4,6 +4,6 @@ import '../controllers/leave_management_controller.dart';
 class LeaveManagementBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<LeaveManagementController>(() => LeaveManagementController());
+    Get.lazyPut<LeaveController>(() => LeaveController());
   }
 }

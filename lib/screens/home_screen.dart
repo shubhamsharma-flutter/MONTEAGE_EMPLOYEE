@@ -7,6 +7,7 @@ import '../controllers/employee_data_controller.dart';
 import '../controllers/home_controller.dart';
 import '../infrastructure/app_drawer/admin_drawer.dart';
 import '../infrastructure/routes/admin_routes.dart';
+import 'package:upgrader/upgrader.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
@@ -20,7 +21,12 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return UpgradeAlert(
+  barrierDismissible: false,
+  upgrader: Upgrader(
+    debugDisplayAlways: false,
+  ),
+  child: Scaffold(
       key: _scaffoldKey,
       drawer: AdminDrawer(),
       backgroundColor: const Color(0xFFF6F1ED),
@@ -219,9 +225,9 @@ SizedBox(
   width: 180.w,
   height: 230.h,
   child: _ActionCard(
-    eyebrow: 'Leave Management',
-    title: 'Leave Approval',
-    subtitle: 'Apply for leave and track your requests.',
+    eyebrow: 'Leave/WFH Management',
+    title: 'Leave/WFH Approval',
+    subtitle: 'Apply for leave/WFH and track your requests.',
     icon: Icons.assignment_rounded,
     accent: const Color(0xFF00796B), // Accent color (Teal)
     background: const [
@@ -240,7 +246,7 @@ SizedBox(
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildHeroCard() {

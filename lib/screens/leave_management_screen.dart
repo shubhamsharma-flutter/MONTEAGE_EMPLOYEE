@@ -5,283 +5,48 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import '../controllers/leave_management_controller.dart';
 import '../widgets/bottom_nav_wrapper.dart';
 
-// ── Static preview leave data ─────────────────────────────────────────────
-final List<Map<String, dynamic>> _staticLeaves = [
-  {
-    "id": "1",
-    "leave_type": "Sick Leave",
-    "reason": "Medical leave due to fever and weakness.",
-    "work_handover_to": "Aman Verma",
-    "from_date": "2026-04-21",
-    "to_date": "2026-04-23",
-    "status": "Pending",
-    "approved_to": "Rahul Sharma, Priya Mehta",
-    "applied_on": "2026-04-20",
-    "remarks": "",
-  },
-  {
-    "id": "2",
-    "leave_type": "Casual Leave",
-    "reason": "Family function leave request.",
-    "work_handover_to": "Meera Iyer",
-    "from_date": "2026-04-10",
-    "to_date": "2026-04-12",
-    "status": "Approved",
-    "approved_to": "Aman Verma",
-    "applied_on": "2026-04-08",
-    "remarks": "",
-  },
-  {
-    "id": "3",
-    "leave_type": "Casual Leave",
-    "reason": "Personal work outside city.",
-    "work_handover_to": "Rahul Sharma",
-    "from_date": "2026-03-28",
-    "to_date": "2026-03-29",
-    "status": "Rejected",
-    "approved_to": "Sneha Joshi",
-    "applied_on": "2026-03-25",
-    "remarks": "Insufficient reason provided.",
-  },
-];
-
-// ── Employee list ─────────────────────────────────────────────────────────
-final List<Map<String, String>> _employeeList = [
-  {"id": "1", "name": "Rahul Sharma"},
-  {"id": "2", "name": "Priya Mehta"},
-  {"id": "3", "name": "Aman Verma"},
-  {"id": "4", "name": "Sneha Joshi"},
-  {"id": "5", "name": "Meera Iyer"},
-];
-
-// ── Static approvers (simulating backend assignment) ──────────────────────
-const List<String> _staticApprovers = [
-  "Rahul Sharma",
-  "Priya Mehta",
-];
-
-// ── Helper: format "yyyy-MM-dd" → "28-04-2026" ───────────────────────────
-String _formatDate(String? raw) {
+// ── Date helper ───────────────────────────────────────────────────────────────
+String _fmtDate(String? raw) {
   if (raw == null || raw.isEmpty) return '';
   final dt = DateTime.tryParse(raw);
   if (dt == null) return raw;
   return DateFormat('dd-MM-yyyy').format(dt);
 }
 
-class LeaveManagementScreen extends StatefulWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+
+class LeaveManagementScreen extends StatelessWidget {
   LeaveManagementScreen({super.key});
 
-  @override
-  State<LeaveManagementScreen> createState() => _LeaveManagementScreenState();
-
-  String approverName = 'John Doe';
-}
-
-class _LeaveManagementScreenState extends State<LeaveManagementScreen> {
-  List<Map<String, dynamic>> leaves = List.from(_staticLeaves);
   final TextEditingController _searchCtrl = TextEditingController();
-  bool _searchVisible = false;
-  int _balanceLeaves = 12;
+  final RxBool _searchVisible = false.obs;
 
-  // ── Active filter: 'Total' | 'Pending' | 'Approved' | 'Rejected' ─────
-  String _selectedFilter = 'Total';
-
-  @override
-  void dispose() {
-    _searchCtrl.dispose();
-    super.dispose();
-  }
-
-  int _calcDays(Map<String, dynamic> leave) {
-    final from = DateTime.tryParse(leave['from_date'] ?? '');
-    final to = DateTime.tryParse(leave['to_date'] ?? '');
-    if (from != null && to != null) {
-      final days = to.difference(from).inDays + 1;
-      return days > 0 ? days : 0;
-    }
-    return 0;
-  }
+  LeaveController get _c => LeaveController.to;
 
   void _openLeaveForm() {
     Get.bottomSheet(
-      LeaveFormBottomSheet(
-        balanceLeaves: _balanceLeaves,
-        approvers: _staticApprovers,
-        onSave: (newLeave) {
-          setState(() => leaves.insert(0, newLeave));
-        },
-      ),
+      LeaveFormBottomSheet(),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
     );
   }
 
-  List<Map<String, dynamic>> get filteredLeaves {
-    final query = _searchCtrl.text.trim().toLowerCase();
-
-    // First apply status filter
-    List<Map<String, dynamic>> statusFiltered;
-    if (_selectedFilter == 'Total') {
-      statusFiltered = List.from(leaves);
-    } else {
-      statusFiltered =
-          leaves.where((l) => l['status'] == _selectedFilter).toList();
-    }
-
-    // Then apply search query
-    if (query.isEmpty) return statusFiltered;
-    return statusFiltered.where((leave) {
-      final leaveType = (leave['leave_type'] ?? '').toString().toLowerCase();
-      final fromDate = (leave['from_date'] ?? '').toString().toLowerCase();
-      final toDate = (leave['to_date'] ?? '').toString().toLowerCase();
-      final appliedOn = (leave['applied_on'] ?? '').toString().toLowerCase();
-      final fromFormatted = _formatDate(leave['from_date']).toLowerCase();
-      final toFormatted = _formatDate(leave['to_date']).toLowerCase();
-      return leaveType.contains(query) ||
-          fromDate.contains(query) ||
-          toDate.contains(query) ||
-          appliedOn.contains(query) ||
-          fromFormatted.contains(query) ||
-          toFormatted.contains(query);
-    }).toList();
-  }
-
-  void _onApprove(String id) {
-    setState(() {
-      final idx = leaves.indexWhere((l) => l['id'] == id);
-      if (idx != -1) {
-        final leave = leaves[idx];
-        leaves[idx] = {...leave, 'status': 'Approved', 'remarks': ''};
-        final days = _calcDays(leave);
-        _balanceLeaves = (_balanceLeaves - days).clamp(0, 999);
-      }
-    });
-    Get.snackbar(
-      "Approved",
-      "Leave request has been approved.",
-      backgroundColor: Colors.green.shade50,
-      colorText: Colors.green.shade800,
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  void _onReject(String id) {
-    final remarksCtrl = TextEditingController();
-    Get.dialog(
-      AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-        backgroundColor: const Color(0xFFF6F1ED),
-        title: Text(
-          "Rejection Remarks",
-          style: GoogleFonts.manrope(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF241917)),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Please provide a reason for rejection:",
-              style: GoogleFonts.inter(
-                  fontSize: 13.sp, color: const Color(0xFF8B7D77)),
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              controller: remarksCtrl,
-              maxLines: 3,
-              style: GoogleFonts.inter(
-                  fontSize: 13.sp, color: const Color(0xFF241917)),
-              decoration: InputDecoration(
-                hintText: "Enter rejection remarks...",
-                hintStyle: GoogleFonts.inter(
-                    fontSize: 12.sp, color: const Color(0xFF8B7D77)),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                    borderSide: const BorderSide(
-                        color: Color(0xFFB54A3A), width: 1.5)),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text("Cancel",
-                style: GoogleFonts.inter(
-                    fontSize: 13.sp,
-                    color: const Color(0xFF8B7D77),
-                    fontWeight: FontWeight.w600)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final remarks = remarksCtrl.text.trim();
-              if (remarks.isEmpty) {
-                Get.snackbar("Required", "Please enter rejection remarks.",
-                    backgroundColor: Colors.orange.shade50,
-                    colorText: Colors.orange.shade800,
-                    snackPosition: SnackPosition.BOTTOM);
-                return;
-              }
-              setState(() {
-                final idx = leaves.indexWhere((l) => l['id'] == id);
-                if (idx != -1) {
-                  leaves[idx] = {
-                    ...leaves[idx],
-                    'status': 'Rejected',
-                    'remarks': remarks
-                  };
-                }
-              });
-              Get.back();
-              Get.snackbar("Rejected", "Leave request has been rejected.",
-                  backgroundColor: Colors.red.shade50,
-                  colorText: Colors.red.shade800,
-                  snackPosition: SnackPosition.BOTTOM);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB54A3A),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10.r)),
-              elevation: 0,
-            ),
-            child: Text("Reject",
-                style: GoogleFonts.manrope(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final visibleLeaves = filteredLeaves;
     return BottomNavWrapper(
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F1ED),
         appBar: AppBar(
-          title: _searchVisible
+          title: Obx(() => _searchVisible.value
               ? TextField(
                   controller: _searchCtrl,
                   autofocus: true,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (v) => _c.searchQuery.value = v,
                   style: GoogleFonts.inter(
                       fontSize: 14.sp, color: const Color(0xFF241917)),
                   decoration: InputDecoration(
@@ -291,90 +56,103 @@ class _LeaveManagementScreenState extends State<LeaveManagementScreen> {
                     border: InputBorder.none,
                   ),
                 )
-              : Text("Leave Approval",
+              : Text(
+                  "Leave and WFH ",
                   style: GoogleFonts.manrope(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF241917))),
+                      color: const Color(0xFF241917)),
+                )),
           backgroundColor: const Color(0xFFF6F1ED),
           elevation: 0,
           actions: [
+            Obx(() => IconButton(
+                  icon: Icon(
+                    _searchVisible.value
+                        ? Icons.close_rounded
+                        : Icons.search_rounded,
+                    color: const Color(0xFF6A3027),
+                  ),
+                  onPressed: () {
+                    _searchVisible.value = !_searchVisible.value;
+                    if (!_searchVisible.value) {
+                      _searchCtrl.clear();
+                      _c.searchQuery.value = '';
+                    }
+                  },
+                )),
             IconButton(
-              icon: Icon(
-                _searchVisible ? Icons.close_rounded : Icons.search_rounded,
-                color: const Color(0xFF6A3027),
-              ),
-              onPressed: () {
-                setState(() {
-                  _searchVisible = !_searchVisible;
-                  if (!_searchVisible) {
-                    _searchCtrl.clear();
-                  }
-                });
-              },
+              icon: const Icon(Icons.refresh_rounded, color: Color(0xFF6A3027)),
+              onPressed: _c.refreshAll,
             ),
           ],
         ),
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Column(
-            children: [
-              SizedBox(height: 4.h),
-              _LeaveStatsCard(
-                leaves: leaves,
-                balanceLeaves: _balanceLeaves,
-                selectedFilter: _selectedFilter,
-                onFilterChanged: (filter) {
-                  setState(() => _selectedFilter = filter);
-                },
-              ),
-              SizedBox(height: 14.h),
-              Row(children: [
-                Text(
-                  _selectedFilter == 'Total'
-                      ? "View Leaves"
-                      : "$_selectedFilter Leaves",
-                  style: GoogleFonts.manrope(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF241917)),
-                ),
-                SizedBox(width: 8.w),
-                // Show count badge when filtered
-                if (_selectedFilter != 'Total')
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                    decoration: BoxDecoration(
-                      color: _filterColor(_selectedFilter).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20.r),
-                    ),
-                    child: Text(
-                      "${visibleLeaves.length}",
-                      style: GoogleFonts.manrope(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w700,
-                        color: _filterColor(_selectedFilter),
-                      ),
-                    ),
-                  ),
-              ]),
-              SizedBox(height: 12.h),
-              Expanded(
-                child: visibleLeaves.isEmpty
-                    ? _emptyState()
-                    : ListView.builder(
-                        itemCount: visibleLeaves.length,
-                        itemBuilder: (_, i) => _LeaveCard(
-                          leave: visibleLeaves[i],
-                          onApprove: _onApprove,
-                          onReject: _onReject,
+        body: Obx(() {
+          if (_c.isLoadingLeaves.value) {
+            return const Center(
+                child: CircularProgressIndicator(color: Color(0xFFB54A3A)));
+          }
+          final visibleLeaves = _c.filteredLeaves;
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              children: [
+                SizedBox(height: 4.h),
+                _LeaveStatsCard(),
+                SizedBox(height: 14.h),
+                Obx(() => Row(
+                      children: [
+                        Text(
+                          _c.selectedFilter.value == 'Total'
+                              ? "Leave/WFH History"
+                              : "${_c.selectedFilter.value} Leaves",
+                          style: GoogleFonts.manrope(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF241917)),
                         ),
-                      ),
-              ),
-            ],
-          ),
-        ),
+                        SizedBox(width: 8.w),
+                        if (_c.selectedFilter.value != 'Total')
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.w, vertical: 2.h),
+                            decoration: BoxDecoration(
+                              color: _filterColor(_c.selectedFilter.value)
+                                  .withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              "${visibleLeaves.length}",
+                              style: GoogleFonts.manrope(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w700,
+                                color: _filterColor(_c.selectedFilter.value),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )),
+                SizedBox(height: 12.h),
+                Expanded(
+                  child: visibleLeaves.isEmpty
+                      ? _emptyState()
+                      : RefreshIndicator(
+                          color: const Color(0xFFB54A3A),
+                          onRefresh: () async => _c.refreshAll(),
+                          child: ListView.builder(
+                            itemCount: visibleLeaves.length,
+                            itemBuilder: (_, i) => _LeaveCard(
+                              leave: visibleLeaves[i],
+                              onApprove: (id) => _c.approveLeave(id),
+                              onReject: (id) => _showRejectDialog(id),
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          );
+        }),
         floatingActionButton: FloatingActionButton(
           onPressed: _openLeaveForm,
           backgroundColor: const Color(0xFFB54A3A),
@@ -383,6 +161,89 @@ class _LeaveManagementScreenState extends State<LeaveManagementScreen> {
         ),
       ),
     );
+  }
+
+  void _showRejectDialog(String id) {
+    final remarksCtrl = TextEditingController();
+    Get.dialog(AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+      backgroundColor: const Color(0xFFF6F1ED),
+      title: Text("Rejection Remarks",
+          style: GoogleFonts.manrope(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF241917))),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Please provide a reason for rejection:",
+              style: GoogleFonts.inter(
+                  fontSize: 13.sp, color: const Color(0xFF8B7D77))),
+          SizedBox(height: 12.h),
+          TextField(
+            controller: remarksCtrl,
+            maxLines: 3,
+            style: GoogleFonts.inter(
+                fontSize: 13.sp, color: const Color(0xFF241917)),
+            decoration: InputDecoration(
+              hintText: "Enter rejection remarks...",
+              hintStyle: GoogleFonts.inter(
+                  fontSize: 12.sp, color: const Color(0xFF8B7D77)),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.r),
+                  borderSide: const BorderSide(
+                      color: Color(0xFFB54A3A), width: 1.5)),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: Text("Cancel",
+              style: GoogleFonts.inter(
+                  fontSize: 13.sp,
+                  color: const Color(0xFF8B7D77),
+                  fontWeight: FontWeight.w600)),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final remarks = remarksCtrl.text.trim();
+            if (remarks.isEmpty) {
+              Get.snackbar("Required", "Please enter rejection remarks.",
+                  backgroundColor: Colors.orange.shade50,
+                  colorText: Colors.orange.shade800,
+                  snackPosition: SnackPosition.BOTTOM);
+              return;
+            }
+            Get.back();
+            _c.rejectLeave(id, remarks);
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFB54A3A),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+            elevation: 0,
+          ),
+          child: Text("Reject",
+              style: GoogleFonts.manrope(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white)),
+        ),
+      ],
+    ));
   }
 
   Color _filterColor(String filter) {
@@ -405,21 +266,159 @@ class _LeaveManagementScreenState extends State<LeaveManagementScreen> {
             Icon(Icons.event_busy_outlined,
                 size: 56.sp, color: const Color(0xFF8B7D77)),
             SizedBox(height: 12.h),
-            Text(
-              _selectedFilter == 'Total'
-                  ? "No leave history found"
-                  : "No $_selectedFilter leaves found",
-              style: GoogleFonts.manrope(
-                  fontSize: 15.sp, color: const Color(0xFF8B7D77)),
-            ),
+            Obx(() => Text(
+                  _c.selectedFilter.value == 'Total'
+                      ? "No leave/WFH history found"
+                      : "No ${_c.selectedFilter.value} leaves found",
+                  style: GoogleFonts.manrope(
+                      fontSize: 15.sp, color: const Color(0xFF8B7D77)),
+                )),
           ],
         ),
       );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// EXPANDABLE LEAVE CARD (inline accordion)
-// ─────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// STATS CARD — 4 clickable tiles (Balance tile removed as requested)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LeaveStatsCard extends StatelessWidget {
+  _LeaveStatsCard();
+
+  LeaveController get _c => LeaveController.to;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      return Container(
+        padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 4.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24.r),
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x12000000),
+                blurRadius: 14,
+                offset: Offset(0, 7))
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _StatTile(
+              label: "Total",
+              value: "${_c.totalCount}",
+              icon: Icons.view_agenda_rounded,
+              color: const Color(0xFF6A3027),
+              isSelected: _c.selectedFilter.value == 'Total',
+              onTap: () => _c.selectedFilter.value = 'Total',
+            ),
+            _vDivider(),
+            _StatTile(
+              label: "Pending",
+              value: "${_c.pendingCount}",
+              icon: Icons.pending_actions_rounded,
+              color: Colors.orange,
+              isSelected: _c.selectedFilter.value == 'Pending',
+              onTap: () => _c.selectedFilter.value = 'Pending',
+            ),
+            _vDivider(),
+            _StatTile(
+              label: "Approved",
+              value: "${_c.approvedCount}",
+              icon: Icons.check_circle_rounded,
+              color: Colors.green,
+              isSelected: _c.selectedFilter.value == 'Approved',
+              onTap: () => _c.selectedFilter.value = 'Approved',
+            ),
+            _vDivider(),
+            _StatTile(
+              label: "Rejected",
+              value: "${_c.rejectedCount}",
+              icon: Icons.cancel_rounded,
+              color: Colors.red,
+              isSelected: _c.selectedFilter.value == 'Rejected',
+              onTap: () => _c.selectedFilter.value = 'Rejected',
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _vDivider() =>
+      Container(height: 40.h, width: 1, color: const Color(0xFFE8DDD9));
+}
+
+class _StatTile extends StatelessWidget {
+  final String label, value;
+  final IconData icon;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _StatTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.10) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12.r),
+          border: isSelected
+              ? Border.all(color: color.withOpacity(0.35), width: 1.2)
+              : Border.all(color: Colors.transparent, width: 1.2),
+        ),
+        child: Column(
+          children: [
+            Icon(icon,
+                size: 22.sp,
+                color: isSelected ? color : color.withOpacity(0.65)),
+            SizedBox(height: 6.h),
+            Text(value,
+                style: GoogleFonts.manrope(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected ? color : const Color(0xFF241917))),
+            SizedBox(height: 2.h),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label,
+                    style: GoogleFonts.inter(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            isSelected ? color : const Color(0xFF8B7D77))),
+                if (isSelected) ...[
+                  SizedBox(width: 2.w),
+                  Icon(Icons.keyboard_arrow_down_rounded,
+                      size: 10.sp, color: color),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEAVE CARD (unchanged from original — works off Map<String, dynamic>)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _LeaveCard extends StatefulWidget {
   final Map<String, dynamic> leave;
@@ -447,13 +446,11 @@ class _LeaveCardState extends State<_LeaveCard>
   void initState() {
     super.initState();
     _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 280),
-    );
-    _expandAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
+        vsync: this, duration: const Duration(milliseconds: 280));
+    _expandAnim =
+        CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut);
     _rotateAnim = Tween<double>(begin: 0, end: 0.5).animate(
-      CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut),
-    );
+        CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -493,8 +490,8 @@ class _LeaveCardState extends State<_LeaveCard>
   Widget build(BuildContext context) {
     final leave = widget.leave;
     final leaveType = (leave['leave_type'] ?? '').toString();
-    final fromFormatted = _formatDate(leave['from_date']);
-    final toFormatted = _formatDate(leave['to_date']);
+    final fromFormatted = _fmtDate(leave['from_date']);
+    final toFormatted = _fmtDate(leave['to_date']);
     final isPending = leave['status'] == 'Pending';
     final remarks = (leave['remarks'] ?? '').toString().trim();
     final workHandover = (leave['work_handover_to'] ?? '').toString().trim();
@@ -505,6 +502,11 @@ class _LeaveCardState extends State<_LeaveCard>
     if (from != null && to != null) {
       final days = to.difference(from).inDays + 1;
       numberOfDays = days > 0 ? '$days day${days > 1 ? 's' : ''}' : '1 day';
+    }
+    // Fallback: use stored no_of_days if dates not parseable
+    if (numberOfDays.isEmpty && (leave['no_of_days'] ?? 0) > 0) {
+      final d = leave['no_of_days'] as int;
+      numberOfDays = '$d day${d > 1 ? 's' : ''}';
     }
 
     return AnimatedContainer(
@@ -528,7 +530,6 @@ class _LeaveCardState extends State<_LeaveCard>
       ),
       child: Column(
         children: [
-          // ── Header row ───────────────────────────────────────────────
           GestureDetector(
             onTap: _toggle,
             behavior: HitTestBehavior.opaque,
@@ -537,14 +538,14 @@ class _LeaveCardState extends State<_LeaveCard>
                   EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
               child: Row(
                 children: [
-                  // Leave type chip
                   Container(
                     padding: EdgeInsets.symmetric(
                         horizontal: 10.w, vertical: 6.h),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF6F1ED),
                       borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: const Color(0xFFE0D5D0)),
+                      border:
+                          Border.all(color: const Color(0xFFE0D5D0)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -564,7 +565,6 @@ class _LeaveCardState extends State<_LeaveCard>
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  // Date range
                   Expanded(
                     child: Text(
                       (fromFormatted.isNotEmpty && toFormatted.isNotEmpty)
@@ -577,13 +577,11 @@ class _LeaveCardState extends State<_LeaveCard>
                     ),
                   ),
                   SizedBox(width: 8.w),
-                  // Status badge
                   _StatusBadge(
                       label: leave['status'] ?? 'Pending',
                       color: _statusColor,
                       icon: _statusIcon),
                   SizedBox(width: 6.w),
-                  // Animated chevron
                   RotationTransition(
                     turns: _rotateAnim,
                     child: Icon(Icons.keyboard_arrow_down_rounded,
@@ -593,8 +591,6 @@ class _LeaveCardState extends State<_LeaveCard>
               ),
             ),
           ),
-
-          // ── Expandable detail body ────────────────────────────────────
           SizeTransition(
             sizeFactor: _expandAnim,
             axisAlignment: -1,
@@ -607,11 +603,11 @@ class _LeaveCardState extends State<_LeaveCard>
                     indent: 14.w,
                     endIndent: 14.w),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 4.h),
+                  padding:
+                      EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 4.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Info rows
                       _infoRow(Icons.description_outlined, "Reason",
                           leave['reason'] ?? ''),
                       if (workHandover.isNotEmpty) ...[
@@ -645,9 +641,7 @@ class _LeaveCardState extends State<_LeaveCard>
                           leave['approved_to'] ?? ''),
                       SizedBox(height: 10.h),
                       _infoRow(Icons.access_time_rounded, "Applied On",
-                          _formatDate(leave['applied_on'])),
-
-                      // Rejection remark
+                          _fmtDate(leave['applied_on'])),
                       if (leave['status'] == 'Rejected' &&
                           remarks.isNotEmpty) ...[
                         SizedBox(height: 10.h),
@@ -657,12 +651,14 @@ class _LeaveCardState extends State<_LeaveCard>
                               horizontal: 12.w, vertical: 10.h),
                           decoration: BoxDecoration(
                             color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(10.r),
-                            border:
-                                Border.all(color: Colors.red.shade100),
+                            borderRadius:
+                                BorderRadius.circular(10.r),
+                            border: Border.all(
+                                color: Colors.red.shade100),
                           ),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
                             children: [
                               Icon(Icons.info_outline_rounded,
                                   size: 13.sp,
@@ -675,14 +671,17 @@ class _LeaveCardState extends State<_LeaveCard>
                                       text: "Remark: ",
                                       style: GoogleFonts.manrope(
                                           fontSize: 11.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.red.shade700),
+                                          fontWeight:
+                                              FontWeight.w700,
+                                          color: Colors
+                                              .red.shade700),
                                     ),
                                     TextSpan(
                                       text: remarks,
                                       style: GoogleFonts.inter(
                                           fontSize: 11.sp,
-                                          color: Colors.red.shade800),
+                                          color:
+                                              Colors.red.shade800),
                                     ),
                                   ]),
                                 ),
@@ -691,8 +690,6 @@ class _LeaveCardState extends State<_LeaveCard>
                           ),
                         ),
                       ],
-
-                      // Approve / Reject buttons for pending
                       if (isPending) ...[
                         SizedBox(height: 14.h),
                         Row(
@@ -714,7 +711,8 @@ class _LeaveCardState extends State<_LeaveCard>
                                       color: Colors.red.shade300),
                                   shape: RoundedRectangleBorder(
                                       borderRadius:
-                                          BorderRadius.circular(10.r)),
+                                          BorderRadius.circular(
+                                              10.r)),
                                   padding: EdgeInsets.symmetric(
                                       vertical: 11.h),
                                 ),
@@ -726,18 +724,21 @@ class _LeaveCardState extends State<_LeaveCard>
                                 onPressed: () =>
                                     widget.onApprove(leave['id']),
                                 icon: Icon(Icons.check_rounded,
-                                    size: 14.sp, color: Colors.white),
+                                    size: 14.sp,
+                                    color: Colors.white),
                                 label: Text("Approve",
                                     style: GoogleFonts.manrope(
                                         fontSize: 12.sp,
                                         fontWeight: FontWeight.w700,
                                         color: Colors.white)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green.shade600,
+                                  backgroundColor:
+                                      Colors.green.shade600,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
                                       borderRadius:
-                                          BorderRadius.circular(10.r)),
+                                          BorderRadius.circular(
+                                              10.r)),
                                   padding: EdgeInsets.symmetric(
                                       vertical: 11.h),
                                 ),
@@ -825,171 +826,9 @@ class _LeaveCardState extends State<_LeaveCard>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// STATS CARD — clickable tiles with active highlight
-// ─────────────────────────────────────────────────────────────────────────
-
-class _LeaveStatsCard extends StatelessWidget {
-  final List<Map<String, dynamic>> leaves;
-  final int balanceLeaves;
-  final String selectedFilter;
-  final ValueChanged<String> onFilterChanged;
-
-  const _LeaveStatsCard({
-    required this.leaves,
-    required this.balanceLeaves,
-    required this.selectedFilter,
-    required this.onFilterChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final total = leaves.length;
-    final pending = leaves.where((e) => e['status'] == 'Pending').length;
-    final approved = leaves.where((e) => e['status'] == 'Approved').length;
-    final rejected = leaves.where((e) => e['status'] == 'Rejected').length;
-
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x12000000), blurRadius: 14, offset: Offset(0, 7))
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _StatTile(
-            label: "Total",
-            value: "$total",
-            icon: Icons.view_agenda_rounded,
-            color: const Color(0xFF6A3027),
-            isSelected: selectedFilter == 'Total',
-            onTap: () => onFilterChanged('Total'),
-          ),
-          _vDivider(),
-          _StatTile(
-            label: "Pending",
-            value: "$pending",
-            icon: Icons.pending_actions_rounded,
-            color: Colors.orange,
-            isSelected: selectedFilter == 'Pending',
-            onTap: () => onFilterChanged('Pending'),
-          ),
-          _vDivider(),
-          _StatTile(
-            label: "Approved",
-            value: "$approved",
-            icon: Icons.check_circle_rounded,
-            color: Colors.green,
-            isSelected: selectedFilter == 'Approved',
-            onTap: () => onFilterChanged('Approved'),
-          ),
-          _vDivider(),
-          _StatTile(
-            label: "Rejected",
-            value: "$rejected",
-            icon: Icons.cancel_rounded,
-            color: Colors.red,
-            isSelected: selectedFilter == 'Rejected',
-            onTap: () => onFilterChanged('Rejected'),
-          ),
-          _vDivider(),
-          // Balance — not clickable, no onTap
-          _StatTile(
-            label: "Balance",
-            value: "$balanceLeaves",
-            icon: Icons.account_balance_wallet_rounded,
-            color: const Color(0xFF1565C0),
-            isSelected: false,
-            onTap: null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _vDivider() =>
-      Container(height: 40.h, width: 1, color: const Color(0xFFE8DDD9));
-}
-
-class _StatTile extends StatelessWidget {
-  final String label, value;
-  final IconData icon;
-  final Color color;
-  final bool isSelected;
-  final VoidCallback? onTap; // null = not clickable (Balance)
-
-  const _StatTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isClickable = onTap != null;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.10) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.r),
-          border: isSelected
-              ? Border.all(color: color.withOpacity(0.35), width: 1.2)
-              : Border.all(color: Colors.transparent, width: 1.2),
-        ),
-        child: Column(
-          children: [
-            Icon(icon,
-                size: 22.sp,
-                color: isSelected ? color : color.withOpacity(0.65)),
-            SizedBox(height: 6.h),
-            Text(value,
-                style: GoogleFonts.manrope(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected
-                        ? color
-                        : const Color(0xFF241917))),
-            SizedBox(height: 2.h),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(label,
-                    style: GoogleFonts.inter(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? color
-                            : const Color(0xFF8B7D77))),
-                if (isClickable && isSelected) ...[
-                  SizedBox(width: 2.w),
-                  Icon(Icons.keyboard_arrow_down_rounded,
-                      size: 10.sp, color: color),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // STATUS BADGE
-// ─────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   final String label;
@@ -1021,21 +860,12 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// BOTTOM SHEET FORM
-// ─────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// BOTTOM SHEET FORM — wired to LeaveController
+// ─────────────────────────────────────────────────────────────────────────────
 
 class LeaveFormBottomSheet extends StatefulWidget {
-  final Function(Map<String, dynamic>) onSave;
-  final int balanceLeaves;
-  final List<String> approvers;
-
-  const LeaveFormBottomSheet({
-    super.key,
-    required this.onSave,
-    required this.balanceLeaves,
-    required this.approvers,
-  });
+  const LeaveFormBottomSheet({super.key});
 
   @override
   State<LeaveFormBottomSheet> createState() => _LeaveFormBottomSheetState();
@@ -1047,27 +877,7 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
   late TextEditingController _toDateCtrl;
   late TextEditingController _workHandoverCtrl;
 
-  String? _leaveType;
-  DateTime? _fromDate;
-  DateTime? _toDate;
-
-  String? _prescriptionFileName;
-
-  static const _handoverTypes = ['Casual Leave', 'Sick Leave', 'Short Leave'];
-
-  bool get _needsHandover =>
-      _leaveType != null && _handoverTypes.contains(_leaveType);
-  bool get _needsPrescription => _leaveType == 'Sick Leave';
-
-  int get _numberOfDays {
-    if (_fromDate != null && _toDate != null) {
-      final diff = _toDate!.difference(_fromDate!).inDays + 1;
-      return diff > 0 ? diff : 0;
-    }
-    return 0;
-  }
-
-  int get _balanceLeaves => widget.balanceLeaves;
+  LeaveController get _c => LeaveController.to;
 
   @override
   void initState() {
@@ -1076,6 +886,11 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
     _fromDateCtrl = TextEditingController();
     _toDateCtrl = TextEditingController();
     _workHandoverCtrl = TextEditingController();
+    // Reset controller form state
+    _c.selectedLeaveType.value = null;
+    _c.fromDate.value = null;
+    _c.toDate.value = null;
+    _c.prescriptionFileName.value = '';
   }
 
   @override
@@ -1090,13 +905,15 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
   Future<void> _pickDate({required bool isFrom}) async {
     final today = DateTime(
         DateTime.now().year, DateTime.now().month, DateTime.now().day);
-    final firstDate = isFrom ? today : (_fromDate ?? today);
-    final initialDate =
-        isFrom ? (_fromDate ?? today) : (_toDate ?? firstDate);
+    final firstDate = isFrom ? today : (_c.fromDate.value ?? today);
+    final initialDate = isFrom
+        ? (_c.fromDate.value ?? today)
+        : (_c.toDate.value ?? firstDate);
 
     final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate.isBefore(firstDate) ? firstDate : initialDate,
+      initialDate:
+          initialDate.isBefore(firstDate) ? firstDate : initialDate,
       firstDate: firstDate,
       lastDate: DateTime(2101),
       builder: (ctx, child) => Theme(
@@ -1110,14 +927,15 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
     if (picked != null) {
       setState(() {
         if (isFrom) {
-          _fromDate = picked;
+          _c.fromDate.value = picked;
           _fromDateCtrl.text = DateFormat('dd-MM-yyyy').format(picked);
-          if (_toDate != null && _toDate!.isBefore(picked)) {
-            _toDate = null;
+          if (_c.toDate.value != null &&
+              _c.toDate.value!.isBefore(picked)) {
+            _c.toDate.value = null;
             _toDateCtrl.clear();
           }
         } else {
-          _toDate = picked;
+          _c.toDate.value = picked;
           _toDateCtrl.text = DateFormat('dd-MM-yyyy').format(picked);
         }
       });
@@ -1129,8 +947,7 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
       context: context,
       backgroundColor: const Color(0xFFF6F1ED),
       shape: RoundedRectangleBorder(
-          borderRadius:
-              BorderRadius.vertical(top: Radius.circular(20.r))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r))),
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
@@ -1147,22 +964,14 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
               ListTile(
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final XFile? image = await ImagePicker()
-                      .pickImage(
-                          source: ImageSource.camera, imageQuality: 85);
+                  final XFile? image = await ImagePicker().pickImage(
+                      source: ImageSource.camera, imageQuality: 85);
                   if (image != null) {
-                    setState(() => _prescriptionFileName = image.name);
+                    setState(
+                        () => _c.prescriptionFileName.value = image.name);
                   }
                 },
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB54A3A).withOpacity(0.10),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.camera_alt_rounded,
-                      color: const Color(0xFFB54A3A), size: 20.sp),
-                ),
+                leading: _uploadIcon(Icons.camera_alt_rounded),
                 title: Text("Take a Photo",
                     style: GoogleFonts.manrope(
                         fontSize: 14.sp,
@@ -1180,24 +989,17 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
                   final XFile? image = await ImagePicker().pickImage(
                       source: ImageSource.gallery, imageQuality: 85);
                   if (image != null) {
-                    setState(() => _prescriptionFileName = image.name);
+                    setState(
+                        () => _c.prescriptionFileName.value = image.name);
                   }
                 },
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB54A3A).withOpacity(0.10),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.photo_library_rounded,
-                      color: const Color(0xFFB54A3A), size: 20.sp),
-                ),
+                leading: _uploadIcon(Icons.photo_library_rounded),
                 title: Text("Choose from Gallery",
                     style: GoogleFonts.manrope(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF241917))),
-                subtitle: Text("Select an existing image from gallery",
+                subtitle: Text("Select an existing image",
                     style: GoogleFonts.inter(
                         fontSize: 11.sp,
                         color: const Color(0xFF8B7D77))),
@@ -1207,23 +1009,14 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
                 onTap: () async {
                   Navigator.pop(ctx);
                   final result = await FilePicker.platform.pickFiles(
-                    type: FileType.custom,
-                    allowedExtensions: ['pdf'],
-                  );
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf']);
                   if (result != null && result.files.isNotEmpty) {
-                    setState(
-                        () => _prescriptionFileName = result.files.first.name);
+                    setState(() => _c.prescriptionFileName.value =
+                        result.files.first.name);
                   }
                 },
-                leading: Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFB54A3A).withOpacity(0.10),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.picture_as_pdf_rounded,
-                      color: const Color(0xFFB54A3A), size: 20.sp),
-                ),
+                leading: _uploadIcon(Icons.picture_as_pdf_rounded),
                 title: Text("Upload PDF",
                     style: GoogleFonts.manrope(
                         fontSize: 14.sp,
@@ -1242,6 +1035,15 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
     );
   }
 
+  Widget _uploadIcon(IconData icon) => Container(
+        padding: EdgeInsets.all(8.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFFB54A3A).withOpacity(0.10),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: const Color(0xFFB54A3A), size: 20.sp),
+      );
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -1252,7 +1054,8 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
         return Container(
           decoration: BoxDecoration(
             color: const Color(0xFFF6F1ED),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(28.r)),
           ),
           child: Column(
             children: [
@@ -1270,7 +1073,7 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Apply Leave",
+                    Text("Apply Leave/WFH",
                         style: GoogleFonts.manrope(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w800,
@@ -1280,9 +1083,11 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
                       child: Container(
                         padding: EdgeInsets.all(6.w),
                         decoration: const BoxDecoration(
-                            color: Color(0xFFE8DDD9), shape: BoxShape.circle),
+                            color: Color(0xFFE8DDD9),
+                            shape: BoxShape.circle),
                         child: Icon(Icons.close,
-                            size: 18.sp, color: const Color(0xFF6A3027)),
+                            size: 18.sp,
+                            color: const Color(0xFF6A3027)),
                       ),
                     ),
                   ],
@@ -1291,119 +1096,142 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
               SizedBox(height: 10.h),
               const Divider(color: Color(0xFFE0D5D0), height: 1),
               Expanded(
-                child: ListView(
-                  controller: scroll,
-                  padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 40.h),
-                  children: [
-                    _label("Leave Type *"),
-                    SizedBox(height: 6.h),
-                    _leaveTypeDropdown(),
-                    SizedBox(height: 16.h),
-                    _label("Leave Reason *"),
-                    SizedBox(height: 6.h),
-                    _field(_reasonCtrl, "Enter leave reason...", maxLines: 4),
-                    SizedBox(height: 16.h),
-                    if (_needsHandover) ...[
-                      _label("Work will be handled by *"),
-                      SizedBox(height: 4.h),
-                      Text(
-                        "Mention the colleague who will manage your responsibilities during the leave.",
-                        style: GoogleFonts.inter(
-                            fontSize: 11.sp,
-                            color: const Color(0xFF8B7D77)),
-                      ),
+                child: Obx(() {
+                  final selectedType = _c.selectedLeaveType.value;
+                  final balance = _c.currentBalance;
+                  final days = _c.numberOfDays;
+                  final exceeds = _c.exceedsBalance;
+                  final needsHandover = _c.needsHandover;
+                  final needsPrescription = _c.needsPrescription;
+                  final prescription = _c.prescriptionFileName.value;
+
+                  return ListView(
+                    controller: scroll,
+                    padding:
+                        EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 40.h),
+                    children: [
+                      // ── Balance summary banner ────────────────────────
+                      if (selectedType != null) ...[
+                        _BalanceBanner(
+                          leaveType: selectedType.leaveType,
+                          balance: balance,
+                          requestedDays: days,
+                        ),
+                        SizedBox(height: 16.h),
+                      ],
+                      _label("Type *"),
                       SizedBox(height: 6.h),
-                      _field(_workHandoverCtrl, "E.g. Aman Verma"),
+                      _leaveTypeDropdown(),
                       SizedBox(height: 16.h),
-                    ],
-                    _label("From Date *"),
-                    SizedBox(height: 6.h),
-                    _dateBox(
-                        controller: _fromDateCtrl,
-                        hint: "Select from date",
-                        onTap: () => _pickDate(isFrom: true)),
-                    SizedBox(height: 16.h),
-                    _label("To Date *"),
-                    SizedBox(height: 6.h),
-                    _dateBox(
-                        controller: _toDateCtrl,
-                        hint: "Select to date",
-                        onTap: () => _pickDate(isFrom: false)),
-                    SizedBox(height: 16.h),
-                    _label("Number of Days"),
-                    SizedBox(height: 6.h),
-                    _readOnlyBox(
-                      icon: Icons.timelapse_rounded,
-                      value: _numberOfDays > 0
-                          ? "$_numberOfDays day${_numberOfDays > 1 ? 's' : ''}"
-                          : "—",
-                      valueColor:
-                          _numberOfDays > _balanceLeaves && _numberOfDays > 0
-                              ? Colors.red.shade700
-                              : null,
-                    ),
-                    if (_numberOfDays > _balanceLeaves &&
-                        _numberOfDays > 0) ...[
+                      _label("Reason *"),
                       SizedBox(height: 6.h),
-                      Row(
-                        children: [
+                      _field(_reasonCtrl, "Enter reason...",
+                          maxLines: 4),
+                      SizedBox(height: 16.h),
+                      if (needsHandover) ...[
+                        _label("Work will be handled by *"),
+                        SizedBox(height: 4.h),
+                        Text(
+                          "Mention the colleague who will manage your responsibilities.",
+                          style: GoogleFonts.inter(
+                              fontSize: 11.sp,
+                              color: const Color(0xFF8B7D77)),
+                        ),
+                        SizedBox(height: 6.h),
+                        _field(_workHandoverCtrl,
+                            "E.g. Aman Verma"),
+                        SizedBox(height: 16.h),
+                      ],
+                      _label("From Date *"),
+                      SizedBox(height: 6.h),
+                      _dateBox(
+                          controller: _fromDateCtrl,
+                          hint: "Select from date",
+                          onTap: () => _pickDate(isFrom: true)),
+                      SizedBox(height: 16.h),
+                      _label("To Date *"),
+                      SizedBox(height: 6.h),
+                      _dateBox(
+                          controller: _toDateCtrl,
+                          hint: "Select to date",
+                          onTap: () => _pickDate(isFrom: false)),
+                      SizedBox(height: 16.h),
+                      _label("Number of Days"),
+                      SizedBox(height: 6.h),
+                      _readOnlyBox(
+                        icon: Icons.timelapse_rounded,
+                        value: days > 0
+                            ? "$days day${days > 1 ? 's' : ''}"
+                            : "—",
+                        valueColor: exceeds ? Colors.red.shade700 : null,
+                      ),
+                      if (exceeds) ...[
+                        SizedBox(height: 6.h),
+                        Row(children: [
                           Icon(Icons.warning_amber_rounded,
-                              size: 14.sp, color: Colors.red.shade700),
+                              size: 14.sp,
+                              color: Colors.red.shade700),
                           SizedBox(width: 6.w),
                           Text(
-                            "Exceeds balance by ${_numberOfDays - _balanceLeaves} day(s)",
+                            "Exceeds balance by ${days - balance} day(s)",
                             style: GoogleFonts.inter(
                                 fontSize: 11.sp,
                                 color: Colors.red.shade700,
                                 fontWeight: FontWeight.w600),
                           ),
-                        ],
-                      ),
-                    ],
-                    SizedBox(height: 16.h),
-                    _label("Balance Leaves"),
-                    SizedBox(height: 6.h),
-                    _readOnlyBox(
-                      icon: Icons.account_balance_wallet_rounded,
-                      value: "$_balanceLeaves leaves remaining",
-                      valueColor: _balanceLeaves < 3
-                          ? Colors.red.shade700
-                          : Colors.green.shade700,
-                    ),
-                    SizedBox(height: 24.h),
-                    if (_needsPrescription) ...[
-                      _label("Doctor's Prescription"),
-                      SizedBox(height: 4.h),
-                      Text(
-                        "Please upload a valid prescription from a registered doctor.",
-                        style: GoogleFonts.inter(
-                            fontSize: 11.sp,
-                            color: const Color(0xFF8B7D77)),
-                      ),
-                      SizedBox(height: 6.h),
-                      _prescriptionUploadBox(),
-                      SizedBox(height: 24.h),
-                    ],
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFB54A3A),
-                          padding: EdgeInsets.symmetric(vertical: 16.h),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14.r)),
-                          elevation: 0,
+                        ]),
+                      ],
+                      if (needsPrescription) ...[
+                        SizedBox(height: 16.h),
+                        _label("Doctor's Prescription"),
+                        SizedBox(height: 4.h),
+                        Text(
+                          "Please upload a valid prescription from a registered doctor.",
+                          style: GoogleFonts.inter(
+                              fontSize: 11.sp,
+                              color: const Color(0xFF8B7D77)),
                         ),
-                        child: Text("Submit Leave Request",
-                            style: GoogleFonts.manrope(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white)),
-                      ),
-                    ),
-                  ],
-                ),
+                        SizedBox(height: 6.h),
+                        _prescriptionUploadBox(prescription),
+                      ],
+                      SizedBox(height: 24.h),
+                      Obx(() => SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _c.isSubmitting.value
+                                  ? null
+                                  : _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color(0xFFB54A3A),
+                                disabledBackgroundColor:
+                                    const Color(0xFFB54A3A)
+                                        .withOpacity(0.5),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 16.h),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(14.r)),
+                                elevation: 0,
+                              ),
+                              child: _c.isSubmitting.value
+                                  ? SizedBox(
+                                      height: 20.h,
+                                      width: 20.h,
+                                      child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white),
+                                    )
+                                  : Text("Submit Leave Request",
+                                      style: GoogleFonts.manrope(
+                                          fontSize: 15.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white)),
+                            ),
+                          )),
+                    ],
+                  );
+                }),
               ),
             ],
           ),
@@ -1412,8 +1240,8 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
     );
   }
 
-  Widget _prescriptionUploadBox() {
-    final hasFile = _prescriptionFileName != null;
+  Widget _prescriptionUploadBox(String prescription) {
+    final hasFile = prescription.isNotEmpty;
     return GestureDetector(
       onTap: _pickPrescription,
       child: AnimatedContainer(
@@ -1424,8 +1252,9 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
           color: hasFile ? Colors.green.shade50 : Colors.white,
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color:
-                hasFile ? Colors.green.shade400 : const Color(0xFFB54A3A),
+            color: hasFile
+                ? Colors.green.shade400
+                : const Color(0xFFB54A3A),
             width: 1.4,
           ),
         ),
@@ -1468,9 +1297,7 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    hasFile
-                        ? _prescriptionFileName!
-                        : "Camera · Gallery · PDF",
+                    hasFile ? prescription : "Camera · Gallery · PDF",
                     style: GoogleFonts.inter(
                       fontSize: 11.sp,
                       color: hasFile
@@ -1485,7 +1312,7 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
             ),
             if (hasFile)
               GestureDetector(
-                onTap: () => setState(() => _prescriptionFileName = null),
+                onTap: () => _c.prescriptionFileName.value = '',
                 child: Padding(
                   padding: EdgeInsets.only(left: 8.w),
                   child: Icon(Icons.close_rounded,
@@ -1499,48 +1326,70 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
   }
 
   Widget _leaveTypeDropdown() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: _leaveType != null
-              ? const Color(0xFFB54A3A)
-              : const Color(0xFFE0D5D0),
-          width: _leaveType != null ? 1.5 : 1.0,
+    return Obx(() {
+      final selected = _c.selectedLeaveType.value;
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: selected != null
+                ? const Color(0xFFB54A3A)
+                : const Color(0xFFE0D5D0),
+            width: selected != null ? 1.5 : 1.0,
+          ),
         ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _leaveType,
-          isExpanded: true,
-          hint: Text("Select Leave Type",
-              style: GoogleFonts.inter(
-                  fontSize: 13.sp, color: const Color(0xFF8B7D77))),
-          icon: Icon(Icons.keyboard_arrow_down_rounded,
-              color: const Color(0xFF6A3027), size: 20.sp),
-          style: GoogleFonts.inter(
-              fontSize: 14.sp, color: const Color(0xFF241917)),
-          onChanged: (newValue) {
-            setState(() {
-              _leaveType = newValue;
-              if (newValue != 'Sick Leave') _prescriptionFileName = null;
-              if (newValue == 'Work From Home') _workHandoverCtrl.clear();
-            });
-          },
-          items: [
-            'Casual Leave',
-            'Sick Leave',
-            'Short Leave',
-            'Work From Home'
-          ]
-              .map((type) =>
-                  DropdownMenuItem<String>(value: type, child: Text(type)))
-              .toList(),
-        ),
-      ),
-    );
+        child: _c.isLoadingTypes.value
+            ? Padding(
+                padding: EdgeInsets.symmetric(vertical: 14.h),
+                child: Row(children: [
+                  SizedBox(
+                      height: 16.h,
+                      width: 16.h,
+                      child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFFB54A3A))),
+                  SizedBox(width: 10.w),
+                  Text("Loading types...",
+                      style: GoogleFonts.inter(
+                          fontSize: 13.sp,
+                          color: const Color(0xFF8B7D77))),
+                ]),
+              )
+            : DropdownButtonHideUnderline(
+                child: DropdownButton<LeaveTypeModel>(
+                  value: selected,
+                  isExpanded: true,
+                  hint: Text("Select Type",
+                      style: GoogleFonts.inter(
+                          fontSize: 13.sp,
+                          color: const Color(0xFF8B7D77))),
+                  icon: Icon(Icons.keyboard_arrow_down_rounded,
+                      color: const Color(0xFF6A3027), size: 20.sp),
+                  style: GoogleFonts.inter(
+                      fontSize: 14.sp, color: const Color(0xFF241917)),
+                  onChanged: (val) {
+                    _c.selectedLeaveType.value = val;
+                    if (val?.leaveType.toUpperCase().contains('SICK') ==
+                        false) {
+                      _c.prescriptionFileName.value = '';
+                    }
+                    // Fetch fresh balance for selected type
+                    if (val != null) {
+                      _c.fetchBalanceForType(val.leaveTypeId);
+                    }
+                  },
+                  items: _c.leaveTypes
+                      .map((t) => DropdownMenuItem<LeaveTypeModel>(
+                            value: t,
+                            child: Text(t.leaveType),
+                          ))
+                      .toList(),
+                ),
+              ),
+      );
+    });
   }
 
   Widget _readOnlyBox(
@@ -1572,12 +1421,13 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
           fontWeight: FontWeight.w700,
           color: const Color(0xFF241917)));
 
-  Widget _field(TextEditingController ctrl, String hint, {int maxLines = 1}) {
+  Widget _field(TextEditingController ctrl, String hint,
+      {int maxLines = 1}) {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,
-      style:
-          GoogleFonts.inter(fontSize: 14.sp, color: const Color(0xFF241917)),
+      style: GoogleFonts.inter(
+          fontSize: 14.sp, color: const Color(0xFF241917)),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.inter(
@@ -1588,22 +1438,25 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
             EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+            borderSide:
+                const BorderSide(color: Color(0xFFE0D5D0))),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+            borderSide:
+                const BorderSide(color: Color(0xFFE0D5D0))),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide:
-                const BorderSide(color: Color(0xFFB54A3A), width: 1.5)),
+            borderSide: const BorderSide(
+                color: Color(0xFFB54A3A), width: 1.5)),
       ),
     );
   }
 
-  Widget _dateBox(
-      {required TextEditingController controller,
-      required String hint,
-      required VoidCallback onTap}) {
+  Widget _dateBox({
+    required TextEditingController controller,
+    required String hint,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1640,13 +1493,14 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
   void _submit() {
     final reason = _reasonCtrl.text.trim();
     final workHandover = _workHandoverCtrl.text.trim();
+    final prescription = _c.prescriptionFileName.value;
 
     String? missingField;
-    if (_leaveType == null) {
-      missingField = "Please select a Leave Type.";
+    if (_c.selectedLeaveType.value == null) {
+      missingField = "Please select a Type.";
     } else if (reason.isEmpty) {
-      missingField = "Please enter a Leave Reason.";
-    } else if (_needsHandover && workHandover.isEmpty) {
+      missingField = "Please enter a Reason.";
+    } else if (_c.needsHandover && workHandover.isEmpty) {
       missingField = "Please enter the colleague who will handle your work.";
     } else if (_fromDateCtrl.text.isEmpty) {
       missingField = "Please select a From Date.";
@@ -1663,7 +1517,9 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
       return;
     }
 
-    if (_fromDate != null && _toDate != null && _toDate!.isBefore(_fromDate!)) {
+    if (_c.fromDate.value != null &&
+        _c.toDate.value != null &&
+        _c.toDate.value!.isBefore(_c.fromDate.value!)) {
       Get.snackbar("Invalid Dates", "To date cannot be before from date.",
           backgroundColor: Colors.red.shade50,
           colorText: Colors.red.shade800,
@@ -1671,10 +1527,10 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
       return;
     }
 
-    if (_numberOfDays > _balanceLeaves) {
+    if (_c.exceedsBalance) {
       Get.snackbar(
         "Insufficient Balance",
-        "You only have $_balanceLeaves leave(s) remaining, but requested $_numberOfDays day(s).",
+        "You only have ${_c.currentBalance} leave(s) remaining, but requested ${_c.numberOfDays} day(s).",
         backgroundColor: Colors.red.shade50,
         colorText: Colors.red.shade800,
         snackPosition: SnackPosition.BOTTOM,
@@ -1683,30 +1539,80 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
       return;
     }
 
-    final newLeave = {
-      "id": DateTime.now().millisecondsSinceEpoch.toString(),
-      "leave_type": _leaveType,
-      "reason": reason,
-      if (workHandover.isNotEmpty) "work_handover_to": workHandover,
-      "from_date": _fromDate != null
-          ? DateFormat('yyyy-MM-dd').format(_fromDate!)
-          : '',
-      "to_date":
-          _toDate != null ? DateFormat('yyyy-MM-dd').format(_toDate!) : '',
-      "status": "Pending",
-      "approved_to": widget.approvers.join(', '),
-      "applied_on": DateFormat('yyyy-MM-dd').format(DateTime.now()),
-      "remarks": "",
-      if (_prescriptionFileName != null) "prescription": _prescriptionFileName,
-    };
-
-    widget.onSave(newLeave);
-    Get.back();
-    Future.delayed(const Duration(milliseconds: 300), () {
-      Get.snackbar("Submitted", "Leave request submitted successfully.",
-          backgroundColor: Colors.green.shade50,
-          colorText: Colors.green.shade800,
-          snackPosition: SnackPosition.BOTTOM);
-    });
+    _c.submitLeave(
+      reason: reason,
+      workHandover: workHandover,
+      prescriptionFile: prescription.isNotEmpty ? prescription : null,
+    );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BALANCE BANNER — shows per-type balance + monthly/yearly label
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BalanceBanner extends StatelessWidget {
+  final String leaveType;
+  final int balance;
+  final int requestedDays;
+
+  const _BalanceBanner({
+    required this.leaveType,
+    required this.balance,
+    required this.requestedDays,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isMonthly = isMonthlyLeave(leaveType);
+    final periodLabel = isMonthly ? "this month" : "this year";
+    final isLow = balance <= 2;
+    final isOver = requestedDays > 0 && requestedDays > balance;
+    final color = isOver
+        ? Colors.red
+        : isLow
+            ? Colors.orange
+            : Colors.green;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: color.withOpacity(0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isOver
+                ? Icons.warning_amber_rounded
+                : Icons.account_balance_wallet_rounded,
+            size: 18.sp,
+            color: color,
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: RichText(
+              text: TextSpan(children: [
+                TextSpan(
+                  text: "$balance leave${balance != 1 ? 's' : ''} remaining ",
+                  style: GoogleFonts.manrope(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w800,
+                      color: color),
+                ),
+                TextSpan(
+                  text: "$periodLabel · $leaveType",
+                  style: GoogleFonts.inter(
+                      fontSize: 11.sp,
+                      color: color.withOpacity(0.8)),
+                ),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

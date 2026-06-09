@@ -225,6 +225,7 @@ class LoginController extends GetxController {
           )
           .timeout(const Duration(seconds: 15));
 
+
       debugPrint("STATUS: ${response.statusCode}");
       debugPrint("BODY: ${response.body}");
 
