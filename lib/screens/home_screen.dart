@@ -374,8 +374,8 @@ SizedBox(
               children: [
                 Expanded(
                   child: _MetricTile(
-                    label: 'Employee ID',
-                    value: employee.employeeId.toString(),
+                    label: 'Employee Code',
+                    value: employee.employeeCode,
                   ),
                 ),
                 _metricDivider(),

@@ -137,23 +137,6 @@ class LoginScreen extends StatelessWidget {
                               );
                             }),
 
-                            SizedBox(height: 10.h),
-
-                            Center(
-                              child: GestureDetector(
-                                onTap: () =>
-                                    Get.to(() => const RegisterScreen()),
-                                child: Text(
-                                  "Don't have an account? Sign Up",
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF6A3027),
-                                  ),
-                                ),
-                              ),
-                            ),
-
                             SizedBox(height: 16.h),
                           ],
                         ),

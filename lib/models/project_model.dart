@@ -40,7 +40,6 @@ class ProjectModel {
   });
 
   factory ProjectModel.fromJson(Map<String, dynamic> j) {
-    
     final modules = <String>[];
     for (int i = 1; i <= 10; i++) {
       final m = j['Module$i'];
@@ -57,9 +56,9 @@ class ProjectModel {
     }
 
     return ProjectModel(
-      projectId: j['SProjectId'] ?? 0,
-      projectName: j['ProjectName'] ?? '',
-      clientName: j['ClientName'] ?? '',
+      projectId: int.tryParse(j['SProjectId']?.toString() ?? '') ?? 0,
+      projectName: j['ProjectName']?.toString() ?? '',
+      clientName: j['ClientName']?.toString() ?? '',
       mobileNo: j['MobileNo'] ?? '',
       email: j['Email'] ?? '',
       description: j['Description'] ?? '',
@@ -78,6 +77,49 @@ class ProjectModel {
     );
   }
 
-  
   String get dropdownLabel => projectName;
+}
+
+extension ProjectModelCopyWith on ProjectModel {
+  ProjectModel copyWith({
+    int? projectId,
+    String? projectName,
+    String? clientName,
+    String? mobileNo,
+    String? email,
+    String? description,
+    String? projectDetails,
+    String? projectStatus,
+    String? productService,
+    String? subProductService,
+    String? projectDate,
+    String? deliveryDate,
+    String? assignDate,
+    String? referenceUrl,
+    String? uploadProjectImg,
+    String? assignedTo,
+    double? completeProgress,
+    List<String>? modules,
+  }) {
+    return ProjectModel(
+      projectId: projectId ?? this.projectId,
+      projectName: projectName ?? this.projectName,
+      clientName: clientName ?? this.clientName,
+      mobileNo: mobileNo ?? this.mobileNo,
+      email: email ?? this.email,
+      description: description ?? this.description,
+      projectDetails: projectDetails ?? this.projectDetails,
+      projectStatus: projectStatus ?? this.projectStatus,
+      productService: productService ?? this.productService,
+      subProductService: subProductService ?? this.subProductService,
+      projectDate: projectDate ?? this.projectDate,
+      deliveryDate: deliveryDate ?? this.deliveryDate,
+      assignDate: assignDate ?? this.assignDate,
+      referenceUrl: referenceUrl ?? this.referenceUrl,
+      uploadProjectImg: uploadProjectImg ?? this.uploadProjectImg,
+      assignedTo: assignedTo ?? this.assignedTo,
+      completeProgress: completeProgress ?? this.completeProgress,
+      modules: modules ?? this.modules,
+    );
+  }
 }

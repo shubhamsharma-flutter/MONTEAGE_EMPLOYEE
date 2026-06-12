@@ -27,4 +27,5 @@ class EmployeeDataController extends GetxController {
   String get employeeId => employee.value?.employeeId.toString() ?? "--";
   String get contactNo => employee.value?.contactNo ?? "--";
   String get photo => employee.value?.photo ?? "";
+  bool get isHrManager => designation.toLowerCase() == "hr manager";
 }

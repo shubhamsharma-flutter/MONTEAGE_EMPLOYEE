@@ -248,8 +248,11 @@ class LoginController extends GetxController {
         }
 
         // Save data
-        box.write("employee_name", emp.employeeName);
+        box.write("EmployeeName", emp.employeeName);
+        box.write("employeeName", emp.employeeName);
         box.write("employee_data", jsonEncode(emp.toJson()));
+        box.write("EmployeeId", emp.employeeId);
+        box.write("employeeId", emp.employeeId);
         box.write("employee_id", emp.employeeId);
         box.write("employee_code", emp.employeeCode);
         box.write("employee_email", emp.email);
@@ -258,6 +261,7 @@ class LoginController extends GetxController {
         box.write("contact_no", emp.contactNo);
         box.write("photo", emp.photo);
         box.write("is_logged_in", true);
+        
 
         Get.offAllNamed("/main");
       } else {
