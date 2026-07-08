@@ -9,19 +9,85 @@ import '../models/givenmodelpm.dart' as given;
 import '../models/recevedmodel.dart' as received;
 import '../models/empdropdownmode.dart' as empdrop;
 
+// ── Palette ──────────────────────────────────────────────────────────────────
+
+const _kBrand = Color(0xFF6A3027);
+const _kBrandDark = Color(0xFF4A2019);
+const _kBg = Color(0xFFF6F1ED);
+const _kSurface = Colors.white;
+const _kTextPrimary = Color(0xFF241917);
+const _kTextSecondary = Color(0xFF6B5C58);
+const _kTextMuted = Color(0xFF8B7D77);
+const _kBorder = Color(0xFFE0D5D0);
+const _kSuccess = Color(0xFF4CAF50);
+const _kInfo = Color(0xFF3B82C4);
+const _kWarning = Color(0xFFE0A03D);
+const _kDanger = Color(0xFFC24B3F);
+
+Color _statusColor(String? status) {
+  switch ((status ?? '').trim().toLowerCase()) {
+    case 'pending':
+      return _kDanger;
+    case 'active':
+    case 'running':
+    case 'in progress':
+      return _kWarning;
+    case 'done':
+    case 'complete':
+    case 'completed':
+      return _kSuccess;
+    case 'on hold':
+    case 'inactive':
+      return _kWarning;
+    default:
+      return _kTextMuted;
+  }
+}
+
+Color _priorityColor(String? priority) {
+  switch ((priority ?? '').trim().toLowerCase()) {
+    case 'high':
+      return _kDanger;
+    case 'medium':
+      return _kWarning;
+    case 'low':
+      return _kSuccess;
+    default:
+      return _kTextMuted;
+  }
+}
+
+String _fmtDate(String? raw) {
+  if (raw == null || raw.isEmpty) return '';
+  return raw.split('T').first;
+}
+
+String _initials(String? name) {
+  final trimmed = (name ?? '').trim();
+  if (trimmed.isEmpty) return '?';
+  final parts = trimmed.split(RegExp(r'\s+'));
+  if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+  return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+      .toUpperCase();
+}
+
+// ── Task Screen ────────────────────────────────────────────────────────────
+
 class TaskScreen extends GetView<TaskController> {
   const TaskScreen({super.key});
 
+  // Normalized by stripping everything but letters so stray casing/spacing/
+  // punctuation from the API ("Team Leader", "TeamLeader", "team_leader", ...)
+  // still matches.
   String get _designation {
     final box = GetStorage();
-    return (box.read('Designation') ?? box.read('designation') ?? '')
-        .toString()
-        .trim()
-        .toLowerCase();
+    final raw =
+        (box.read('Designation') ?? box.read('designation') ?? '').toString();
+    return raw.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
   }
 
-  bool get _isProjectManager => _designation == 'project manager';
-  bool get _isTeamLeader => _designation == 'team leader';
+  bool get _isProjectManager => _designation == 'projectmanager';
+  bool get _isTeamLeader => _designation == 'teamleader';
   bool get _isDeveloper => _designation == 'developer';
 
   @override
@@ -46,33 +112,97 @@ class TaskScreen extends GetView<TaskController> {
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF6F1ED),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF6A3027),
-          elevation: 0,
-          title: Text(
-            'Task Management',
-            style: GoogleFonts.manrope(
-              color: Colors.white,
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
+        backgroundColor: _kBg,
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverToBoxAdapter(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [_kBrand, _kBrandDark],
+                  ),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(28),
+                  ),
+                ),
+                padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 40.w,
+                            height: 40.w,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Icon(Icons.task_alt_rounded,
+                                color: Colors.white, size: 22.sp),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Task Management',
+                                  style: GoogleFonts.manrope(
+                                    color: Colors.white,
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  'Track and manage your work',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white.withValues(alpha: 0.75),
+                                    fontSize: 12.sp,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 18.h),
+                      Container(
+                        height: 46.h,
+                        padding: EdgeInsets.all(4.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        child: TabBar(
+                          indicator: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(11.r),
+                          ),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          dividerColor: Colors.transparent,
+                          splashBorderRadius: BorderRadius.circular(11.r),
+                          labelColor: _kBrand,
+                          unselectedLabelColor: Colors.white,
+                          labelStyle: GoogleFonts.manrope(
+                              fontSize: 12.5.sp, fontWeight: FontWeight.w700),
+                          unselectedLabelStyle: GoogleFonts.manrope(
+                              fontSize: 12.5.sp, fontWeight: FontWeight.w600),
+                          tabs: tabs,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-          centerTitle: true,
-          bottom: TabBar(
-            indicatorColor: Colors.white,
-            indicatorWeight: 3,
-            labelStyle: GoogleFonts.manrope(
-                fontSize: 13.sp, fontWeight: FontWeight.w700),
-            unselectedLabelStyle:
-                GoogleFonts.manrope(fontSize: 13.sp, fontWeight: FontWeight.w500),
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white60,
-            tabs: tabs,
-          ),
-        ),
-        body: TabBarView(
-          children: tabViews,
+          ],
+          body: TabBarView(children: tabViews),
         ),
       ),
     );
@@ -86,9 +216,7 @@ class _MyProjectsTab extends GetView<TaskController> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-        );
+        return const _LoadingView();
       }
       if (controller.errorMessage.value.isNotEmpty) {
         return _ErrorView(
@@ -97,16 +225,18 @@ class _MyProjectsTab extends GetView<TaskController> {
         );
       }
       if (controller.projects.isEmpty) {
-        return _EmptyView(message: 'No projects assigned');
+        return const _EmptyView(
+          icon: Icons.folder_open_rounded,
+          message: 'No projects assigned',
+        );
       }
       return RefreshIndicator(
-        color: const Color(0xFF6A3027),
+        color: _kBrand,
         onRefresh: controller.fetchProjects,
         child: ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
           itemCount: controller.projects.length,
-          itemBuilder: (_, i) =>
-              _ProjectCard(project: controller.projects[i]),
+          itemBuilder: (_, i) => _ProjectCard(project: controller.projects[i]),
         ),
       );
     });
@@ -120,9 +250,7 @@ class _GivenProjectsTab extends GetView<TaskController> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isTaskWorksLoading.value) {
-        return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-        );
+        return const _LoadingView();
       }
       if (controller.taskWorksError.value.isNotEmpty) {
         return _ErrorView(
@@ -131,16 +259,18 @@ class _GivenProjectsTab extends GetView<TaskController> {
         );
       }
       if (controller.taskWorks.isEmpty) {
-        return _EmptyView(message: 'No given projects found');
+        return const _EmptyView(
+          icon: Icons.send_rounded,
+          message: 'No given projects found',
+        );
       }
       return RefreshIndicator(
-        color: const Color(0xFF6A3027),
+        color: _kBrand,
         onRefresh: controller.fetchTaskWorks,
         child: ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
           itemCount: controller.taskWorks.length,
-          itemBuilder: (_, i) =>
-              _TaskWorkCard(task: controller.taskWorks[i]),
+          itemBuilder: (_, i) => _TaskWorkCard(task: controller.taskWorks[i]),
         ),
       );
     });
@@ -158,9 +288,7 @@ class _ReceivedProjectsTab extends GetView<TaskController> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isReceivedLoading.value) {
-        return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-        );
+        return const _LoadingView();
       }
       if (controller.receivedError.value.isNotEmpty) {
         return _ErrorView(
@@ -169,13 +297,16 @@ class _ReceivedProjectsTab extends GetView<TaskController> {
         );
       }
       if (controller.receivedWorks.isEmpty) {
-        return _EmptyView(message: 'No received projects found');
+        return const _EmptyView(
+          icon: Icons.inbox_rounded,
+          message: 'No received projects found',
+        );
       }
       return RefreshIndicator(
-        color: const Color(0xFF6A3027),
+        color: _kBrand,
         onRefresh: controller.fetchReceivedWorks,
         child: ListView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
           itemCount: controller.receivedWorks.length,
           itemBuilder: (_, i) => _ReceivedCard(
               item: controller.receivedWorks[i],
@@ -184,6 +315,277 @@ class _ReceivedProjectsTab extends GetView<TaskController> {
         ),
       );
     });
+  }
+}
+
+// ── Shared card shell ──────────────────────────────────────────────────────
+
+class _CardShell extends StatelessWidget {
+  final Color accentColor;
+  final Widget child;
+  const _CardShell({required this.accentColor, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 14.h),
+      decoration: BoxDecoration(
+        color: _kSurface,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: _kBrand.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 5.w, color: accentColor),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
+                child: child,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardTitleRow extends StatelessWidget {
+  final String title;
+  final String status;
+  final Color statusColor;
+  const _CardTitleRow(
+      {required this.title, required this.status, required this.statusColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.manrope(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
+              color: _kTextPrimary,
+            ),
+          ),
+        ),
+        SizedBox(width: 8.w),
+        _StatusPill(label: status, color: statusColor),
+      ],
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _StatusPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    if (label.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6.w,
+            height: 6.w,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          SizedBox(width: 5.w),
+          Text(label,
+              style: GoogleFonts.inter(
+                  fontSize: 10.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: color)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriorityPill extends StatelessWidget {
+  final String priority;
+  const _PriorityPill({required this.priority});
+
+  @override
+  Widget build(BuildContext context) {
+    if (priority.isEmpty) return const SizedBox.shrink();
+    final color = _priorityColor(priority);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.flag_rounded, size: 11.sp, color: color),
+          SizedBox(width: 4.w),
+          Text(priority,
+              style: GoogleFonts.inter(
+                  fontSize: 10.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: color)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  final IconData icon;
+  final String? label;
+  final String value;
+  final bool highlight;
+  const _MetaChip(
+      {required this.icon,
+      this.label,
+      required this.value,
+      this.highlight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = highlight ? _kDanger : _kTextMuted;
+    final textColor = highlight ? _kDanger : _kTextSecondary;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: highlight ? _kDanger.withValues(alpha: 0.1) : _kBg,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(
+            color: highlight ? _kDanger.withValues(alpha: 0.35) : _kBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11.sp, color: color),
+          SizedBox(width: 4.w),
+          if (label != null) ...[
+            Text('$label ',
+                style: GoogleFonts.inter(
+                    fontSize: 10.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: textColor)),
+          ],
+          Text(value,
+              style: GoogleFonts.inter(
+                  fontSize: 10.5.sp,
+                  fontWeight: highlight ? FontWeight.w700 : FontWeight.w400,
+                  color: textColor)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonRow extends StatelessWidget {
+  final String name;
+  const _PersonRow({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    if (name.isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: [
+        Container(
+          width: 22.w,
+          height: 22.w,
+          decoration: BoxDecoration(
+            color: _kBrand.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              _initials(name),
+              style: GoogleFonts.manrope(
+                  fontSize: 9.5.sp, fontWeight: FontWeight.w800, color: _kBrand),
+            ),
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text(name,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                  color: _kTextSecondary)),
+        ),
+      ],
+    );
+  }
+}
+
+class _CardActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool filled;
+  const _CardActionButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    this.filled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (filled) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 16.sp),
+          label: Text(label,
+              style: GoogleFonts.manrope(
+                  fontSize: 13.sp, fontWeight: FontWeight.w700)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _kBrand,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: EdgeInsets.symmetric(vertical: 11.h),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.r)),
+          ),
+        ),
+      );
+    }
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 16.sp, color: _kBrand),
+        label: Text(label,
+            style: GoogleFonts.manrope(
+                fontSize: 13.sp, fontWeight: FontWeight.w700, color: _kBrand)),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: _kBrand),
+          padding: EdgeInsets.symmetric(vertical: 11.h),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.r)),
+        ),
+      ),
+    );
   }
 }
 
@@ -219,143 +621,79 @@ class _ReceivedCard extends StatelessWidget {
     );
   }
 
-  Color get _statusColor {
-    switch ((item.aStatus ?? '').toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'active':
-      case 'running':
-        return const Color(0xFF4CAF50);
-      case 'done':
-      case 'complete':
-        return Colors.blue;
-      default:
-        return const Color(0xFF8B7D77);
-    }
-  }
-
-  String _fmtDate(String? raw) {
-    if (raw == null || raw.isEmpty) return '';
-    return raw.split('T').first;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6A3027).withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    final status = item.aStatus ?? '';
+    final priority = item.priority ?? '';
+    final person = item.employeeName ?? '';
+
+    return _CardShell(
+      accentColor: _statusColor(status),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardTitleRow(
+            title: item.taskTittle ?? item.projectName ?? 'Untitled',
+            status: status,
+            statusColor: _statusColor(status),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          if ((item.proDescription ?? '').isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Text(
+              item.proDescription!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+            ),
+          ],
+          if ((item.allocateDate ?? '').isNotEmpty ||
+              (item.deliveryEstimateDate ?? '').isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 6.h,
               children: [
-                Expanded(
-                  child: Text(
-                    item.taskTittle ?? item.projectName ?? 'Untitled',
-                    style: GoogleFonts.manrope(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF241917),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                _StatusBadge(label: item.aStatus ?? '', color: _statusColor),
+                if ((item.allocateDate ?? '').isNotEmpty)
+                  _MetaChip(
+                      icon: Icons.calendar_today_rounded,
+                      label: 'Start',
+                      value: _fmtDate(item.allocateDate)),
+                if ((item.deliveryEstimateDate ?? '').isNotEmpty)
+                  _MetaChip(
+                      icon: Icons.flag_rounded,
+                      label: 'Due',
+                      value: _fmtDate(item.endDeliveryEstimateDate),
+                      highlight: true),
               ],
             ),
-          
-            if ((item.proDescription ?? '').isNotEmpty) ...[
-              SizedBox(height: 8.h),
-              Text(
-                item.proDescription!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                    fontSize: 12.sp, color: const Color(0xFF6B5C58)),
-              ),
-            ],
+          ],
+          if (person.isNotEmpty || priority.isNotEmpty) ...[
             SizedBox(height: 10.h),
             Row(
               children: [
-                if ((item.allocateDate ?? '').isNotEmpty)
-                  _DateChip(Icons.calendar_today_rounded,
-                      _fmtDate(item.allocateDate)),
-                if ((item.allocateDate ?? '').isNotEmpty &&
-                    (item.deliveryEstimateDate ?? '').isNotEmpty)
-                  SizedBox(width: 8.w),
-                if ((item.deliveryEstimateDate ?? '').isNotEmpty)
-                  _DateChip(Icons.flag_rounded,
-                      _fmtDate(item.endDeliveryEstimateDate),
-                      color: const Color(0xFFB54A3A)),
+                Expanded(child: _PersonRow(name: person)),
+                if (priority.isNotEmpty) _PriorityPill(priority: priority),
               ],
             ),
-            if ((item.employeeName ?? '').isNotEmpty) ...[
-              SizedBox(height: 8.h),
-              _IconRow(Icons.person_outline_rounded, item.employeeName!),
-            ],
-            if ((item.priority ?? '').isNotEmpty) ...[
-              SizedBox(height: 6.h),
-              _IconRow(
-                  Icons.flag_circle_outlined, 'Priority: ${item.priority}'),
-            ],
-            if (canAssign) ...[
-              SizedBox(height: 12.h),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showAssignSheet(context),
-                  icon: Icon(Icons.add_task_rounded, size: 16.sp),
-                  label: Text('Assign Task',
-                      style: GoogleFonts.manrope(
-                          fontSize: 13.sp, fontWeight: FontWeight.w700)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6A3027),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: EdgeInsets.symmetric(vertical: 11.h),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r)),
-                  ),
-                ),
-              ),
-            ],
-            if (canUpdate) ...[
-              SizedBox(height: 12.h),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showUpdateSheet(context),
-                  icon: Icon(Icons.update_rounded,
-                      size: 16.sp, color: const Color(0xFF6A3027)),
-                  label: Text('Update',
-                      style: GoogleFonts.manrope(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF6A3027))),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF6A3027)),
-                    padding: EdgeInsets.symmetric(vertical: 11.h),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.r)),
-                  ),
-                ),
-              ),
-            ],
           ],
-        ),
+          if (canAssign) ...[
+            SizedBox(height: 12.h),
+            _CardActionButton(
+              label: 'Assign Task',
+              icon: Icons.add_task_rounded,
+              onPressed: () => _showAssignSheet(context),
+            ),
+          ],
+          if (canUpdate) ...[
+            SizedBox(height: canAssign ? 8.h : 12.h),
+            _CardActionButton(
+              label: 'Update',
+              icon: Icons.update_rounded,
+              filled: false,
+              onPressed: () => _showUpdateSheet(context),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -378,111 +716,74 @@ class _ProjectCard extends StatelessWidget {
     );
   }
 
-  Color get _statusColor {
-    switch (project.projectStatus.toLowerCase()) {
-      case 'active':
-      case 'running':
-        return const Color(0xFF4CAF50);
-      case 'on hold':
-      case 'inactive':
-        return Colors.orange;
-      case 'complete':
-      case 'done':
-        return Colors.blue;
-      default:
-        return const Color(0xFF8B7D77);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6A3027).withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return _CardShell(
+      accentColor: _statusColor(project.projectStatus),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardTitleRow(
+            title: project.projectName,
+            status: project.projectStatus,
+            statusColor: _statusColor(project.projectStatus),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          if (project.clientName.isNotEmpty) ...[
+            SizedBox(height: 8.h),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Icon(Icons.business_rounded, size: 13.sp, color: _kTextMuted),
+                SizedBox(width: 4.w),
                 Expanded(
-                  child: Text(
-                    project.projectName,
-                    style: GoogleFonts.manrope(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF241917),
-                    ),
-                  ),
+                  child: Text(project.clientName,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                          fontSize: 12.sp, color: _kTextMuted)),
                 ),
-                SizedBox(width: 8.w),
-                _StatusBadge(label: project.projectStatus, color: _statusColor),
               ],
-            ),
-            if (project.clientName.isNotEmpty) ...[
-              SizedBox(height: 6.h),
-              _IconRow(Icons.business_rounded, project.clientName),
-            ],
-            if (project.description.isNotEmpty) ...[
-              SizedBox(height: 8.h),
-              Text(
-                project.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                    fontSize: 12.sp, color: const Color(0xFF6B5C58)),
-              ),
-            ],
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                if (project.assignDate.isNotEmpty)
-                  _DateChip(Icons.calendar_today_rounded, project.assignDate),
-                if (project.assignDate.isNotEmpty &&
-                    project.deliveryDate.isNotEmpty)
-                  SizedBox(width: 8.w),
-                if (project.deliveryDate.isNotEmpty)
-                  _DateChip(Icons.flag_rounded, project.deliveryDate,
-                      color: const Color(0xFFB54A3A)),
-              ],
-            ),
-            if (project.assignedTo.isNotEmpty) ...[
-              SizedBox(height: 8.h),
-              _IconRow(Icons.person_outline_rounded, project.assignedTo),
-            ],
-            SizedBox(height: 12.h),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _showAssignSheet(context),
-                icon: Icon(Icons.add_task_rounded, size: 16.sp),
-                label: Text('Assign Task',
-                    style: GoogleFonts.manrope(
-                        fontSize: 13.sp, fontWeight: FontWeight.w700)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6A3027),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(vertical: 11.h),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r)),
-                ),
-              ),
             ),
           ],
-        ),
+          if (project.description.isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Text(
+              project.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+            ),
+          ],
+          if (project.assignDate.isNotEmpty ||
+              project.deliveryDate.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 6.h,
+              children: [
+                if (project.assignDate.isNotEmpty)
+                  _MetaChip(
+                      icon: Icons.calendar_today_rounded,
+                      label: 'Start',
+                      value: project.assignDate),
+                if (project.deliveryDate.isNotEmpty)
+                  _MetaChip(
+                      icon: Icons.flag_rounded,
+                      label: 'Due',
+                      value: project.deliveryDate,
+                      highlight: true),
+              ],
+            ),
+          ],
+          if (project.assignedTo.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            _PersonRow(name: project.assignedTo),
+          ],
+          SizedBox(height: 12.h),
+          _CardActionButton(
+            label: 'Assign Task',
+            icon: Icons.add_task_rounded,
+            onPressed: () => _showAssignSheet(context),
+          ),
+        ],
       ),
     );
   }
@@ -494,231 +795,84 @@ class _TaskWorkCard extends StatelessWidget {
   final given.Data task;
   const _TaskWorkCard({required this.task});
 
-  Color get _statusColor {
-    switch ((task.aStatus ?? '').toLowerCase()) {
-      case 'pending':
-        return Colors.orange;
-      case 'active':
-      case 'running':
-        return const Color(0xFF4CAF50);
-      case 'done':
-      case 'complete':
-        return Colors.blue;
-      default:
-        return const Color(0xFF8B7D77);
-    }
-  }
-
-  String _fmtDate(String? raw) {
-    if (raw == null || raw.isEmpty) return '';
-    return raw.split('T').first;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6A3027).withValues(alpha: 0.07),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    final status = task.aStatus ?? '';
+    final priority = task.priority ?? '';
+    final person = task.employeeName ?? '';
+
+    return _CardShell(
+      accentColor: _statusColor(status),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardTitleRow(
+            title: task.projectName ?? task.taskTittle ?? 'Untitled',
+            status: status,
+            statusColor: _statusColor(status),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title + status
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    task.projectName ?? task.taskTittle ?? 'Untitled',
-                    style: GoogleFonts.manrope(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF241917),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 8.w),
-                _StatusBadge(
-                    label: task.aStatus ?? '', color: _statusColor),
-              ],
+          if ((task.proDescription ?? '').isNotEmpty) ...[
+            SizedBox(height: 8.h),
+            Text(
+              task.proDescription!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
             ),
-
-            if ((task.proDescription ?? '').isNotEmpty) ...[
-              SizedBox(height: 6.h),
-              _IconRow(Icons.folder_rounded, task.proDescription!),
-            ],
-
-          
-
+          ],
+          if ((task.allocateDate ?? '').isNotEmpty ||
+              (task.deliveryEstimateDate ?? '').isNotEmpty) ...[
             SizedBox(height: 10.h),
-
             Wrap(
               spacing: 8.w,
               runSpacing: 6.h,
               children: [
                 if ((task.allocateDate ?? '').isNotEmpty)
-                  _LabeledDateChip(
-                    label: 'Start',
-                    icon: Icons.calendar_today_rounded,
-                    date: _fmtDate(task.allocateDate),
-                    labelColor: const Color(0xFF6A3027),
-                  ),
+                  _MetaChip(
+                      icon: Icons.calendar_today_rounded,
+                      label: 'Start',
+                      value: _fmtDate(task.allocateDate)),
                 if ((task.deliveryEstimateDate ?? '').isNotEmpty)
-                  _LabeledDateChip(
-                    label: 'Delivery',
-                    icon: Icons.flag_rounded,
-                    date: _fmtDate(task.endDeliveryEstimateDate),
-                    labelColor: const Color(0xFFB54A3A),
-                  ),
+                  _MetaChip(
+                      icon: Icons.flag_rounded,
+                      label: 'Delivery',
+                      value: _fmtDate(task.endDeliveryEstimateDate),
+                      highlight: true),
               ],
             ),
-
-            if ((task.employeeName ?? '').isNotEmpty) ...[
-              SizedBox(height: 8.h),
-              _IconRow(Icons.person_outline_rounded, task.employeeName!),
-            ],
-
-            if ((task.priority ?? '').isNotEmpty) ...[
-              SizedBox(height: 6.h),
-              _IconRow(Icons.flag_circle_outlined, 'Priority: ${task.priority}'),
-            ],
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Shared small widgets ──────────────────────────────────────────────────────
-
-class _StatusBadge extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatusBadge({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    if (label.isEmpty) return const SizedBox.shrink();
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Text(label,
-          style: GoogleFonts.inter(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-              color: color)),
-    );
-  }
-}
-
-class _IconRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _IconRow(this.icon, this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 13.sp, color: const Color(0xFF8B7D77)),
-        SizedBox(width: 4.w),
-        Expanded(
-          child: Text(text,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                  fontSize: 12.sp, color: const Color(0xFF8B7D77))),
-        ),
-      ],
-    );
-  }
-}
-
-class _LabeledDateChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final String date;
-  final Color labelColor;
-  const _LabeledDateChip({
-    required this.label,
-    required this.icon,
-    required this.date,
-    required this.labelColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-      decoration: BoxDecoration(
-        color: labelColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: labelColor.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '$label: ',
-            style: GoogleFonts.inter(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w700,
-              color: labelColor,
+          if (person.isNotEmpty || priority.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            Row(
+              children: [
+                Expanded(child: _PersonRow(name: person)),
+                if (priority.isNotEmpty) _PriorityPill(priority: priority),
+              ],
             ),
-          ),
-          Icon(icon, size: 11.sp, color: labelColor),
-          SizedBox(width: 3.w),
-          Text(
-            date,
-            style: GoogleFonts.inter(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w500,
-              color: labelColor,
-            ),
-          ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _DateChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  const _DateChip(this.icon, this.label,
-      {this.color = const Color(0xFF8B7D77)});
+// ── Loading / Empty / Error states ──────────────────────────────────────────
+
+class _LoadingView extends StatelessWidget {
+  const _LoadingView();
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12.sp, color: color),
-        SizedBox(width: 3.w),
-        Text(label,
-            style: GoogleFonts.inter(fontSize: 11.sp, color: color)),
-      ],
+    return const Center(
+      child: CircularProgressIndicator(color: _kBrand, strokeWidth: 2.5),
     );
   }
 }
 
 class _EmptyView extends StatelessWidget {
+  final IconData icon;
   final String message;
-  const _EmptyView({required this.message});
+  const _EmptyView({required this.icon, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -726,12 +880,21 @@ class _EmptyView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.folder_open_rounded,
-              size: 56.sp, color: const Color(0xFFCBC0BA)),
-          SizedBox(height: 12.h),
+          Container(
+            width: 84.w,
+            height: 84.w,
+            decoration: BoxDecoration(
+              color: _kBrand.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 36.sp, color: _kBrand.withValues(alpha: 0.5)),
+          ),
+          SizedBox(height: 16.h),
           Text(message,
               style: GoogleFonts.manrope(
-                  fontSize: 15.sp, color: const Color(0xFF8B7D77))),
+                  fontSize: 14.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _kTextMuted)),
         ],
       ),
     );
@@ -751,21 +914,33 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded,
-                size: 48.sp, color: const Color(0xFFB54A3A)),
-            SizedBox(height: 12.h),
+            Container(
+              width: 76.w,
+              height: 76.w,
+              decoration: BoxDecoration(
+                color: _kDanger.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.error_outline_rounded,
+                  size: 34.sp, color: _kDanger),
+            ),
+            SizedBox(height: 14.h),
             Text(message,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                    fontSize: 14.sp, color: const Color(0xFF6A3027))),
-            SizedBox(height: 16.h),
+                style:
+                    GoogleFonts.inter(fontSize: 13.5.sp, color: _kTextSecondary)),
+            SizedBox(height: 18.h),
             ElevatedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6A3027),
+                backgroundColor: _kBrand,
                 foregroundColor: Colors.white,
+                elevation: 0,
+                padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.r)),
               ),
             ),
           ],
@@ -774,6 +949,95 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
+
+// ── Shared bottom-sheet chrome ──────────────────────────────────────────────
+
+class _SheetHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  const _SheetHeader(
+      {required this.icon, required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Container(
+            width: 40.w,
+            height: 4.h,
+            decoration: BoxDecoration(
+              color: _kBorder,
+              borderRadius: BorderRadius.circular(2.r),
+            ),
+          ),
+        ),
+        SizedBox(height: 18.h),
+        Row(
+          children: [
+            Container(
+              width: 38.w,
+              height: 38.w,
+              decoration: BoxDecoration(
+                color: _kBrand.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(11.r),
+              ),
+              child: Icon(icon, color: _kBrand, size: 19.sp),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: GoogleFonts.manrope(
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.w800,
+                          color: _kTextPrimary)),
+                  SizedBox(height: 2.h),
+                  Text(subtitle,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                          fontSize: 12.5.sp, color: _kTextMuted)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+Widget _sheetLabel(String text) => Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Text(text,
+          style: GoogleFonts.inter(
+              fontSize: 12.sp, fontWeight: FontWeight.w600, color: _kBrand)),
+    );
+
+InputDecoration _sheetFieldDecoration(String hint, {IconData? prefixIcon}) =>
+    InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFFCBC0BA)),
+      prefixIcon: prefixIcon == null
+          ? null
+          : Icon(prefixIcon, size: 18, color: _kTextMuted),
+      filled: true,
+      fillColor: _kSurface,
+      contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(color: _kBorder)),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(color: _kBorder)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: const BorderSide(color: _kBrand, width: 1.5)),
+    );
 
 // ── Assign Task Bottom Sheet ───────────────────────────────────────────────────
 
@@ -793,12 +1057,11 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
   final _deliveryCtrl = TextEditingController();
   final _endDeliveryCtrl = TextEditingController();
   String _priority = 'High';
-  String _recurrence = 'Daily';
+  final String _recurrence = 'Daily';
   int? _selectedEmpId;
   String? _selectedEmpName;
 
   static const _priorities = ['High', 'Medium', 'Low'];
-  static const _recurrences = ['Daily', 'Weekly', 'Monthly', 'None'];
 
   @override
   void initState() {
@@ -824,7 +1087,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
       lastDate: DateTime(2030),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF6A3027)),
+          colorScheme: const ColorScheme.light(primary: _kBrand),
         ),
         child: child!,
       ),
@@ -860,7 +1123,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
       Get.back();
       Get.snackbar('Success', 'Task assigned successfully',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFF4CAF50),
+          backgroundColor: _kSuccess,
           colorText: Colors.white);
     }
   }
@@ -869,61 +1132,49 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F1ED),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        color: _kBg,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       padding: EdgeInsets.only(
         left: 20.w,
         right: 20.w,
-        top: 16.h,
+        top: 12.h,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
       ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCBC0BA),
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
+            _SheetHeader(
+              icon: Icons.add_task_rounded,
+              title: 'Assign Task',
+              subtitle: widget.projectName,
             ),
-            SizedBox(height: 16.h),
-            Text('Assign Task',
-                style: GoogleFonts.manrope(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917))),
-            SizedBox(height: 4.h),
-            Text(widget.projectName,
-                style: GoogleFonts.inter(
-                    fontSize: 13.sp, color: const Color(0xFF8B7D77))),
             SizedBox(height: 20.h),
-
-            _label('Task Title *'),
-            _field(_titleCtrl, 'Enter task title'),
+            _sheetLabel('Task Title *'),
+            TextField(
+              controller: _titleCtrl,
+              style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+              decoration: _sheetFieldDecoration('Enter task title',
+                  prefixIcon: Icons.title_rounded),
+            ),
             SizedBox(height: 14.h),
-
-            _label('Employee *'),
+            _sheetLabel('Employee *'),
             Obx(() {
               if (_c.isEmpLoading.value) {
                 return Container(
                   height: 48.h,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(color: const Color(0xFFE0D5D0)),
+                    color: _kSurface,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: _kBorder),
                   ),
                   child: const Center(
                     child: SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                          color: Color(0xFF6A3027), strokeWidth: 2),
+                          color: _kBrand, strokeWidth: 2),
                     ),
                   ),
                 );
@@ -933,9 +1184,9 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
                   height: 48.h,
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(color: const Color(0xFFE0D5D0)),
+                    color: _kSurface,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: _kBorder),
                   ),
                   child: Align(
                     alignment: Alignment.centerLeft,
@@ -948,19 +1199,20 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
               return Container(
                 padding: EdgeInsets.symmetric(horizontal: 14.w),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10.r),
-                  border: Border.all(color: const Color(0xFFE0D5D0)),
+                  color: _kSurface,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: _kBorder),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: _selectedEmpId,
                     isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: _kTextMuted),
                     hint: Text('Select employee',
                         style: GoogleFonts.inter(
                             fontSize: 13.sp, color: const Color(0xFFCBC0BA))),
-                    style: GoogleFonts.inter(
-                        fontSize: 14.sp, color: const Color(0xFF241917)),
+                    style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
                     items: _c.boundEmployees
                         .where((e) => e.employeeId != null)
                         .map((e) => DropdownMenuItem<int>(
@@ -982,29 +1234,53 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
               );
             }),
             SizedBox(height: 14.h),
-
-            _label('Description'),
-            _field(_descCtrl, 'Enter task description', maxLines: 3),
+            _sheetLabel('Description'),
+            TextField(
+              controller: _descCtrl,
+              maxLines: 3,
+              style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+              decoration: _sheetFieldDecoration('Enter task description'),
+            ),
             SizedBox(height: 14.h),
-
-            _label('Priority'),
-            _dropdown(_priorities, _priority,
-                (v) => setState(() => _priority = v!)),
+            _sheetLabel('Priority'),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 14.w),
+              decoration: BoxDecoration(
+                color: _kSurface,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: _kBorder),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _priority,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                      color: _kTextMuted),
+                  style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+                  items: _priorities
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _priority = v!),
+                ),
+              ),
+            ),
             SizedBox(height: 14.h),
-
-          
-
-
-            _label('End Delivery Date'),
-            _dateField(_endDeliveryCtrl, 'YYYY-MM-DD'),
+            _sheetLabel('End Delivery Date'),
+            TextField(
+              controller: _endDeliveryCtrl,
+              readOnly: true,
+              onTap: () => _pickDate(_endDeliveryCtrl),
+              style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+              decoration:
+                  _sheetFieldDecoration('YYYY-MM-DD', prefixIcon: Icons.event_rounded),
+            ),
             SizedBox(height: 24.h),
-
             Obx(() => SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _c.isAssigning.value ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A3027),
+                      backgroundColor: _kBrand,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -1019,8 +1295,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text('Assign Task',
                             style: GoogleFonts.manrope(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700)),
+                                fontSize: 15.sp, fontWeight: FontWeight.w700)),
                   ),
                 )),
           ],
@@ -1028,113 +1303,9 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
       ),
     );
   }
-
-  Widget _label(String text) => Padding(
-        padding: EdgeInsets.only(bottom: 6.h),
-        child: Text(text,
-            style: GoogleFonts.inter(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF6A3027))),
-      );
-
-  Widget _field(TextEditingController ctrl, String hint,
-          {int maxLines = 1, TextInputType? keyboardType}) =>
-      TextField(
-        controller: ctrl,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        style: GoogleFonts.inter(
-            fontSize: 14.sp, color: const Color(0xFF241917)),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.inter(
-              fontSize: 13.sp, color: const Color(0xFFCBC0BA)),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide:
-                  const BorderSide(color: Color(0xFF6A3027), width: 1.5)),
-        ),
-      );
-
-  Widget _dropdown(List<String> items, String value,
-          void Function(String?) onChanged) =>
-      Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: const Color(0xFFE0D5D0)),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: value,
-            isExpanded: true,
-            style: GoogleFonts.inter(
-                fontSize: 14.sp, color: const Color(0xFF241917)),
-            items: items
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
-            onChanged: onChanged,
-          ),
-        ),
-      );
-
-  Widget _dateField(TextEditingController ctrl, String hint) => TextField(
-        controller: ctrl,
-        readOnly: true,
-        onTap: () => _pickDate(ctrl),
-        style: GoogleFonts.inter(
-            fontSize: 14.sp, color: const Color(0xFF241917)),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.inter(
-              fontSize: 13.sp, color: const Color(0xFFCBC0BA)),
-          suffixIcon: const Icon(Icons.calendar_today_rounded,
-              size: 18, color: Color(0xFF6A3027)),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10.r),
-              borderSide:
-                  const BorderSide(color: Color(0xFF6A3027), width: 1.5)),
-        ),
-      );
 }
 
 // ── Update Progress Bottom Sheet ────────────────────────────────────────────
-
-class _UpdateProgressSheet extends StatefulWidget {
-  final int proAllocatId;
-  final String taskTitle;
-  final String? currentProgress;
-  const _UpdateProgressSheet({
-    required this.proAllocatId,
-    required this.taskTitle,
-    this.currentProgress,
-  });
-
-  @override
-  State<_UpdateProgressSheet> createState() => _UpdateProgressSheetState();
-}
 
 class _StatusOption {
   final String label;
@@ -1154,16 +1325,14 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10.r),
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 6.w),
         decoration: BoxDecoration(
-          color: selected
-              ? option.color.withValues(alpha: 0.12)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(10.r),
+          color: selected ? option.color.withValues(alpha: 0.12) : _kSurface,
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: selected ? option.color : const Color(0xFFE0D5D0),
+            color: selected ? option.color : _kBorder,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -1171,14 +1340,14 @@ class _StatusCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(option.icon, size: 20.sp, color: option.color),
-            SizedBox(height: 4.h),
+            SizedBox(height: 5.h),
             Text(
               option.label,
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 10.5.sp,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? option.color : const Color(0xFF6B5C58),
+                color: selected ? option.color : _kTextSecondary,
               ),
             ),
           ],
@@ -1188,6 +1357,20 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
+class _UpdateProgressSheet extends StatefulWidget {
+  final int proAllocatId;
+  final String taskTitle;
+  final String? currentProgress;
+  const _UpdateProgressSheet({
+    required this.proAllocatId,
+    required this.taskTitle,
+    this.currentProgress,
+  });
+
+  @override
+  State<_UpdateProgressSheet> createState() => _UpdateProgressSheetState();
+}
+
 class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
   final _c = Get.find<TaskController>();
   final _descCtrl = TextEditingController();
@@ -1195,10 +1378,9 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
   String? _selectedStatus;
 
   static const _statusOptions = [
-    _StatusOption('Pending', Icons.hourglass_empty_rounded, Colors.orange),
-    _StatusOption(
-        'In Progress', Icons.autorenew_rounded, Color(0xFF4CAF50)),
-    _StatusOption('Completed', Icons.check_circle_rounded, Colors.blue),
+    _StatusOption('Pending', Icons.hourglass_empty_rounded, _kWarning),
+    _StatusOption('In Progress', Icons.autorenew_rounded, _kSuccess),
+    _StatusOption('Completed', Icons.check_circle_rounded, _kInfo),
   ];
 
   @override
@@ -1241,7 +1423,7 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
       Get.back();
       Get.snackbar('Success', 'Progress updated successfully',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFF4CAF50),
+          backgroundColor: _kSuccess,
           colorText: Colors.white);
     }
   }
@@ -1250,62 +1432,43 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F1ED),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        color: _kBg,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
       ),
       padding: EdgeInsets.only(
         left: 20.w,
         right: 20.w,
-        top: 16.h,
+        top: 12.h,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
       ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40.w,
-                height: 4.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCBC0BA),
-                  borderRadius: BorderRadius.circular(2.r),
-                ),
-              ),
+            _SheetHeader(
+              icon: Icons.update_rounded,
+              title: 'Update Progress',
+              subtitle: widget.taskTitle,
             ),
-            SizedBox(height: 16.h),
-            Text('Update Progress',
-                style: GoogleFonts.manrope(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917))),
-            SizedBox(height: 4.h),
-            Text(widget.taskTitle,
-                style: GoogleFonts.inter(
-                    fontSize: 13.sp, color: const Color(0xFF8B7D77))),
             SizedBox(height: 20.h),
-
-            _label('Description *'),
+            _sheetLabel('Description *'),
             TextField(
               controller: _descCtrl,
               maxLines: 3,
-              style: GoogleFonts.inter(
-                  fontSize: 14.sp, color: const Color(0xFF241917)),
-              decoration: _inputDecoration('Enter progress description'),
+              style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+              decoration: _sheetFieldDecoration('Enter progress description'),
             ),
             SizedBox(height: 14.h),
-
-            _label('Progress (%) *'),
+            _sheetLabel('Progress (%) *'),
             TextField(
               controller: _progressCtrl,
               keyboardType: TextInputType.number,
-              style: GoogleFonts.inter(
-                  fontSize: 14.sp, color: const Color(0xFF241917)),
-              decoration: _inputDecoration('0 - 100'),
+              style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+              decoration: _sheetFieldDecoration('0 - 100',
+                  prefixIcon: Icons.percent_rounded),
             ),
             SizedBox(height: 14.h),
-
-            _label('Status *'),
+            _sheetLabel('Status *'),
             Row(
               children: _statusOptions
                   .map((opt) => Expanded(
@@ -1323,13 +1486,12 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
                   .toList(),
             ),
             SizedBox(height: 24.h),
-
             Obx(() => SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _c.isUpdatingProgress.value ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A3027),
+                      backgroundColor: _kBrand,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: EdgeInsets.symmetric(vertical: 14.h),
@@ -1344,8 +1506,7 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
                                 color: Colors.white, strokeWidth: 2))
                         : Text('Update',
                             style: GoogleFonts.manrope(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700)),
+                                fontSize: 15.sp, fontWeight: FontWeight.w700)),
                   ),
                 )),
           ],
@@ -1353,31 +1514,4 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
       ),
     );
   }
-
-  Widget _label(String text) => Padding(
-        padding: EdgeInsets.only(bottom: 6.h),
-        child: Text(text,
-            style: GoogleFonts.inter(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF6A3027))),
-      );
-
-  InputDecoration _inputDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle:
-            GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFFCBC0BA)),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-        border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10.r),
-            borderSide: const BorderSide(color: Color(0xFF6A3027), width: 1.5)),
-      );
 }

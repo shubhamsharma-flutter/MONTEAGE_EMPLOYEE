@@ -41,14 +41,20 @@ class TaskController extends GetxController {
       };
 
   // ── Designation ────────────────────────────────────────────────────────────
-  bool get _isTeamLeader {
-    final designation =
+  // Normalized by stripping everything but letters so stray casing/spacing/
+  // punctuation from the API ("Team Leader", "TeamLeader", "team_leader", ...)
+  // still matches.
+  String get _normalizedDesignation {
+    final raw =
         (_box.read('Designation') ?? _box.read('designation') ?? '')
-            .toString()
-            .trim()
-            .toLowerCase();
-    return designation == 'team leader';
+            .toString();
+    final normalized = raw.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
+    debugPrint(
+        'TaskController designation raw="$raw" normalized="$normalized"');
+    return normalized;
   }
+
+  bool get _isTeamLeader => _normalizedDesignation == 'teamleader';
 
   // ── API URLs ───────────────────────────────────────────────────────────────
   String get _projectsUrl => _isTeamLeader
@@ -154,11 +160,15 @@ class TaskController extends GetxController {
     try {
       isEmpLoading(true);
       boundEmployees.clear();
+      final url = _isTeamLeader
+          ? '$_apiBase/MObTeamLeaderTeamList/${empid.value}'
+          : '$_apiBase/AppBindEmployee';
+      debugPrint(
+          'fetchBindEmployees url: $url (isTeamLeader=$_isTeamLeader, empid=${empid.value})');
       final res = await http
-          .get(Uri.parse('$_apiBase/MObTeamLeaderTeamList/${empid.value}'),
-              headers: _headers)
+          .get(Uri.parse(url), headers: _headers)
           .timeout(const Duration(seconds: 12));
-      debugPrint('fetchBindEmployees [${res.statusCode}]');
+      debugPrint('fetchBindEmployees [${res.statusCode}]: ${res.body}');
       if (res.statusCode == 200) {
         final parsed = empdrop.empdropdown.fromJson(jsonDecode(res.body));
         boundEmployees.value = parsed.data ?? [];
