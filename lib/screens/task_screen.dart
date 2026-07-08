@@ -12,30 +12,35 @@ import '../models/empdropdownmode.dart' as empdrop;
 class TaskScreen extends GetView<TaskController> {
   const TaskScreen({super.key});
 
-  bool get _isProjectManager {
+  String get _designation {
     final box = GetStorage();
-    final designation =
-        (box.read('Designation') ?? box.read('designation') ?? '')
-            .toString()
-            .trim()
-            .toLowerCase();
-    return designation == 'project manager';
+    return (box.read('Designation') ?? box.read('designation') ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
   }
+
+  bool get _isProjectManager => _designation == 'project manager';
+  bool get _isTeamLeader => _designation == 'team leader';
+  bool get _isDeveloper => _designation == 'developer';
 
   @override
   Widget build(BuildContext context) {
     final isPM = _isProjectManager;
+    final isTL = _isTeamLeader;
+    final isDev = _isDeveloper;
 
     final tabs = <Tab>[
-      const Tab(text: 'My Projects'),
-      const Tab(text: 'Given'),
+      if (!isDev) const Tab(text: 'My Projects'),
+      if (!isDev) const Tab(text: 'Given'),
       if (!isPM) const Tab(text: 'Received'),
     ];
 
     final tabViews = <Widget>[
-      _MyProjectsTab(),
-      _GivenProjectsTab(),
-      if (!isPM) _ReceivedProjectsTab(),
+      if (!isDev) _MyProjectsTab(),
+      if (!isDev) _GivenProjectsTab(),
+      if (!isPM)
+        _ReceivedProjectsTab(canAssign: isTL, canUpdate: isTL || isDev),
     ];
 
     return DefaultTabController(
@@ -145,6 +150,10 @@ class _GivenProjectsTab extends GetView<TaskController> {
 // ── Tab 3: Received Projects ──────────────────────────────────────────────────
 
 class _ReceivedProjectsTab extends GetView<TaskController> {
+  final bool canAssign;
+  final bool canUpdate;
+  const _ReceivedProjectsTab({this.canAssign = false, this.canUpdate = false});
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -168,8 +177,10 @@ class _ReceivedProjectsTab extends GetView<TaskController> {
         child: ListView.builder(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           itemCount: controller.receivedWorks.length,
-          itemBuilder: (_, i) =>
-              _ReceivedCard(item: controller.receivedWorks[i]),
+          itemBuilder: (_, i) => _ReceivedCard(
+              item: controller.receivedWorks[i],
+              canAssign: canAssign,
+              canUpdate: canUpdate),
         ),
       );
     });
@@ -180,7 +191,33 @@ class _ReceivedProjectsTab extends GetView<TaskController> {
 
 class _ReceivedCard extends StatelessWidget {
   final received.RData item;
-  const _ReceivedCard({required this.item});
+  final bool canAssign;
+  final bool canUpdate;
+  const _ReceivedCard(
+      {required this.item, this.canAssign = false, this.canUpdate = false});
+
+  void _showAssignSheet(BuildContext context) {
+    Get.bottomSheet(
+      _AssignTaskSheet(
+        projectId: item.sProjectId ?? 0,
+        projectName: item.projectName ?? item.taskTittle ?? '',
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  void _showUpdateSheet(BuildContext context) {
+    Get.bottomSheet(
+      _UpdateProgressSheet(
+        proAllocatId: item.proAllocatId ?? 0,
+        taskTitle: item.taskTittle ?? item.projectName ?? '',
+        currentProgress: item.progress,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
 
   Color get _statusColor {
     switch ((item.aStatus ?? '').toLowerCase()) {
@@ -274,6 +311,49 @@ class _ReceivedCard extends StatelessWidget {
               _IconRow(
                   Icons.flag_circle_outlined, 'Priority: ${item.priority}'),
             ],
+            if (canAssign) ...[
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showAssignSheet(context),
+                  icon: Icon(Icons.add_task_rounded, size: 16.sp),
+                  label: Text('Assign Task',
+                      style: GoogleFonts.manrope(
+                          fontSize: 13.sp, fontWeight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6A3027),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(vertical: 11.h),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r)),
+                  ),
+                ),
+              ),
+            ],
+            if (canUpdate) ...[
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showUpdateSheet(context),
+                  icon: Icon(Icons.update_rounded,
+                      size: 16.sp, color: const Color(0xFF6A3027)),
+                  label: Text('Update',
+                      style: GoogleFonts.manrope(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF6A3027))),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF6A3027)),
+                    padding: EdgeInsets.symmetric(vertical: 11.h),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.r)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -289,7 +369,10 @@ class _ProjectCard extends StatelessWidget {
 
   void _showAssignSheet(BuildContext context) {
     Get.bottomSheet(
-      _AssignTaskSheet(project: project),
+      _AssignTaskSheet(
+        projectId: project.projectId,
+        projectName: project.projectName,
+      ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
     );
@@ -695,8 +778,9 @@ class _ErrorView extends StatelessWidget {
 // ── Assign Task Bottom Sheet ───────────────────────────────────────────────────
 
 class _AssignTaskSheet extends StatefulWidget {
-  final ProjectModel project;
-  const _AssignTaskSheet({required this.project});
+  final int projectId;
+  final String projectName;
+  const _AssignTaskSheet({required this.projectId, required this.projectName});
 
   @override
   State<_AssignTaskSheet> createState() => _AssignTaskSheetState();
@@ -719,7 +803,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
   @override
   void initState() {
     super.initState();
-    _titleCtrl.text = widget.project.projectName;
+    _titleCtrl.text = widget.projectName;
     _c.fetchBindEmployees();
   }
 
@@ -763,7 +847,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
       return;
     }
     final ok = await _c.assignTask(
-      sProjectId: widget.project.projectId,
+      sProjectId: widget.projectId,
       employeeId: _selectedEmpId!,
       taskTitle: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim(),
@@ -772,7 +856,13 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
       priority: _priority,
       recurrence: _recurrence,
     );
-    if (ok) Get.back();
+    if (ok) {
+      Get.back();
+      Get.snackbar('Success', 'Task assigned successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF4CAF50),
+          colorText: Colors.white);
+    }
   }
 
   @override
@@ -809,7 +899,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF241917))),
             SizedBox(height: 4.h),
-            Text(widget.project.projectName,
+            Text(widget.projectName,
                 style: GoogleFonts.inter(
                     fontSize: 13.sp, color: const Color(0xFF8B7D77))),
             SizedBox(height: 20.h),
@@ -1027,5 +1117,267 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
               borderSide:
                   const BorderSide(color: Color(0xFF6A3027), width: 1.5)),
         ),
+      );
+}
+
+// ── Update Progress Bottom Sheet ────────────────────────────────────────────
+
+class _UpdateProgressSheet extends StatefulWidget {
+  final int proAllocatId;
+  final String taskTitle;
+  final String? currentProgress;
+  const _UpdateProgressSheet({
+    required this.proAllocatId,
+    required this.taskTitle,
+    this.currentProgress,
+  });
+
+  @override
+  State<_UpdateProgressSheet> createState() => _UpdateProgressSheetState();
+}
+
+class _StatusOption {
+  final String label;
+  final IconData icon;
+  final Color color;
+  const _StatusOption(this.label, this.icon, this.color);
+}
+
+class _StatusCard extends StatelessWidget {
+  final _StatusOption option;
+  final bool selected;
+  final VoidCallback onTap;
+  const _StatusCard(
+      {required this.option, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
+        decoration: BoxDecoration(
+          color: selected
+              ? option.color.withValues(alpha: 0.12)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(
+            color: selected ? option.color : const Color(0xFFE0D5D0),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(option.icon, size: 20.sp, color: option.color),
+            SizedBox(height: 4.h),
+            Text(
+              option.label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 10.5.sp,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? option.color : const Color(0xFF6B5C58),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
+  final _c = Get.find<TaskController>();
+  final _descCtrl = TextEditingController();
+  final _progressCtrl = TextEditingController();
+  String? _selectedStatus;
+
+  static const _statusOptions = [
+    _StatusOption('Pending', Icons.hourglass_empty_rounded, Colors.orange),
+    _StatusOption(
+        'In Progress', Icons.autorenew_rounded, Color(0xFF4CAF50)),
+    _StatusOption('Completed', Icons.check_circle_rounded, Colors.blue),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _progressCtrl.text = widget.currentProgress ?? '';
+  }
+
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    _progressCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_descCtrl.text.trim().isEmpty) {
+      Get.snackbar('Missing', 'Description is required',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final progress = int.tryParse(_progressCtrl.text.trim());
+    if (progress == null || progress < 0 || progress > 100) {
+      Get.snackbar('Missing', 'Enter a valid progress (0-100)',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    if (_selectedStatus == null) {
+      Get.snackbar('Missing', 'Please select a status',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    final ok = await _c.updateProgress(
+      proAllocatId: widget.proAllocatId,
+      empDescription: _descCtrl.text.trim(),
+      progress: progress,
+      status: _selectedStatus!,
+    );
+    if (ok) {
+      Get.back();
+      Get.snackbar('Success', 'Progress updated successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF4CAF50),
+          colorText: Colors.white);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F1ED),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      padding: EdgeInsets.only(
+        left: 20.w,
+        right: 20.w,
+        top: 16.h,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBC0BA),
+                  borderRadius: BorderRadius.circular(2.r),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Text('Update Progress',
+                style: GoogleFonts.manrope(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF241917))),
+            SizedBox(height: 4.h),
+            Text(widget.taskTitle,
+                style: GoogleFonts.inter(
+                    fontSize: 13.sp, color: const Color(0xFF8B7D77))),
+            SizedBox(height: 20.h),
+
+            _label('Description *'),
+            TextField(
+              controller: _descCtrl,
+              maxLines: 3,
+              style: GoogleFonts.inter(
+                  fontSize: 14.sp, color: const Color(0xFF241917)),
+              decoration: _inputDecoration('Enter progress description'),
+            ),
+            SizedBox(height: 14.h),
+
+            _label('Progress (%) *'),
+            TextField(
+              controller: _progressCtrl,
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.inter(
+                  fontSize: 14.sp, color: const Color(0xFF241917)),
+              decoration: _inputDecoration('0 - 100'),
+            ),
+            SizedBox(height: 14.h),
+
+            _label('Status *'),
+            Row(
+              children: _statusOptions
+                  .map((opt) => Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                              right: opt == _statusOptions.last ? 0 : 8.w),
+                          child: _StatusCard(
+                            option: opt,
+                            selected: _selectedStatus == opt.label,
+                            onTap: () =>
+                                setState(() => _selectedStatus = opt.label),
+                          ),
+                        ),
+                      ))
+                  .toList(),
+            ),
+            SizedBox(height: 24.h),
+
+            Obx(() => SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _c.isUpdatingProgress.value ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6A3027),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: _c.isUpdatingProgress.value
+                        ? SizedBox(
+                            height: 20.h,
+                            width: 20.h,
+                            child: const CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
+                        : Text('Update',
+                            style: GoogleFonts.manrope(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w700)),
+                  ),
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _label(String text) => Padding(
+        padding: EdgeInsets.only(bottom: 6.h),
+        child: Text(text,
+            style: GoogleFonts.inter(
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF6A3027))),
+      );
+
+  InputDecoration _inputDecoration(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle:
+            GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFFCBC0BA)),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.r),
+            borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.r),
+            borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.r),
+            borderSide: const BorderSide(color: Color(0xFF6A3027), width: 1.5)),
       );
 }
