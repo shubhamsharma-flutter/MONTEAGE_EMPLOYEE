@@ -20,7 +20,6 @@ const _kTextSecondary = Color(0xFF6B5C58);
 const _kTextMuted = Color(0xFF8B7D77);
 const _kBorder = Color(0xFFE0D5D0);
 const _kSuccess = Color(0xFF4CAF50);
-const _kInfo = Color(0xFF3B82C4);
 const _kWarning = Color(0xFFE0A03D);
 const _kDanger = Color(0xFFC24B3F);
 
@@ -104,7 +103,7 @@ class TaskScreen extends GetView<TaskController> {
 
     final tabViews = <Widget>[
       if (!isDev) _MyProjectsTab(),
-      if (!isDev) _GivenProjectsTab(),
+      if (!isDev) _GivenProjectsTab(canUpdate: isPM),
       if (!isPM)
         _ReceivedProjectsTab(canAssign: isTL, canUpdate: isTL || isDev),
     ];
@@ -211,108 +210,564 @@ class TaskScreen extends GetView<TaskController> {
 
 // ── Tab 1: My Projects ────────────────────────────────────────────────────────
 
-class _MyProjectsTab extends GetView<TaskController> {
+class _MyProjectsTab extends StatefulWidget {
+  @override
+  State<_MyProjectsTab> createState() => _MyProjectsTabState();
+}
+
+class _MyProjectsTabState extends State<_MyProjectsTab> {
+  final _c = Get.find<TaskController>();
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isLoading.value) {
+      if (_c.isLoading.value) {
         return const _LoadingView();
       }
-      if (controller.errorMessage.value.isNotEmpty) {
+      if (_c.errorMessage.value.isNotEmpty) {
         return _ErrorView(
-          message: controller.errorMessage.value,
-          onRetry: controller.fetchProjects,
+          message: _c.errorMessage.value,
+          onRetry: _c.fetchProjects,
         );
       }
-      if (controller.projects.isEmpty) {
+      if (_c.projects.isEmpty) {
         return const _EmptyView(
           icon: Icons.folder_open_rounded,
           message: 'No projects assigned',
         );
       }
-      return RefreshIndicator(
-        color: _kBrand,
-        onRefresh: controller.fetchProjects,
-        child: ListView.builder(
-          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-          itemCount: controller.projects.length,
-          itemBuilder: (_, i) => _ProjectCard(project: controller.projects[i]),
-        ),
+
+      final query = _query.trim().toLowerCase();
+      final filtered = query.isEmpty
+          ? _c.projects
+          : _c.projects
+              .where((p) =>
+                  p.projectName.toLowerCase().contains(query) ||
+                  p.clientName.toLowerCase().contains(query))
+              .toList();
+
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+            child: _SearchField(
+              controller: _searchCtrl,
+              hint: 'Search projects...',
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              color: _kBrand,
+              onRefresh: _c.fetchProjects,
+              child: filtered.isEmpty
+                  ? ListView(
+                      padding: EdgeInsets.fromLTRB(16.w, 40.h, 16.w, 24.h),
+                      children: [
+                        Center(
+                          child: Text('No projects match "${_query.trim()}"',
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp, color: _kTextMuted)),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) =>
+                          _ProjectCard(project: filtered[i]),
+                    ),
+            ),
+          ),
+        ],
       );
     });
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+  const _SearchField(
+      {required this.controller, required this.hint, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 46.h,
+      decoration: BoxDecoration(
+        color: _kSurface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: _kBorder),
+      ),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: GoogleFonts.inter(fontSize: 13.5.sp, color: _kTextPrimary),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle:
+              GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFFCBC0BA)),
+          prefixIcon: Icon(Icons.search_rounded, size: 20.sp, color: _kTextMuted),
+          suffixIcon: controller.text.isEmpty
+              ? null
+              : IconButton(
+                  icon: Icon(Icons.close_rounded, size: 18.sp, color: _kTextMuted),
+                  onPressed: () {
+                    controller.clear();
+                    onChanged('');
+                  },
+                ),
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+        ),
+      ),
+    );
   }
 }
 
 // ── Tab 2: Given Projects ─────────────────────────────────────────────────────
 
-class _GivenProjectsTab extends GetView<TaskController> {
+/// Buckets a raw status string into one of the three summary buckets used
+/// by the Given-tab stats, mirroring `_statusColor`'s grouping.
+String? _statusBucket(String? status) {
+  switch ((status ?? '').trim().toLowerCase()) {
+    case 'pending':
+      return 'Pending';
+    case 'active':
+    case 'running':
+    case 'in progress':
+    case 'on hold':
+    case 'inactive':
+      return 'Running';
+    case 'done':
+    case 'complete':
+    case 'completed':
+      return 'Completed';
+    default:
+      return null;
+  }
+}
+
+const _kStatusBuckets = ['Pending', 'Running', 'Completed'];
+
+Color _bucketColor(String bucket) {
+  switch (bucket) {
+    case 'Pending':
+      return _kDanger;
+    case 'Running':
+      return _kWarning;
+    case 'Completed':
+      return _kSuccess;
+    default:
+      return _kTextMuted;
+  }
+}
+
+IconData _bucketIcon(String bucket) {
+  switch (bucket) {
+    case 'Pending':
+      return Icons.hourglass_empty_rounded;
+    case 'Running':
+      return Icons.autorenew_rounded;
+    case 'Completed':
+      return Icons.check_circle_rounded;
+    default:
+      return Icons.circle;
+  }
+}
+
+class _GivenProjectsTab extends StatefulWidget {
+  final bool canUpdate;
+  const _GivenProjectsTab({this.canUpdate = false});
+
+  @override
+  State<_GivenProjectsTab> createState() => _GivenProjectsTabState();
+}
+
+class _GivenProjectsTabState extends State<_GivenProjectsTab> {
+  final _c = Get.find<TaskController>();
+  String? _statusFilter;
+  String? _employeeFilter;
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isTaskWorksLoading.value) {
+      if (_c.isTaskWorksLoading.value) {
         return const _LoadingView();
       }
-      if (controller.taskWorksError.value.isNotEmpty) {
+      if (_c.taskWorksError.value.isNotEmpty) {
         return _ErrorView(
-          message: controller.taskWorksError.value,
-          onRetry: controller.fetchTaskWorks,
+          message: _c.taskWorksError.value,
+          onRetry: _c.fetchTaskWorks,
         );
       }
-      if (controller.taskWorks.isEmpty) {
+      final tasks = _c.taskWorks;
+      if (tasks.isEmpty) {
         return const _EmptyView(
           icon: Icons.send_rounded,
           message: 'No given projects found',
         );
       }
+
+      final statusCounts = <String, int>{for (final b in _kStatusBuckets) b: 0};
+      final Map<String, Map<String, int>> byEmployee = {};
+      for (final t in tasks) {
+        final bucket = _statusBucket(t.aStatus);
+        if (bucket == null) continue;
+        statusCounts[bucket] = (statusCounts[bucket] ?? 0) + 1;
+
+        final name = (t.employeeName ?? '').trim();
+        if (name.isEmpty) continue;
+        final entry = byEmployee.putIfAbsent(
+            name, () => {for (final b in _kStatusBuckets) b: 0});
+        entry[bucket] = (entry[bucket] ?? 0) + 1;
+      }
+
+      final filtered = tasks.where((t) {
+        if (_statusFilter != null && _statusBucket(t.aStatus) != _statusFilter) {
+          return false;
+        }
+        if (_employeeFilter != null &&
+            (t.employeeName ?? '').trim() != _employeeFilter) {
+          return false;
+        }
+        return true;
+      }).toList();
+
+      final hasFilter = _statusFilter != null || _employeeFilter != null;
+
       return RefreshIndicator(
         color: _kBrand,
-        onRefresh: controller.fetchTaskWorks,
-        child: ListView.builder(
+        onRefresh: _c.fetchTaskWorks,
+        child: ListView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-          itemCount: controller.taskWorks.length,
-          itemBuilder: (_, i) => _TaskWorkCard(task: controller.taskWorks[i]),
+          children: [
+            Row(
+              children: [
+                for (final bucket in _kStatusBuckets) ...[
+                  Expanded(
+                    child: _StatSummaryCard(
+                      label: bucket,
+                      count: statusCounts[bucket] ?? 0,
+                      color: _bucketColor(bucket),
+                      icon: _bucketIcon(bucket),
+                      selected: _statusFilter == bucket,
+                      onTap: () => setState(() {
+                        _statusFilter = _statusFilter == bucket ? null : bucket;
+                      }),
+                    ),
+                  ),
+                  if (bucket != _kStatusBuckets.last) SizedBox(width: 10.w),
+                ],
+              ],
+            ),
+            if (byEmployee.isNotEmpty) ...[
+              SizedBox(height: 20.h),
+              Text('By Employee',
+                  style: GoogleFonts.manrope(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: _kTextPrimary)),
+              SizedBox(height: 10.h),
+              ...byEmployee.entries.map((e) => _EmployeeStatRow(
+                    name: e.key,
+                    counts: e.value,
+                    selected: _employeeFilter == e.key,
+                    onTap: () => setState(() {
+                      _employeeFilter = _employeeFilter == e.key ? null : e.key;
+                    }),
+                  )),
+            ],
+            SizedBox(height: 20.h),
+            Row(
+              children: [
+                Text('Tasks',
+                    style: GoogleFonts.manrope(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: _kTextPrimary)),
+                SizedBox(width: 8.w),
+                Text('(${filtered.length})',
+                    style: GoogleFonts.inter(
+                        fontSize: 12.5.sp, color: _kTextMuted)),
+                const Spacer(),
+                if (hasFilter)
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _statusFilter = null;
+                      _employeeFilter = null;
+                    }),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.close_rounded, size: 14.sp, color: _kBrand),
+                        SizedBox(width: 3.w),
+                        Text('Clear filter',
+                            style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: _kBrand)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(height: 10.h),
+            if (filtered.isEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24.h),
+                child: Center(
+                  child: Text('No tasks match this filter',
+                      style: GoogleFonts.inter(
+                          fontSize: 13.sp, color: _kTextMuted)),
+                ),
+              )
+            else
+              ...filtered.map((t) =>
+                  _TaskWorkCard(task: t, canUpdate: widget.canUpdate)),
+          ],
         ),
       );
     });
   }
 }
 
+class _StatSummaryCard extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _StatSummaryCard({
+    required this.label,
+    required this.count,
+    required this.color,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 8.w),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.12) : _kSurface,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+            color: selected ? color : _kBorder,
+            width: selected ? 1.5 : 1,
+          ),
+          boxShadow: selected
+              ? []
+              : [
+                  BoxShadow(
+                    color: _kBrand.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20.sp, color: color),
+            SizedBox(height: 6.h),
+            Text('$count',
+                style: GoogleFonts.manrope(
+                    fontSize: 18.sp, fontWeight: FontWeight.w800, color: color)),
+            SizedBox(height: 2.h),
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 10.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? color : _kTextMuted)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmployeeStatRow extends StatelessWidget {
+  final String name;
+  final Map<String, int> counts;
+  final bool selected;
+  final VoidCallback onTap;
+  const _EmployeeStatRow({
+    required this.name,
+    required this.counts,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: selected ? _kBrand.withValues(alpha: 0.08) : _kSurface,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: selected ? _kBrand : _kBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 26.w,
+              height: 26.w,
+              decoration: BoxDecoration(
+                color: _kBrand.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  _initials(name),
+                  style: GoogleFonts.manrope(
+                      fontSize: 10.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: _kBrand),
+                ),
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(name,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.manrope(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: _kTextPrimary)),
+            ),
+            for (final bucket in _kStatusBuckets)
+              Padding(
+                padding: EdgeInsets.only(left: 6.w),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: _bucketColor(bucket).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(7.r),
+                  ),
+                  child: Text(
+                    '${counts[bucket] ?? 0}',
+                    style: GoogleFonts.inter(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w700,
+                        color: _bucketColor(bucket)),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ── Tab 3: Received Projects ──────────────────────────────────────────────────
 
-class _ReceivedProjectsTab extends GetView<TaskController> {
+class _ReceivedProjectsTab extends StatefulWidget {
   final bool canAssign;
   final bool canUpdate;
   const _ReceivedProjectsTab({this.canAssign = false, this.canUpdate = false});
 
   @override
+  State<_ReceivedProjectsTab> createState() => _ReceivedProjectsTabState();
+}
+
+class _ReceivedProjectsTabState extends State<_ReceivedProjectsTab> {
+  final _c = Get.find<TaskController>();
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isReceivedLoading.value) {
+      if (_c.isReceivedLoading.value) {
         return const _LoadingView();
       }
-      if (controller.receivedError.value.isNotEmpty) {
+      if (_c.receivedError.value.isNotEmpty) {
         return _ErrorView(
-          message: controller.receivedError.value,
-          onRetry: controller.fetchReceivedWorks,
+          message: _c.receivedError.value,
+          onRetry: _c.fetchReceivedWorks,
         );
       }
-      if (controller.receivedWorks.isEmpty) {
+      if (_c.receivedWorks.isEmpty) {
         return const _EmptyView(
           icon: Icons.inbox_rounded,
           message: 'No received projects found',
         );
       }
-      return RefreshIndicator(
-        color: _kBrand,
-        onRefresh: controller.fetchReceivedWorks,
-        child: ListView.builder(
-          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-          itemCount: controller.receivedWorks.length,
-          itemBuilder: (_, i) => _ReceivedCard(
-              item: controller.receivedWorks[i],
-              canAssign: canAssign,
-              canUpdate: canUpdate),
-        ),
+
+      final query = _query.trim().toLowerCase();
+      final filtered = query.isEmpty
+          ? _c.receivedWorks
+          : _c.receivedWorks.where((item) {
+              return (item.taskTittle ?? '').toLowerCase().contains(query) ||
+                  (item.projectName ?? '').toLowerCase().contains(query) ||
+                  (item.employeeName ?? '').toLowerCase().contains(query);
+            }).toList();
+
+      return Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
+            child: _SearchField(
+              controller: _searchCtrl,
+              hint: 'Search received tasks...',
+              onChanged: (v) => setState(() => _query = v),
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              color: _kBrand,
+              onRefresh: _c.fetchReceivedWorks,
+              child: filtered.isEmpty
+                  ? ListView(
+                      padding: EdgeInsets.fromLTRB(16.w, 40.h, 16.w, 24.h),
+                      children: [
+                        Center(
+                          child: Text('No tasks match "${_query.trim()}"',
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp, color: _kTextMuted)),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) => _ReceivedCard(
+                          item: filtered[i],
+                          canAssign: widget.canAssign,
+                          canUpdate: widget.canUpdate),
+                    ),
+            ),
+          ),
+        ],
       );
     });
   }
@@ -793,7 +1248,21 @@ class _ProjectCard extends StatelessWidget {
 
 class _TaskWorkCard extends StatelessWidget {
   final given.Data task;
-  const _TaskWorkCard({required this.task});
+  final bool canUpdate;
+  const _TaskWorkCard({required this.task, this.canUpdate = false});
+
+  void _showUpdateSheet(BuildContext context) {
+    Get.bottomSheet(
+      _UpdateProgressSheet(
+        proAllocatId: task.proAllocatId ?? 0,
+        taskTitle: task.projectName ?? task.taskTittle ?? '',
+        currentProgress: task.progress?.toString(),
+        allowReject: true,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -848,6 +1317,15 @@ class _TaskWorkCard extends StatelessWidget {
                 Expanded(child: _PersonRow(name: person)),
                 if (priority.isNotEmpty) _PriorityPill(priority: priority),
               ],
+            ),
+          ],
+          if (canUpdate) ...[
+            SizedBox(height: 12.h),
+            _CardActionButton(
+              label: 'Update',
+              icon: Icons.update_rounded,
+              filled: false,
+              onPressed: () => _showUpdateSheet(context),
             ),
           ],
         ],
@@ -1361,10 +1839,12 @@ class _UpdateProgressSheet extends StatefulWidget {
   final int proAllocatId;
   final String taskTitle;
   final String? currentProgress;
+  final bool allowReject;
   const _UpdateProgressSheet({
     required this.proAllocatId,
     required this.taskTitle,
     this.currentProgress,
+    this.allowReject = false,
   });
 
   @override
@@ -1377,11 +1857,18 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
   final _progressCtrl = TextEditingController();
   String? _selectedStatus;
 
-  static const _statusOptions = [
-    _StatusOption('Pending', Icons.hourglass_empty_rounded, _kWarning),
-    _StatusOption('In Progress', Icons.autorenew_rounded, _kSuccess),
-    _StatusOption('Completed', Icons.check_circle_rounded, _kInfo),
+  static const _baseStatusOptions = [
+    _StatusOption('Pending', Icons.hourglass_empty_rounded, _kDanger),
+    _StatusOption('In Progress', Icons.autorenew_rounded, _kWarning),
+    _StatusOption('Completed', Icons.check_circle_rounded, _kSuccess),
   ];
+  static const _rejectOption =
+      _StatusOption('Reject', Icons.cancel_rounded, _kDanger);
+
+  List<_StatusOption> get _statusOptions => [
+        ..._baseStatusOptions,
+        if (widget.allowReject) _rejectOption,
+      ];
 
   @override
   void initState() {
