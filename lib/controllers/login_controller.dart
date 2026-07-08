@@ -185,6 +185,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:monteage_employee/infrastructure/utils/pref_manager.dart';
 import 'package:monteage_employee/models/login_response_model.dart';
 
 class LoginController extends GetxController {
@@ -247,6 +248,7 @@ class LoginController extends GetxController {
           Get.snackbar("Error", "User data missing from API");
           return;
         }
+      
 
         // Save data
         box.write("EmployeeName", emp.employeeName);

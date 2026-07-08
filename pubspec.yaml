@@ -57,7 +57,7 @@ dependencies:
   firebase_messaging:
   geolocator:
   open_file:
-  file_picker:
+  file_picker: ^11.0.2
   permission_handler:
   package_info_plus:
   share_plus:

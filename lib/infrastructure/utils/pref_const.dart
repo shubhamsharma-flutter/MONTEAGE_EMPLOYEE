@@ -1,6 +1,8 @@
 // infrastructure/utils/pref_const.dart
 class PrefConst {
   static String isLoggedIn = "isLoggedIn";
+    static String empid = "empid";
+
   static String EnrollmentNo = "EnrollmentNo";
   static String StudentId = "StudentId";
   static String CourseId = "CourseId";

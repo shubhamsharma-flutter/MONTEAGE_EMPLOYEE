@@ -1083,7 +1083,7 @@ class _LeaveFormBottomSheetState extends State<LeaveFormBottomSheet> {
               ListTile(
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final result = await FilePicker.platform.pickFiles(
+                  final result = await FilePicker.pickFiles(
                       type: FileType.custom,
                       allowedExtensions: ['pdf']);
                   if (result != null && result.files.isNotEmpty) {
