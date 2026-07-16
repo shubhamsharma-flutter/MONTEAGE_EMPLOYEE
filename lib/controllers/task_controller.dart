@@ -350,6 +350,9 @@ class TaskController extends GetxController {
     required String empDescription,
     required int progress,
     required String status,
+    String? taskTitle,
+    int? notifyEmployeeId,
+    String? notifyEmployeeName,
   }) async {
     try {
       isUpdatingProgress(true);
@@ -372,6 +375,21 @@ class TaskController extends GetxController {
 
       if (res.statusCode == 200) {
         fetchReceivedWorks();
+        fetchTaskWorks();
+        if (notifyEmployeeId != null && notifyEmployeeId > 0) {
+          final updatedBy = (_box.read('EmployeeName') ?? 'A team member').toString();
+          final recipientName = (notifyEmployeeName ?? '').trim();
+          final greeting = recipientName.isEmpty ? '' : 'Hi $recipientName, ';
+          PushNotificationService.instance.sendToEmployee(
+            employeeId: notifyEmployeeId.toString(),
+            title: 'Progress Updated',
+            body: '$greeting$updatedBy updated progress on ${taskTitle ?? 'a task'} to $progress%',
+            data: {
+              'type': 'progress_updated',
+              'proAllocatId': proAllocatId.toString(),
+            },
+          );
+        }
         return true;
       } else {
         Get.snackbar('Failed', 'Server error: ${res.statusCode}',

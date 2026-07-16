@@ -56,6 +56,44 @@ Color _priorityColor(String? priority) {
   }
 }
 
+const _kProjectStatusFilters = ['Pending', 'In Progress', 'On Hold', 'Completed'];
+
+String? _projectStatusBucket(String? status) {
+  switch ((status ?? '').trim().toLowerCase()) {
+    case 'pending':
+      return 'Pending';
+    case 'active':
+    case 'running':
+    case 'in progress':
+      return 'In Progress';
+    case 'on hold':
+    case 'onhold':
+    case 'inactive':
+      return 'On Hold';
+    case 'done':
+    case 'complete':
+    case 'completed':
+      return 'Completed';
+    default:
+      return null;
+  }
+}
+
+Color _projectStatusFilterColor(String bucket) {
+  switch (bucket) {
+    case 'Pending':
+      return _kDanger;
+    case 'In Progress':
+      return _kWarning;
+    case 'On Hold':
+      return _kBrand;
+    case 'Completed':
+      return _kSuccess;
+    default:
+      return _kTextMuted;
+  }
+}
+
 String _fmtDate(String? raw) {
   if (raw == null || raw.isEmpty) return '';
   return raw.split('T').first;
@@ -68,6 +106,49 @@ String _initials(String? name) {
   if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
   return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
       .toUpperCase();
+}
+
+void _showDescriptionDialog(BuildContext context, String title, String description) {
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: _kSurface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: GoogleFonts.manrope(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: _kTextPrimary)),
+            SizedBox(height: 10.h),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: 320.h),
+              child: SingleChildScrollView(
+                child: Text(description,
+                    style: GoogleFonts.inter(
+                        fontSize: 13.sp, color: _kTextSecondary, height: 1.5)),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text('Close',
+                    style: GoogleFonts.manrope(
+                        fontWeight: FontWeight.w700, color: _kBrand)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 // ── Task Screen ────────────────────────────────────────────────────────────
@@ -103,7 +184,7 @@ class TaskScreen extends GetView<TaskController> {
 
     final tabViews = <Widget>[
       if (!isDev) _MyProjectsTab(canAssignToTl: isPM, canUpdateStatus: isPM),
-      if (!isDev) _GivenProjectsTab(canUpdate: isPM),
+      if (!isDev) _GivenProjectsTab(canUpdate: true),
       if (!isPM)
         _ReceivedProjectsTab(canAssign: isTL, canUpdate: isTL || isDev),
     ];
@@ -223,6 +304,7 @@ class _MyProjectsTabState extends State<_MyProjectsTab> {
   final _c = Get.find<TaskController>();
   final _searchCtrl = TextEditingController();
   String _query = '';
+  String? _statusFilter;
 
   @override
   void dispose() {
@@ -250,13 +332,18 @@ class _MyProjectsTabState extends State<_MyProjectsTab> {
       }
 
       final query = _query.trim().toLowerCase();
-      final filtered = query.isEmpty
-          ? _c.projects
-          : _c.projects
-              .where((p) =>
-                  p.projectName.toLowerCase().contains(query) ||
-                  p.clientName.toLowerCase().contains(query))
-              .toList();
+      final filtered = _c.projects.where((p) {
+        if (query.isNotEmpty &&
+            !p.projectName.toLowerCase().contains(query) &&
+            !p.clientName.toLowerCase().contains(query)) {
+          return false;
+        }
+        if (_statusFilter != null &&
+            _projectStatusBucket(p.projectStatus) != _statusFilter) {
+          return false;
+        }
+        return true;
+      }).toList();
 
       return Column(
         children: [
@@ -268,6 +355,28 @@ class _MyProjectsTabState extends State<_MyProjectsTab> {
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
+          SizedBox(height: 10.h),
+          SizedBox(
+            height: 34.h,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              children: [
+                for (final bucket in _kProjectStatusFilters)
+                  Padding(
+                    padding: EdgeInsets.only(right: 8.w),
+                    child: _StatusFilterChip(
+                      label: bucket,
+                      color: _projectStatusFilterColor(bucket),
+                      selected: _statusFilter == bucket,
+                      onTap: () => setState(() {
+                        _statusFilter = _statusFilter == bucket ? null : bucket;
+                      }),
+                    ),
+                  ),
+              ],
+            ),
+          ),
           Expanded(
             child: RefreshIndicator(
               color: _kBrand,
@@ -277,7 +386,10 @@ class _MyProjectsTabState extends State<_MyProjectsTab> {
                       padding: EdgeInsets.fromLTRB(16.w, 40.h, 16.w, 24.h),
                       children: [
                         Center(
-                          child: Text('No projects match "${_query.trim()}"',
+                          child: Text(
+                              query.isNotEmpty
+                                  ? 'No projects match "${_query.trim()}"'
+                                  : 'No projects match this filter',
                               style: GoogleFonts.inter(
                                   fontSize: 13.sp, color: _kTextMuted)),
                         ),
@@ -297,6 +409,53 @@ class _MyProjectsTabState extends State<_MyProjectsTab> {
         ],
       );
     });
+  }
+}
+
+class _StatusFilterChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+  const _StatusFilterChip({
+    required this.label,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.12) : _kSurface,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(
+            color: selected ? color : _kBorder,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6.w,
+              height: 6.w,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            SizedBox(width: 6.w),
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? color : _kTextSecondary)),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -1078,6 +1237,8 @@ class _ReceivedCard extends StatelessWidget {
         proAllocatId: item.proAllocatId ?? 0,
         taskTitle: item.taskTittle ?? item.projectName ?? '',
         currentProgress: item.progress,
+        notifyEmployeeId: item.employeeId1,
+        notifyEmployeeName: item.employeeName1,
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -1102,11 +1263,17 @@ class _ReceivedCard extends StatelessWidget {
           ),
           if ((item.proDescription ?? '').isNotEmpty) ...[
             SizedBox(height: 8.h),
-            Text(
-              item.proDescription!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+            GestureDetector(
+              onTap: () => _showDescriptionDialog(
+                  context,
+                  item.taskTittle ?? item.projectName ?? 'Description',
+                  item.proDescription!),
+              child: Text(
+                item.proDescription!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+              ),
             ),
           ],
           if ((item.allocateDate ?? '').isNotEmpty ||
@@ -1311,6 +1478,8 @@ class _TaskWorkCard extends StatelessWidget {
         proAllocatId: task.proAllocatId ?? 0,
         taskTitle: task.projectName ?? task.taskTittle ?? '',
         currentProgress: task.progress?.toString(),
+        notifyEmployeeId: task.employeeId1,
+        notifyEmployeeName: task.employeeName1,
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -1335,11 +1504,17 @@ class _TaskWorkCard extends StatelessWidget {
           ),
           if ((task.proDescription ?? '').isNotEmpty) ...[
             SizedBox(height: 8.h),
-            Text(
-              task.proDescription!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+            GestureDetector(
+              onTap: () => _showDescriptionDialog(
+                  context,
+                  task.projectName ?? task.taskTittle ?? 'Description',
+                  task.proDescription!),
+              child: Text(
+                task.proDescription!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+              ),
             ),
           ],
           if ((task.allocateDate ?? '').isNotEmpty ||
@@ -2054,10 +2229,14 @@ class _UpdateProgressSheet extends StatefulWidget {
   final int proAllocatId;
   final String taskTitle;
   final String? currentProgress;
+  final int? notifyEmployeeId;
+  final String? notifyEmployeeName;
   const _UpdateProgressSheet({
     required this.proAllocatId,
     required this.taskTitle,
     this.currentProgress,
+    this.notifyEmployeeId,
+    this.notifyEmployeeName,
   });
 
   @override
@@ -2073,7 +2252,6 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
   static const _statusOptions = [
     _StatusOption('Pending', Icons.hourglass_empty_rounded, _kDanger),
     _StatusOption('Running', Icons.autorenew_rounded, _kWarning),
-    _StatusOption('On-Hold', Icons.autorenew_rounded, _kWarning),
     _StatusOption('Completed', Icons.check_circle_rounded, _kSuccess),
   ];
 
@@ -2112,6 +2290,9 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
       empDescription: _descCtrl.text.trim(),
       progress: progress,
       status: _selectedStatus!,
+      taskTitle: widget.taskTitle,
+      notifyEmployeeId: widget.notifyEmployeeId,
+      notifyEmployeeName: widget.notifyEmployeeName,
     );
     if (ok) {
       Get.back();
@@ -2233,6 +2414,7 @@ class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
   static const _statusOptions = [
     _StatusOption('Pending', Icons.hourglass_empty_rounded, _kDanger),
     _StatusOption('In Progress', Icons.autorenew_rounded, _kWarning),
+    _StatusOption('On-Hold', Icons.autorenew_rounded, _kWarning),
     _StatusOption('Completed', Icons.check_circle_rounded, _kSuccess),
   ];
 
