@@ -96,7 +96,28 @@ Color _projectStatusFilterColor(String bucket) {
 
 String _fmtDate(String? raw) {
   if (raw == null || raw.isEmpty) return '';
-  return raw.split('T').first;
+
+  final value = raw.trim();
+  final candidate = value.split('T').first;
+  final parsed = DateTime.tryParse(candidate);
+  if (parsed == null) return candidate;
+
+  const monthNames = <int, String>{
+    1: 'January',
+    2: 'February',
+    3: 'March',
+    4: 'April',
+    5: 'May',
+    6: 'June',
+    7: 'July',
+    8: 'August',
+    9: 'September',
+    10: 'October',
+    11: 'November',
+    12: 'December',
+  };
+
+  return '${parsed.day} ${monthNames[parsed.month] ?? parsed.month} ${parsed.year}';
 }
 
 String _initials(String? name) {
@@ -563,8 +584,16 @@ class _GivenProjectsTab extends StatefulWidget {
 
 class _GivenProjectsTabState extends State<_GivenProjectsTab> {
   final _c = Get.find<TaskController>();
+  final _searchCtrl = TextEditingController();
   String? _statusFilter;
   String? _employeeFilter;
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -600,6 +629,7 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
         entry[bucket] = (entry[bucket] ?? 0) + 1;
       }
 
+      final searchQuery = _query.trim().toLowerCase();
       final filtered = tasks.where((t) {
         if (_statusFilter != null && _statusBucket(t.aStatus) != _statusFilter) {
           return false;
@@ -607,6 +637,17 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
         if (_employeeFilter != null &&
             (t.employeeName ?? '').trim() != _employeeFilter) {
           return false;
+        }
+        if (searchQuery.isNotEmpty) {
+          final haystack = [
+            t.projectName,
+            t.taskTittle,
+            t.employeeName,
+            t.proDescription,
+          ].join(' ').toLowerCase();
+          if (!haystack.contains(searchQuery)) {
+            return false;
+          }
         }
         return true;
       }).toList();
@@ -619,6 +660,12 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
         child: ListView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
           children: [
+            _SearchField(
+              controller: _searchCtrl,
+              hint: 'Search tasks...',
+              onChanged: (v) => setState(() => _query = v),
+            ),
+            SizedBox(height: 12.h),
             Row(
               children: [
                 for (final bucket in _kStatusBuckets) ...[
@@ -1422,12 +1469,12 @@ class _ProjectCard extends StatelessWidget {
                   _MetaChip(
                       icon: Icons.calendar_today_rounded,
                       label: 'Start',
-                      value: project.assignDate),
+                      value: _fmtDate(project.assignDate)),
                 if (project.deliveryDate.isNotEmpty)
                   _MetaChip(
                       icon: Icons.flag_rounded,
                       label: 'Due',
-                      value: project.deliveryDate,
+                      value: _fmtDate(project.deliveryDate),
                       highlight: true),
               ],
             ),
@@ -1437,26 +1484,55 @@ class _ProjectCard extends StatelessWidget {
             _PersonRow(name: project.assignedTo),
           ],
           SizedBox(height: 12.h),
-          _CardActionButton(
-            label: 'Assign Task',
-            icon: Icons.add_task_rounded,
-            onPressed: () => _showAssignSheet(context),
+          Row(
+            children: [
+              Expanded(
+                child: _CardActionButton(
+                  label: 'Assign Task',
+                  icon: Icons.add_task_rounded,
+                  onPressed: () => _showAssignSheet(context),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Container(
+                decoration: BoxDecoration(
+                  color: _kBrand.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: IconButton(
+                  tooltip: 'View in Given',
+                  onPressed: () {
+                    final tabController = DefaultTabController.of(context);
+                    tabController.animateTo(1);
+                  },
+                  icon: Icon(Icons.remove_red_eye_rounded, color: _kBrand),
+                ),
+              ),
+            ],
           ),
-          if (canAssignToTl) ...[
-            SizedBox(height: 12.h),
-            _CardActionButton(
-              label: 'Assign Project To TL',
-              icon: Icons.add_task_rounded,
-              onPressed: () => _showAssignToTlSheet(context),
-            ),
-          ],
-          if (canUpdateStatus) ...[
-            SizedBox(height: 12.h),
-            _CardActionButton(
-              label: 'Update Project Status',
-              icon: Icons.update_rounded,
-              filled: false,
-              onPressed: () => _showUpdateStatusSheet(context),
+          if (canAssignToTl || canUpdateStatus) ...[
+            SizedBox(height: 8.h),
+            Row(
+              children: [
+                if (canAssignToTl)
+                  Expanded(
+                    child: _CardActionButton(
+                      label: 'Assign Project To TL',
+                      icon: Icons.assignment_ind_rounded,
+                      onPressed: () => _showAssignToTlSheet(context),
+                    ),
+                  ),
+                if (canAssignToTl && canUpdateStatus) SizedBox(width: 8.w),
+                if (canUpdateStatus)
+                  Expanded(
+                    child: _CardActionButton(
+                      label: 'Update Project Status',
+                      icon: Icons.update_rounded,
+                      filled: false,
+                      onPressed: () => _showUpdateStatusSheet(context),
+                    ),
+                  ),
+              ],
             ),
           ],
         ],
@@ -1799,8 +1875,8 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
       ),
     );
     if (picked != null) {
-      ctrl.text =
-          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      ctrl.text = _fmtDate(
+          '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}');
     }
   }
 
