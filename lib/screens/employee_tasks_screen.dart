@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../controllers/task_controller.dart';
 import 'task_screen.dart';
 
@@ -50,9 +51,10 @@ class _EmployeeTasksScreenState extends State<EmployeeTasksScreen> {
         title: Text(
           widget.employeeName,
           style: GoogleFonts.manrope(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w800,
-              color: _kTextPrimary),
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w800,
+            color: _kTextPrimary,
+          ),
         ),
       ),
       body: Obx(() {
@@ -91,7 +93,9 @@ class _EmployeeTasksScreenState extends State<EmployeeTasksScreen> {
                       child: Text(
                         'No tasks found',
                         style: GoogleFonts.inter(
-                            fontSize: 13.sp, color: _kTextMuted),
+                          fontSize: 13.sp,
+                          color: _kTextMuted,
+                        ),
                       ),
                     )
                   : RefreshIndicator(

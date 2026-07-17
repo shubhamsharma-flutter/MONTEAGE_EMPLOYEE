@@ -3,12 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/task_controller.dart';
 import '../models/empdropdownmode.dart' as empdrop;
 import '../models/givenmodelpm.dart' as given;
 import '../models/project_model.dart';
 import '../models/recevedmodel.dart' as received;
-import '../models/empdropdownmode.dart' as empdrop;
 
 // ── Palette ──────────────────────────────────────────────────────────────────
 
@@ -945,8 +945,11 @@ class SearchField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String> onChanged;
-  const _SearchField(
-      {required this.controller, required this.hint, required this.onChanged});
+  const SearchField(
+      {super.key,
+      required this.controller,
+      required this.hint,
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -1057,6 +1060,7 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
   final _c = Get.find<TaskController>();
   final _searchCtrl = TextEditingController();
   String? _statusFilter;
+  String? _employeeFilter;
   String _query = '';
 
   @override
@@ -1233,7 +1237,7 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
               )
             else
               ...filtered.map((t) =>
-                  _TaskWorkCard(task: t, canUpdate: widget.canUpdate)),
+                  TaskWorkCard(task: t, canUpdate: widget.canUpdate)),
           ],
         ),
       );
