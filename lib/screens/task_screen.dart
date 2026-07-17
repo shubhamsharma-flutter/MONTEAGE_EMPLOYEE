@@ -3,11 +3,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/task_controller.dart';
 import '../models/project_model.dart';
 import '../models/givenmodelpm.dart' as given;
 import '../models/recevedmodel.dart' as received;
 import '../models/empdropdownmode.dart' as empdrop;
+import 'employee_tasks_screen.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
 
@@ -170,6 +172,324 @@ void _showDescriptionDialog(BuildContext context, String title, String descripti
       ),
     ),
   );
+}
+
+// ── Full project details popup — description, client, dates, people,
+// modules, reference link and any uploaded file, all in one place. ──────────
+
+Future<void> _openUrl(String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
+  final people = project.assignedTo
+      .split(',')
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList();
+  final service = [project.productService, project.subProductService]
+      .where((s) => s.isNotEmpty)
+      .join(' • ');
+
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: _kSurface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 32.h),
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: 560.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(project.projectName,
+                        style: GoogleFonts.manrope(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w800,
+                            color: _kTextPrimary)),
+                  ),
+                  if (project.projectStatus.isNotEmpty) ...[
+                    SizedBox(width: 8.w),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: _statusColor(project.projectStatus)
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(project.projectStatus,
+                          style: GoogleFonts.inter(
+                              fontSize: 10.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: _statusColor(project.projectStatus))),
+                    ),
+                  ],
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (project.description.isNotEmpty)
+                        _DetailSection(
+                          label: 'Description',
+                          child: Text(project.description,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  color: _kTextSecondary,
+                                  height: 1.5)),
+                        ),
+                      if (project.projectDetails.isNotEmpty &&
+                          project.projectDetails != project.description)
+                        _DetailSection(
+                          label: 'Project Details',
+                          child: Text(project.projectDetails,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  color: _kTextSecondary,
+                                  height: 1.5)),
+                        ),
+                      if (project.clientName.isNotEmpty ||
+                          project.mobileNo.isNotEmpty ||
+                          project.email.isNotEmpty)
+                        _DetailSection(
+                          label: 'Client',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (project.clientName.isNotEmpty)
+                                _DetailRow(Icons.business_rounded,
+                                    project.clientName),
+                              if (project.mobileNo.isNotEmpty)
+                                _DetailRow(
+                                    Icons.call_rounded, project.mobileNo),
+                              if (project.email.isNotEmpty)
+                                _DetailRow(
+                                    Icons.email_rounded, project.email),
+                            ],
+                          ),
+                        ),
+                      if (service.isNotEmpty)
+                        _DetailSection(
+                          label: 'Service',
+                          child: Text(service,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp, color: _kTextSecondary)),
+                        ),
+                      if (project.assignDate.isNotEmpty ||
+                          project.projectDate.isNotEmpty ||
+                          project.deliveryDate.isNotEmpty)
+                        _DetailSection(
+                          label: 'Timeline',
+                          child: Wrap(
+                            spacing: 8.w,
+                            runSpacing: 6.h,
+                            children: [
+                              if (project.projectDate.isNotEmpty)
+                                _MetaChip(
+                                    icon: Icons.event_rounded,
+                                    label: 'Started',
+                                    value: _fmtDate(project.projectDate)),
+                              if (project.assignDate.isNotEmpty)
+                                _MetaChip(
+                                    icon: Icons.calendar_today_rounded,
+                                    label: 'Assigned',
+                                    value: _fmtDate(project.assignDate)),
+                              if (project.deliveryDate.isNotEmpty)
+                                _MetaChip(
+                                    icon: Icons.flag_rounded,
+                                    label: 'Due',
+                                    value: _fmtDate(project.deliveryDate),
+                                    highlight: true),
+                            ],
+                          ),
+                        ),
+                      if (people.isNotEmpty)
+                        _DetailSection(
+                          label: 'People Involved',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final p in people)
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 8.h),
+                                  child: _PersonRow(name: p),
+                                ),
+                            ],
+                          ),
+                        ),
+                      if (project.modules.isNotEmpty)
+                        _DetailSection(
+                          label: 'Modules',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final m in project.modules)
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 6.h),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(Icons.check_circle_outline_rounded,
+                                          size: 14.sp, color: _kBrand),
+                                      SizedBox(width: 8.w),
+                                      Expanded(
+                                        child: Text(m,
+                                            style: GoogleFonts.inter(
+                                                fontSize: 12.5.sp,
+                                                color: _kTextSecondary)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      if ((project.referenceUrl ?? '').isNotEmpty)
+                        _DetailSection(
+                          label: 'Reference URL',
+                          child: _AttachmentLink(
+                            icon: Icons.link_rounded,
+                            label: project.referenceUrl!,
+                            onTap: () => _openUrl(project.referenceUrl!),
+                          ),
+                        ),
+                      if ((project.uploadProjectImg ?? '').isNotEmpty)
+                        _DetailSection(
+                          label: 'Attachment',
+                          child: _AttachmentLink(
+                            icon: Icons.attach_file_rounded,
+                            label: project.uploadProjectImg!,
+                            onTap: () => _openUrl(
+                                project.uploadProjectImg!.startsWith('http')
+                                    ? project.uploadProjectImg!
+                                    : 'https://montempep.eduagentapp.com/${project.uploadProjectImg}'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text('Close',
+                      style: GoogleFonts.manrope(
+                          fontWeight: FontWeight.w700, color: _kBrand)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _DetailSection extends StatelessWidget {
+  final String label;
+  final Widget child;
+  const _DetailSection({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label.toUpperCase(),
+              style: GoogleFonts.manrope(
+                  fontSize: 10.5.sp,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                  color: _kTextMuted)),
+          SizedBox(height: 6.h),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _DetailRow(this.icon, this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 13.sp, color: _kTextMuted),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(text,
+                style: GoogleFonts.inter(
+                    fontSize: 12.5.sp, color: _kTextSecondary)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttachmentLink extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _AttachmentLink(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+        decoration: BoxDecoration(
+          color: _kBg,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: _kBorder),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 15.sp, color: _kBrand),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                      color: _kBrand,
+                      decoration: TextDecoration.underline)),
+            ),
+            Icon(Icons.open_in_new_rounded, size: 14.sp, color: _kTextMuted),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── Task Screen ────────────────────────────────────────────────────────────
@@ -370,7 +690,7 @@ class _MyProjectsTabState extends State<_MyProjectsTab> {
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-            child: _SearchField(
+            child: SearchField(
               controller: _searchCtrl,
               hint: 'Search projects...',
               onChanged: (v) => setState(() => _query = v),
@@ -480,12 +800,15 @@ class _StatusFilterChip extends StatelessWidget {
   }
 }
 
-class _SearchField extends StatelessWidget {
+class SearchField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String> onChanged;
-  const _SearchField(
-      {required this.controller, required this.hint, required this.onChanged});
+  const SearchField(
+      {super.key,
+      required this.controller,
+      required this.hint,
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -586,7 +909,6 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
   final _c = Get.find<TaskController>();
   final _searchCtrl = TextEditingController();
   String? _statusFilter;
-  String? _employeeFilter;
   String _query = '';
 
   @override
@@ -634,10 +956,6 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
         if (_statusFilter != null && _statusBucket(t.aStatus) != _statusFilter) {
           return false;
         }
-        if (_employeeFilter != null &&
-            (t.employeeName ?? '').trim() != _employeeFilter) {
-          return false;
-        }
         if (searchQuery.isNotEmpty) {
           final haystack = [
             t.projectName,
@@ -652,7 +970,7 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
         return true;
       }).toList();
 
-      final hasFilter = _statusFilter != null || _employeeFilter != null;
+      final hasFilter = _statusFilter != null;
 
       return RefreshIndicator(
         color: _kBrand,
@@ -660,7 +978,7 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
         child: ListView(
           padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
           children: [
-            _SearchField(
+            SearchField(
               controller: _searchCtrl,
               hint: 'Search tasks...',
               onChanged: (v) => setState(() => _query = v),
@@ -696,10 +1014,16 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
               ...byEmployee.entries.map((e) => _EmployeeStatRow(
                     name: e.key,
                     counts: e.value,
-                    selected: _employeeFilter == e.key,
-                    onTap: () => setState(() {
-                      _employeeFilter = _employeeFilter == e.key ? null : e.key;
-                    }),
+                    selected: false,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EmployeeTasksScreen(
+                          employeeName: e.key,
+                          canUpdate: widget.canUpdate,
+                        ),
+                      ),
+                    ),
                   )),
             ],
             SizedBox(height: 20.h),
@@ -719,7 +1043,6 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
                   GestureDetector(
                     onTap: () => setState(() {
                       _statusFilter = null;
-                      _employeeFilter = null;
                     }),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -748,7 +1071,7 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
               )
             else
               ...filtered.map((t) =>
-                  _TaskWorkCard(task: t, canUpdate: widget.canUpdate)),
+                  TaskWorkCard(task: t, canUpdate: widget.canUpdate)),
           ],
         ),
       );
@@ -949,7 +1272,7 @@ class _ReceivedProjectsTabState extends State<_ReceivedProjectsTab> {
         children: [
           Padding(
             padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
-            child: _SearchField(
+            child: SearchField(
               controller: _searchCtrl,
               hint: 'Search received tasks...',
               onChanged: (v) => setState(() => _query = v),
@@ -1451,11 +1774,29 @@ class _ProjectCard extends StatelessWidget {
           ],
           if (project.description.isNotEmpty) ...[
             SizedBox(height: 8.h),
-            Text(
-              project.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _showProjectDetailsDialog(context, project),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        project.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                            fontSize: 12.sp, color: _kTextSecondary),
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Icon(Icons.info_outline_rounded,
+                        size: 14.sp, color: _kTextMuted),
+                  ],
+                ),
+              ),
             ),
           ],
           if (project.assignDate.isNotEmpty ||
@@ -1543,10 +1884,10 @@ class _ProjectCard extends StatelessWidget {
 
 // ── Given Project (Task Work) Card ────────────────────────────────────────────
 
-class _TaskWorkCard extends StatelessWidget {
+class TaskWorkCard extends StatelessWidget {
   final given.Data task;
   final bool canUpdate;
-  const _TaskWorkCard({required this.task, this.canUpdate = false});
+  const TaskWorkCard({super.key, required this.task, this.canUpdate = false});
 
   void _showUpdateSheet(BuildContext context) {
     Get.bottomSheet(
@@ -1581,15 +1922,30 @@ class _TaskWorkCard extends StatelessWidget {
           if ((task.proDescription ?? '').isNotEmpty) ...[
             SizedBox(height: 8.h),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => _showDescriptionDialog(
                   context,
                   task.projectName ?? task.taskTittle ?? 'Description',
                   task.proDescription!),
-              child: Text(
-                task.proDescription!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.h),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        task.proDescription!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                            fontSize: 12.sp, color: _kTextSecondary),
+                      ),
+                    ),
+                    SizedBox(width: 6.w),
+                    Icon(Icons.info_outline_rounded,
+                        size: 14.sp, color: _kTextMuted),
+                  ],
+                ),
               ),
             ),
           ],

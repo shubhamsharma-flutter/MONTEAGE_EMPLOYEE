@@ -566,11 +566,42 @@ class LeaveController extends GetxController {
         'remarks': '',
       };
 
-  String _resolveOverallStatus(String s1, String s2, String s3) {
-    if (s1 == 'Rejected' || s2 == 'Rejected' || s3 == 'Rejected') return 'Rejected';
-    if (s1 == 'Approved' && s2 == 'Approved' && s3 == 'Approved') return 'Approved';
+  // Which of the 3 approval slots (1=Team Leader, 2=HR Manager,
+  // 3=Project Manager) someone with [applicantRole] actually needs signed
+  // off — mirrors approversForRole(): an Employee needs all three, a Team
+  // Leader only needs HR + PM (skips their own level), and HR/PM/Admin only
+  // need HR.
+  List<bool> _requiredSlots(EmployeeRole applicantRole) {
+    final required = approversForRole(applicantRole);
+    return [
+      required.contains('Team Leader'),
+      required.contains('HR Manager'),
+      required.contains('Project Manager'),
+    ];
+  }
+
+  String _resolveStatusForApplicant(
+      EmployeeRole applicantRole, String s1, String s2, String s3) {
+    final slots = _requiredSlots(applicantRole);
+    final statuses = [s1, s2, s3];
+    final needed = [
+      for (var i = 0; i < 3; i++)
+        if (slots[i]) statuses[i],
+    ];
+    if (needed.any((s) => s == 'Rejected')) return 'Rejected';
+    if (needed.isNotEmpty && needed.every((s) => s == 'Approved')) {
+      return 'Approved';
+    }
     return 'Pending';
   }
+
+  // Team Leaves can't yet tell which role each applicant holds — the leave
+  // APIs don't return the applicant's designation — so this conservatively
+  // assumes the strictest case (Employee: needs TL + HR + PM all three).
+  // Once the backend exposes a designation per leave row, resolve team
+  // entries through _resolveStatusForApplicant with the real role instead.
+  String _resolveOverallStatus(String s1, String s2, String s3) =>
+      _resolveStatusForApplicant(EmployeeRole.employee, s1, s2, s3);
   Map<String, dynamic> _buildHistoryEntry(EmployeeLeaveModel r) => {
         'id': r.employeeLeaveId > 0
             ? '${r.employeeLeaveId}'
@@ -585,13 +616,14 @@ class LeaveController extends GetxController {
             : '',
         'to_date':
             r.toDate != null ? DateFormat('yyyy-MM-dd').format(r.toDate!) : '',
-        // Same 3-slot logic the approver's Team Leaves list uses — keeps
-        // "My Leaves" in sync once a TL/HR/PM approves or rejects.
+        // This is always the logged-in user's own leave, so we know exactly
+        // which slots they need (approversForRole(employeeRole)) — a Team
+        // Leader's own leave only needs HR + PM, a PM's only needs HR, etc.
         'approve_status1': r.approveStatus1,
         'approve_status2': r.approveStatus2,
         'approve_status3': r.approveStatus3,
-        'status': _resolveOverallStatus(
-            r.approveStatus1, r.approveStatus2, r.approveStatus3),
+        'status': _resolveStatusForApplicant(
+            employeeRole, r.approveStatus1, r.approveStatus2, r.approveStatus3),
         'approved_to': approvers.join(', '),
         'applied_on': r.fromDate != null
             ? DateFormat('dd-MM-yyyy').format(r.fromDate!)
