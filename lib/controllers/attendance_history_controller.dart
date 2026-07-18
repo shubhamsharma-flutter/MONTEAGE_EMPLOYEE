@@ -48,7 +48,8 @@ class AttendanceHistoryController extends GetxController {
   String get _employeeId =>
       (box.read("employee_id") ?? "").toString().trim();
   String get _employeeCode =>
-      (box.read("employee_code") ?? "").toString().trim();
+      (box.read("employee_code") ?? "").toString().trim(); 
+ 
  
   Uri get _historyUri {
     final identifier = _employeeCode.isNotEmpty ? _employeeCode : _employeeId;
