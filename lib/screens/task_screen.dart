@@ -1,14 +1,20 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:open_file/open_file.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../controllers/task_controller.dart';
 import '../models/empdropdownmode.dart' as empdrop;
 import '../models/givenmodelpm.dart' as given;
 import '../models/project_model.dart';
 import '../models/recevedmodel.dart' as received;
+import 'employee_tasks_screen.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
 
@@ -314,9 +320,11 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
       .map((e) => e.trim())
       .where((e) => e.isNotEmpty)
       .toList();
-  final service = [project.productService, project.subProductService]
-      .where((s) => s.isNotEmpty)
-      .join(' • ');
+  final service = [
+    project.productService,
+    project.subProductService,
+  ].where((s) => s.isNotEmpty).join(' • ');
+  final isPM = _isCurrentUserProjectManager();
 
   showDialog(
     context: context,
@@ -336,31 +344,49 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(project.projectName,
-                        style: GoogleFonts.manrope(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: _kTextPrimary)),
+                    child: Text(
+                      project.projectName,
+                      style: GoogleFonts.manrope(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: _kTextPrimary,
+                      ),
+                    ),
                   ),
                   if (project.projectStatus.isNotEmpty) ...[
                     SizedBox(width: 8.w),
                     Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: _statusColor(project.projectStatus)
-                            .withValues(alpha: 0.12),
+                        color: _statusColor(
+                          project.projectStatus,
+                        ).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20.r),
                       ),
-                      child: Text(project.projectStatus,
-                          style: GoogleFonts.inter(
-                              fontSize: 10.5.sp,
-                              fontWeight: FontWeight.w700,
-                              color: _statusColor(project.projectStatus))),
+                      child: Text(
+                        project.projectStatus,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: _statusColor(project.projectStatus),
+                        ),
+                      ),
                     ),
                   ],
                 ],
               ),
+              if (project.deliveryDate.isNotEmpty) ...[
+                SizedBox(height: 8.h),
+                _MetaChip(
+                  icon: Icons.flag_rounded,
+                  label: 'Due',
+                  value: _fmtDate(project.deliveryDate),
+                  highlight: true,
+                ),
+              ],
               SizedBox(height: 12.h),
               Flexible(
                 child: SingleChildScrollView(
@@ -370,52 +396,65 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                       if (project.description.isNotEmpty)
                         _DetailSection(
                           label: 'Description',
-                          child: Text(project.description,
-                              style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  color: _kTextSecondary,
-                                  height: 1.5)),
+                          child: Text(
+                            project.description,
+                            style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              color: _kTextSecondary,
+                              height: 1.5,
+                            ),
+                          ),
                         ),
                       if (project.projectDetails.isNotEmpty &&
                           project.projectDetails != project.description)
                         _DetailSection(
                           label: 'Project Details',
-                          child: Text(project.projectDetails,
-                              style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  color: _kTextSecondary,
-                                  height: 1.5)),
+                          child: Text(
+                            project.projectDetails,
+                            style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              color: _kTextSecondary,
+                              height: 1.5,
+                            ),
+                          ),
                         ),
-                      if (project.clientName.isNotEmpty ||
-                          project.mobileNo.isNotEmpty ||
-                          project.email.isNotEmpty)
+                      if (isPM &&
+                          (project.clientName.isNotEmpty ||
+                              project.mobileNo.isNotEmpty ||
+                              project.email.isNotEmpty))
                         _DetailSection(
                           label: 'Client',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (project.clientName.isNotEmpty)
-                                _DetailRow(Icons.business_rounded,
-                                    project.clientName),
+                                _DetailRow(
+                                  Icons.business_rounded,
+                                  project.clientName,
+                                ),
                               if (project.mobileNo.isNotEmpty)
                                 _DetailRow(
-                                    Icons.call_rounded, project.mobileNo),
+                                  Icons.call_rounded,
+                                  project.mobileNo,
+                                ),
                               if (project.email.isNotEmpty)
-                                _DetailRow(
-                                    Icons.email_rounded, project.email),
+                                _DetailRow(Icons.email_rounded, project.email),
                             ],
                           ),
                         ),
                       if (service.isNotEmpty)
                         _DetailSection(
                           label: 'Service',
-                          child: Text(service,
-                              style: GoogleFonts.inter(
-                                  fontSize: 13.sp, color: _kTextSecondary)),
+                          child: Text(
+                            service,
+                            style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              color: _kTextSecondary,
+                            ),
+                          ),
                         ),
                       if (project.assignDate.isNotEmpty ||
-                          project.projectDate.isNotEmpty ||
-                          project.deliveryDate.isNotEmpty)
+                          project.projectDate.isNotEmpty)
                         _DetailSection(
                           label: 'Timeline',
                           child: Wrap(
@@ -424,20 +463,16 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                             children: [
                               if (project.projectDate.isNotEmpty)
                                 _MetaChip(
-                                    icon: Icons.event_rounded,
-                                    label: 'Started',
-                                    value: _fmtDate(project.projectDate)),
+                                  icon: Icons.event_rounded,
+                                  label: 'Started',
+                                  value: _fmtDate(project.projectDate),
+                                ),
                               if (project.assignDate.isNotEmpty)
                                 _MetaChip(
-                                    icon: Icons.calendar_today_rounded,
-                                    label: 'Assigned',
-                                    value: _fmtDate(project.assignDate)),
-                              if (project.deliveryDate.isNotEmpty)
-                                _MetaChip(
-                                    icon: Icons.flag_rounded,
-                                    label: 'Due',
-                                    value: _fmtDate(project.deliveryDate),
-                                    highlight: true),
+                                  icon: Icons.calendar_today_rounded,
+                                  label: 'Assigned',
+                                  value: _fmtDate(project.assignDate),
+                                ),
                             ],
                           ),
                         ),
@@ -468,14 +503,20 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Icon(Icons.check_circle_outline_rounded,
-                                          size: 14.sp, color: _kBrand),
+                                      Icon(
+                                        Icons.check_circle_outline_rounded,
+                                        size: 14.sp,
+                                        color: _kBrand,
+                                      ),
                                       SizedBox(width: 8.w),
                                       Expanded(
-                                        child: Text(m,
-                                            style: GoogleFonts.inter(
-                                                fontSize: 12.5.sp,
-                                                color: _kTextSecondary)),
+                                        child: Text(
+                                          m,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12.5.sp,
+                                            color: _kTextSecondary,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -495,13 +536,10 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                       if ((project.uploadProjectImg ?? '').isNotEmpty)
                         _DetailSection(
                           label: 'Attachment',
-                          child: _AttachmentLink(
-                            icon: Icons.attach_file_rounded,
-                            label: project.uploadProjectImg!,
-                            onTap: () => _openUrl(
-                                project.uploadProjectImg!.startsWith('http')
-                                    ? project.uploadProjectImg!
-                                    : 'https://montempep.eduagentapp.com/${project.uploadProjectImg}'),
+                          child: _AttachmentDownloadTile(
+                            url: project.uploadProjectImg!.startsWith('http')
+                                ? project.uploadProjectImg!
+                                : 'https://montempep.eduagentapp.com/${project.uploadProjectImg}',
                           ),
                         ),
                     ],
@@ -513,9 +551,13 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text('Close',
-                      style: GoogleFonts.manrope(
-                          fontWeight: FontWeight.w700, color: _kBrand)),
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.manrope(
+                      fontWeight: FontWeight.w700,
+                      color: _kBrand,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -538,12 +580,15 @@ class _DetailSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(),
-              style: GoogleFonts.manrope(
-                  fontSize: 10.5.sp,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.4,
-                  color: _kTextMuted)),
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.manrope(
+              fontSize: 10.5.sp,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.4,
+              color: _kTextMuted,
+            ),
+          ),
           SizedBox(height: 6.h),
           child,
         ],
@@ -567,9 +612,13 @@ class _DetailRow extends StatelessWidget {
           Icon(icon, size: 13.sp, color: _kTextMuted),
           SizedBox(width: 8.w),
           Expanded(
-            child: Text(text,
-                style: GoogleFonts.inter(
-                    fontSize: 12.5.sp, color: _kTextSecondary)),
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 12.5.sp,
+                color: _kTextSecondary,
+              ),
+            ),
           ),
         ],
       ),
@@ -581,8 +630,11 @@ class _AttachmentLink extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _AttachmentLink(
-      {required this.icon, required this.label, required this.onTap});
+  const _AttachmentLink({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -601,13 +653,16 @@ class _AttachmentLink extends StatelessWidget {
             Icon(icon, size: 15.sp, color: _kBrand),
             SizedBox(width: 8.w),
             Expanded(
-              child: Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                      fontSize: 12.sp,
-                      color: _kBrand,
-                      decoration: TextDecoration.underline)),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  color: _kBrand,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
             Icon(Icons.open_in_new_rounded, size: 14.sp, color: _kTextMuted),
           ],
@@ -617,22 +672,150 @@ class _AttachmentLink extends StatelessWidget {
   }
 }
 
+/// Downloads the attachment on tap (Android, via [FileDownloader]) and opens
+/// it with the device's default viewer. Falls back to launching the URL
+/// externally on platforms the downloader plugin doesn't support.
+class _AttachmentDownloadTile extends StatefulWidget {
+  final String url;
+  const _AttachmentDownloadTile({required this.url});
+
+  @override
+  State<_AttachmentDownloadTile> createState() =>
+      _AttachmentDownloadTileState();
+}
+
+class _AttachmentDownloadTileState extends State<_AttachmentDownloadTile> {
+  bool _downloading = false;
+  double _progress = 0;
+  String? _localPath;
+
+  Future<void> _handleTap() async {
+    if (_downloading) return;
+    if (_localPath != null) {
+      await OpenFile.open(_localPath);
+      return;
+    }
+    if (!Platform.isAndroid) {
+      await _openUrl(widget.url);
+      return;
+    }
+
+    setState(() {
+      _downloading = true;
+      _progress = 0;
+    });
+    try {
+      final file = await FileDownloader.downloadFile(
+        url: widget.url,
+        onProgress: (name, progress) {
+          if (mounted) setState(() => _progress = progress);
+        },
+        onDownloadCompleted: (path) {
+          if (!mounted) return;
+          setState(() {
+            _downloading = false;
+            _localPath = path;
+          });
+          OpenFile.open(path);
+        },
+        onDownloadError: (error) {
+          if (!mounted) return;
+          setState(() => _downloading = false);
+          Get.snackbar(
+            'Download failed',
+            error,
+            backgroundColor: _kDanger,
+            colorText: Colors.white,
+          );
+        },
+      );
+      if (file == null && mounted) {
+        setState(() => _downloading = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _downloading = false);
+      Get.snackbar(
+        'Download failed',
+        '$e',
+        backgroundColor: _kDanger,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final label = _downloading
+        ? 'Downloading… ${_progress.toStringAsFixed(0)}%'
+        : (_localPath != null ? 'Open File' : 'View File');
+
+    return GestureDetector(
+      onTap: _handleTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
+        decoration: BoxDecoration(
+          color: _kBg,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: _kBorder),
+        ),
+        child: Row(
+          children: [
+            if (_downloading)
+              SizedBox(
+                width: 15.sp,
+                height: 15.sp,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: _kBrand,
+                  value: _progress > 0 ? _progress / 100 : null,
+                ),
+              )
+            else
+              Icon(Icons.attach_file_rounded, size: 15.sp, color: _kBrand),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: _kBrand,
+                ),
+              ),
+            ),
+            if (!_downloading)
+              Icon(Icons.open_in_new_rounded, size: 14.sp, color: _kTextMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Normalized by stripping everything but letters so stray casing/spacing/
+// punctuation from the API ("Team Leader", "TeamLeader", "team_leader", ...)
+// still matches.
+String _readDesignation() {
+  final box = GetStorage();
+  final raw = (box.read('Designation') ?? box.read('designation') ?? '')
+      .toString();
+  return raw.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
+}
+
+bool _isCurrentUserProjectManager() => _readDesignation() == 'projectmanager';
+
 // ── Task Screen ────────────────────────────────────────────────────────────
 
 class TaskScreen extends GetView<TaskController> {
   const TaskScreen({super.key});
 
-  // Normalized by stripping everything but letters so stray casing/spacing/
-  // punctuation from the API ("Team Leader", "TeamLeader", "team_leader", ...)
-  // still matches.
-  String get _designation {
-    final box = GetStorage();
-    final raw = (box.read('Designation') ?? box.read('designation') ?? '')
-        .toString();
-    return raw.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
-  }
+  String get _designation => _readDesignation();
 
-  bool get _isProjectManager => _designation == 'projectmanager';
+  bool get _isProjectManager => _isCurrentUserProjectManager();
   bool get _isTeamLeader => _designation == 'teamleader';
   bool get _isDeveloper => _designation == 'developer';
 
@@ -945,11 +1128,12 @@ class SearchField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String> onChanged;
-  const SearchField(
-      {super.key,
-      required this.controller,
-      required this.hint,
-      required this.onChanged});
+  const SearchField({
+    super.key,
+    required this.controller,
+    required this.hint,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1060,7 +1244,6 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
   final _c = Get.find<TaskController>();
   final _searchCtrl = TextEditingController();
   String? _statusFilter;
-  String? _employeeFilter;
   String _query = '';
 
   @override
@@ -1169,14 +1352,20 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
                 ),
               ),
               SizedBox(height: 10.h),
-              ...byEmployee.entries.map((e) => _EmployeeStatRow(
-                    name: e.key,
-                    counts: e.value,
-                    selected: _employeeFilter == e.key,
-                    onTap: () => setState(() {
-                      _employeeFilter = _employeeFilter == e.key ? null : e.key;
-                    }),
-                  )),
+              ...byEmployee.entries.map(
+                (e) => _EmployeeStatRow(
+                  name: e.key,
+                  counts: e.value,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => EmployeeTasksScreen(
+                        employeeName: e.key,
+                        canUpdate: widget.canUpdate,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
             SizedBox(height: 20.h),
             Row(
@@ -1236,8 +1425,9 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
                 ),
               )
             else
-              ...filtered.map((t) =>
-                  TaskWorkCard(task: t, canUpdate: widget.canUpdate)),
+              ...filtered.map(
+                (t) => TaskWorkCard(task: t, canUpdate: widget.canUpdate),
+              ),
           ],
         ),
       );
@@ -1317,12 +1507,10 @@ class _StatSummaryCard extends StatelessWidget {
 class _EmployeeStatRow extends StatelessWidget {
   final String name;
   final Map<String, int> counts;
-  final bool selected;
   final VoidCallback onTap;
   const _EmployeeStatRow({
     required this.name,
     required this.counts,
-    required this.selected,
     required this.onTap,
   });
 
@@ -1335,9 +1523,9 @@ class _EmployeeStatRow extends StatelessWidget {
         margin: EdgeInsets.only(bottom: 8.h),
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: selected ? _kBrand.withValues(alpha: 0.08) : _kSurface,
+          color: _kSurface,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: selected ? _kBrand : _kBorder),
+          border: Border.all(color: _kBorder),
         ),
         child: Row(
           children: [
@@ -1390,6 +1578,8 @@ class _EmployeeStatRow extends StatelessWidget {
                   ),
                 ),
               ),
+            SizedBox(width: 4.w),
+            Icon(Icons.chevron_right_rounded, size: 18.sp, color: _kTextMuted),
           ],
         ),
       ),
@@ -2018,12 +2208,17 @@ class _ProjectCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                            fontSize: 12.sp, color: _kTextSecondary),
+                          fontSize: 12.sp,
+                          color: _kTextSecondary,
+                        ),
                       ),
                     ),
                     SizedBox(width: 6.w),
-                    Icon(Icons.info_outline_rounded,
-                        size: 14.sp, color: _kTextMuted),
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 14.sp,
+                      color: _kTextMuted,
+                    ),
                   ],
                 ),
               ),
@@ -2164,14 +2359,18 @@ class TaskWorkCard extends StatelessWidget {
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => _showDescriptionDialog(
-                  context,
-                  task.projectName ?? task.taskTittle ?? 'Description',
-                  task.proDescription!),
+                context,
+                task.projectName ?? task.taskTittle ?? 'Description',
+                task.proDescription!,
+              ),
               child: Text(
                 task.proDescription!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(fontSize: 12.sp, color: _kTextSecondary),
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  color: _kTextSecondary,
+                ),
               ),
             ),
           ],
