@@ -8,7 +8,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:open_file/open_file.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../controllers/task_controller.dart';
 import '../models/empdropdownmode.dart' as empdrop;
 import '../models/givenmodelpm.dart' as given;
@@ -314,7 +313,8 @@ Future<void> _openUrl(String url) async {
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
-void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
+void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
+    {bool isPM = false}) {
   final people = project.assignedTo
       .split(',')
       .map((e) => e.trim())
@@ -378,13 +378,31 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                   ],
                 ],
               ),
-              if (project.deliveryDate.isNotEmpty) ...[
-                SizedBox(height: 8.h),
-                _MetaChip(
-                  icon: Icons.flag_rounded,
-                  label: 'Due',
-                  value: _fmtDate(project.deliveryDate),
-                  highlight: true,
+              if (project.assignDate.isNotEmpty ||
+                  project.projectDate.isNotEmpty ||
+                  project.deliveryDate.isNotEmpty) ...[
+                SizedBox(height: 10.h),
+                Wrap(
+                  spacing: 8.w,
+                  runSpacing: 6.h,
+                  children: [
+                    if (project.projectDate.isNotEmpty)
+                      _MetaChip(
+                          icon: Icons.event_rounded,
+                          label: 'Started',
+                          value: _fmtDate(project.projectDate)),
+                    if (project.assignDate.isNotEmpty)
+                      _MetaChip(
+                          icon: Icons.calendar_today_rounded,
+                          label: 'Assigned',
+                          value: _fmtDate(project.assignDate)),
+                    if (project.deliveryDate.isNotEmpty)
+                      _MetaChip(
+                          icon: Icons.flag_rounded,
+                          label: 'Due',
+                          value: _fmtDate(project.deliveryDate),
+                          highlight: true),
+                  ],
                 ),
               ],
               SizedBox(height: 12.h),
@@ -418,6 +436,7 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                             ),
                           ),
                         ),
+                      // Client contact info is only for the Project Manager.
                       if (isPM &&
                           (project.clientName.isNotEmpty ||
                               project.mobileNo.isNotEmpty ||
@@ -451,29 +470,6 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                               fontSize: 13.sp,
                               color: _kTextSecondary,
                             ),
-                          ),
-                        ),
-                      if (project.assignDate.isNotEmpty ||
-                          project.projectDate.isNotEmpty)
-                        _DetailSection(
-                          label: 'Timeline',
-                          child: Wrap(
-                            spacing: 8.w,
-                            runSpacing: 6.h,
-                            children: [
-                              if (project.projectDate.isNotEmpty)
-                                _MetaChip(
-                                  icon: Icons.event_rounded,
-                                  label: 'Started',
-                                  value: _fmtDate(project.projectDate),
-                                ),
-                              if (project.assignDate.isNotEmpty)
-                                _MetaChip(
-                                  icon: Icons.calendar_today_rounded,
-                                  label: 'Assigned',
-                                  value: _fmtDate(project.assignDate),
-                                ),
-                            ],
                           ),
                         ),
                       if (people.isNotEmpty)
@@ -558,6 +554,172 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project) {
                       color: _kBrand,
                     ),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+// ── Full task details popup for the Given tab — same idea as the project
+// details popup above, but built from a task's own fields. There is no
+// client info on a task at all, so nothing to hide here. ────────────────────
+
+void _showTaskDetailsDialog(BuildContext context, given.Data task) {
+  final service = [task.productService, task.subProductService]
+      .where((s) => s != null && s.toString().trim().isNotEmpty)
+      .join(' • ');
+  final title = task.projectName ?? task.taskTittle ?? 'Task';
+  final status = task.aStatus ?? '';
+
+  showDialog(
+    context: context,
+    builder: (ctx) => Dialog(
+      backgroundColor: _kSurface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 32.h),
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: 560.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(title,
+                        style: GoogleFonts.manrope(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w800,
+                            color: _kTextPrimary)),
+                  ),
+                  if (status.isNotEmpty) ...[
+                    SizedBox(width: 8.w),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: _statusColor(status).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(status,
+                          style: GoogleFonts.inter(
+                              fontSize: 10.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: _statusColor(status))),
+                    ),
+                  ],
+                ],
+              ),
+              if ((task.allocateDate ?? '').isNotEmpty ||
+                  (task.endDeliveryEstimateDate ?? '').isNotEmpty) ...[
+                SizedBox(height: 10.h),
+                Wrap(
+                  spacing: 8.w,
+                  runSpacing: 6.h,
+                  children: [
+                    if ((task.allocateDate ?? '').isNotEmpty)
+                      _MetaChip(
+                          icon: Icons.calendar_today_rounded,
+                          label: 'Start',
+                          value: _fmtDate(task.allocateDate)),
+                    if ((task.endDeliveryEstimateDate ?? '').isNotEmpty)
+                      _MetaChip(
+                          icon: Icons.flag_rounded,
+                          label: 'Delivery',
+                          value: _fmtDate(task.endDeliveryEstimateDate),
+                          highlight: true),
+                  ],
+                ),
+              ],
+              SizedBox(height: 12.h),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if ((task.proDescription ?? '').isNotEmpty)
+                        _DetailSection(
+                          label: 'Description',
+                          child: Text(task.proDescription!,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  color: _kTextSecondary,
+                                  height: 1.5)),
+                        ),
+                      if (service.isNotEmpty)
+                        _DetailSection(
+                          label: 'Service',
+                          child: Text(service,
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp, color: _kTextSecondary)),
+                        ),
+                      if ((task.priority ?? '').isNotEmpty ||
+                          (task.recurrence ?? '').isNotEmpty)
+                        _DetailSection(
+                          label: 'Priority & Recurrence',
+                          child: Wrap(
+                            spacing: 8.w,
+                            runSpacing: 6.h,
+                            children: [
+                              if ((task.priority ?? '').isNotEmpty)
+                                _MetaChip(
+                                    icon: Icons.flag_outlined,
+                                    label: 'Priority',
+                                    value: task.priority!),
+                              if ((task.recurrence ?? '').isNotEmpty)
+                                _MetaChip(
+                                    icon: Icons.repeat_rounded,
+                                    label: 'Recurrence',
+                                    value: task.recurrence!),
+                            ],
+                          ),
+                        ),
+                      if ((task.employeeName ?? '').isNotEmpty)
+                        _DetailSection(
+                          label: 'Assigned To',
+                          child: _PersonRow(name: task.employeeName!),
+                        ),
+                      if (task.progress != null &&
+                          task.progress.toString().trim().isNotEmpty)
+                        _DetailSection(
+                          label: 'Progress',
+                          child: Text('${task.progress}%',
+                              style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: _kTextSecondary)),
+                        ),
+                      if ((task.uploadAllotFile ?? '').isNotEmpty)
+                        _DetailSection(
+                          label: 'Attachment',
+                          child: _AttachmentLink(
+                            icon: Icons.attach_file_rounded,
+                            label: task.uploadAllotFile!,
+                            onTap: () => _openUrl(
+                                task.uploadAllotFile!.startsWith('http')
+                                    ? task.uploadAllotFile!
+                                    : 'https://montempep.eduagentapp.com/${task.uploadAllotFile}'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text('Close',
+                      style: GoogleFonts.manrope(
+                          fontWeight: FontWeight.w700, color: _kBrand)),
                 ),
               ),
             ],
@@ -832,7 +994,8 @@ class TaskScreen extends GetView<TaskController> {
     ];
 
     final tabViews = <Widget>[
-      if (!isDev) _MyProjectsTab(canAssignToTl: isPM, canUpdateStatus: isPM),
+      if (!isDev)
+        _MyProjectsTab(canAssignToTl: isPM, canUpdateStatus: isPM, isPM: isPM),
       if (!isDev) _GivenProjectsTab(canUpdate: true),
       if (!isPM)
         _ReceivedProjectsTab(canAssign: isTL, canUpdate: isTL || isDev),
@@ -950,9 +1113,11 @@ class TaskScreen extends GetView<TaskController> {
 class _MyProjectsTab extends StatefulWidget {
   final bool canAssignToTl;
   final bool canUpdateStatus;
+  final bool isPM;
   const _MyProjectsTab({
     this.canAssignToTl = false,
     this.canUpdateStatus = false,
+    this.isPM = false,
   });
 
   @override
@@ -1064,6 +1229,7 @@ class _MyProjectsTabState extends State<_MyProjectsTab> {
                         project: filtered[i],
                         canAssignToTl: widget.canAssignToTl,
                         canUpdateStatus: widget.canUpdateStatus,
+                        isPM: widget.isPM,
                       ),
                     ),
             ),
@@ -2121,10 +2287,12 @@ class _ProjectCard extends StatelessWidget {
   final ProjectModel project;
   final bool canAssignToTl;
   final bool canUpdateStatus;
+  final bool isPM;
   const _ProjectCard({
     required this.project,
     this.canAssignToTl = false,
     this.canUpdateStatus = false,
+    this.isPM = false,
   });
 
   void _showAssignSheet(BuildContext context) {
@@ -2196,7 +2364,8 @@ class _ProjectCard extends StatelessWidget {
             SizedBox(height: 8.h),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => _showProjectDetailsDialog(context, project),
+              onTap: () =>
+                  _showProjectDetailsDialog(context, project, isPM: isPM),
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 4.h),
                 child: Row(
@@ -2371,11 +2540,7 @@ class TaskWorkCard extends StatelessWidget {
             SizedBox(height: 8.h),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => _showDescriptionDialog(
-                context,
-                task.projectName ?? task.taskTittle ?? 'Description',
-                task.proDescription!,
-              ),
+              onTap: () => _showTaskDetailsDialog(context, task),
               child: Text(
                 task.proDescription!,
                 maxLines: 2,
