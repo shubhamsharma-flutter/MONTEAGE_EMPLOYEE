@@ -2317,6 +2317,19 @@ class TaskWorkCard extends StatelessWidget {
   const TaskWorkCard({super.key, required this.task, this.canUpdate = false});
 
   void _showUpdateSheet(BuildContext context) {
+    if (_isCurrentUserProjectManager()) {
+      Get.bottomSheet(
+        _AssignTaskSheet(
+          projectId: task.sProjectId ?? 0,
+          projectName: task.projectName ?? task.taskTittle ?? '',
+          initialEmployeeId: task.employeeId,
+          initialEmployeeName: task.employeeName,
+        ),
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+      );
+      return;
+    }
     Get.bottomSheet(
       _UpdateProgressSheet(
         proAllocatId: task.proAllocatId ?? 0,
@@ -2665,7 +2678,14 @@ InputDecoration _sheetFieldDecoration(String hint, {IconData? prefixIcon}) =>
 class _AssignTaskSheet extends StatefulWidget {
   final int projectId;
   final String projectName;
-  const _AssignTaskSheet({required this.projectId, required this.projectName});
+  final int? initialEmployeeId;
+  final String? initialEmployeeName;
+  const _AssignTaskSheet({
+    required this.projectId,
+    required this.projectName,
+    this.initialEmployeeId,
+    this.initialEmployeeName,
+  });
 
   @override
   State<_AssignTaskSheet> createState() => _AssignTaskSheetState();
@@ -2674,6 +2694,7 @@ class _AssignTaskSheet extends StatefulWidget {
 class _AssignTaskSheetState extends State<_AssignTaskSheet> {
   final _c = Get.find<TaskController>();
   final _titleCtrl = TextEditingController();
+  final _empNameCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _deliveryCtrl = TextEditingController();
   final _endDeliveryCtrl = TextEditingController();
@@ -2682,18 +2703,24 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
   int? _selectedEmpId;
   String? _selectedEmpName;
 
+  bool get _hasFixedEmployee => widget.initialEmployeeId != null;
+
   static const _priorities = ['High', 'Medium', 'Low'];
 
   @override
   void initState() {
     super.initState();
     _titleCtrl.text = widget.projectName;
+    _selectedEmpId = widget.initialEmployeeId;
+    _selectedEmpName = widget.initialEmployeeName;
+    _empNameCtrl.text = widget.initialEmployeeName ?? '';
     _c.fetchBindEmployees();
   }
 
   @override
   void dispose() {
     _titleCtrl.dispose();
+    _empNameCtrl.dispose();
     _descCtrl.dispose();
     _deliveryCtrl.dispose();
     _endDeliveryCtrl.dispose();
@@ -2770,7 +2797,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
         left: 20.w,
         right: 20.w,
         top: 12.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+        bottom: 24.h,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -2793,98 +2820,116 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
             ),
             SizedBox(height: 14.h),
             _sheetLabel('Employee *'),
-            Obx(() {
-              if (_c.isEmpLoading.value) {
-                return Container(
-                  height: 48.h,
-                  decoration: BoxDecoration(
-                    color: _kSurface,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: _kBorder),
-                  ),
-                  child: const Center(
-                    child: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: _kBrand,
-                        strokeWidth: 2,
+            if (_hasFixedEmployee)
+              TextField(
+                controller: _empNameCtrl,
+                readOnly: true,
+                style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+                decoration: _sheetFieldDecoration(
+                  'Employee name',
+                  prefixIcon: Icons.person_rounded,
+                ),
+              )
+            else
+              Obx(() {
+                if (_c.isEmpLoading.value) {
+                  return Container(
+                    height: 48.h,
+                    decoration: BoxDecoration(
+                      color: _kSurface,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: _kBorder),
+                    ),
+                    child: const Center(
+                      child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: _kBrand,
+                          strokeWidth: 2,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }
-              if (_c.boundEmployees.isEmpty) {
+                  );
+                }
+                if (_c.boundEmployees.isEmpty) {
+                  return Container(
+                    height: 48.h,
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
+                    decoration: BoxDecoration(
+                      color: _kSurface,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: _kBorder),
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'No employees bound to this project',
+                        style: GoogleFonts.inter(
+                          fontSize: 13.sp,
+                          color: const Color(0xFFCBC0BA),
+                        ),
+                      ),
+                    ),
+                  );
+                }
                 return Container(
-                  height: 48.h,
                   padding: EdgeInsets.symmetric(horizontal: 14.w),
                   decoration: BoxDecoration(
                     color: _kSurface,
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(color: _kBorder),
                   ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'No employees bound to this project',
-                      style: GoogleFonts.inter(
-                        fontSize: 13.sp,
-                        color: const Color(0xFFCBC0BA),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value:
+                          _c.boundEmployees.any(
+                            (e) => e.employeeId == _selectedEmpId,
+                          )
+                          ? _selectedEmpId
+                          : null,
+                      isExpanded: true,
+                      icon: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: _kTextMuted,
                       ),
+                      hint: Text(
+                        'Select employee',
+                        style: GoogleFonts.inter(
+                          fontSize: 13.sp,
+                          color: const Color(0xFFCBC0BA),
+                        ),
+                      ),
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: _kTextPrimary,
+                      ),
+                      items: _c.boundEmployees
+                          .where((e) => e.employeeId != null)
+                          .map(
+                            (e) => DropdownMenuItem<int>(
+                              value: e.employeeId,
+                              child: Text(
+                                e.employeeName ?? 'ID ${e.employeeId}',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        setState(() {
+                          _selectedEmpId = v;
+                          _selectedEmpName = _c.boundEmployees
+                              .firstWhere(
+                                (e) => e.employeeId == v,
+                                orElse: () => empdrop.Data(),
+                              )
+                              .employeeName;
+                        });
+                      },
                     ),
                   ),
                 );
-              }
-              return Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.w),
-                decoration: BoxDecoration(
-                  color: _kSurface,
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: _kBorder),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<int>(
-                    value: _selectedEmpId,
-                    isExpanded: true,
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: _kTextMuted,
-                    ),
-                    hint: Text(
-                      'Select employee',
-                      style: GoogleFonts.inter(
-                        fontSize: 13.sp,
-                        color: const Color(0xFFCBC0BA),
-                      ),
-                    ),
-                    style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      color: _kTextPrimary,
-                    ),
-                    items: _c.boundEmployees
-                        .where((e) => e.employeeId != null)
-                        .map(
-                          (e) => DropdownMenuItem<int>(
-                            value: e.employeeId,
-                            child: Text(e.employeeName ?? 'ID ${e.employeeId}'),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) {
-                      setState(() {
-                        _selectedEmpId = v;
-                        _selectedEmpName = _c.boundEmployees
-                            .firstWhere(
-                              (e) => e.employeeId == v,
-                              orElse: () => empdrop.Data(),
-                            )
-                            .employeeName;
-                      });
-                    },
-                  ),
-                ),
-              );
-            }),
+              }),
             SizedBox(height: 14.h),
             _sheetLabel('Description'),
             TextField(
@@ -3034,7 +3079,7 @@ class _AssignprojecttotlState extends State<_Assignprojecttotl> {
         left: 20.w,
         right: 20.w,
         top: 12.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+        bottom: 24.h,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -3326,7 +3371,7 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
         left: 20.w,
         right: 20.w,
         top: 12.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+        bottom: 24.h,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -3487,7 +3532,7 @@ class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
         left: 20.w,
         right: 20.w,
         top: 12.h,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+        bottom: 24.h,
       ),
       child: SingleChildScrollView(
         child: Column(
