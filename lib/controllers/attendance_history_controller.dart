@@ -11,7 +11,7 @@ import '../models/attendance_history_model.dart';
 class AttendanceHistoryController extends GetxController {
   final box = GetStorage();
 
-  final String baseUrl = "http://att.monteage.co.in/";
+  final String baseUrl = "http://att.monteage.pl.in/";
   final String historyApi =
       "http://att.monteage.co.in/attendance/api/attendance/history/";
   final String refreshApi =
@@ -48,8 +48,9 @@ class AttendanceHistoryController extends GetxController {
   String get _employeeId =>
       (box.read("employee_id") ?? "").toString().trim();
   String get _employeeCode =>
-      (box.read("employee_code") ?? "").toString().trim();
-
+      (box.read("employee_code") ?? "").toString().trim(); 
+ 
+ 
   Uri get _historyUri {
     final identifier = _employeeCode.isNotEmpty ? _employeeCode : _employeeId;
     if (identifier.isEmpty) return Uri.parse(historyApi);
@@ -176,72 +177,132 @@ class AttendanceHistoryController extends GetxController {
     }
   }
 
-  String getAttendanceRemark(Result record) {
-    String checkInRemark = "On Time";
-    if (record.timestamp != null && record.timestamp!.trim().isNotEmpty) {
-      try {
-        final dt = DateTime.parse(record.timestamp!).toLocal();
-        final checkInMinutes = dt.hour * 60 + dt.minute;
+ String getAttendanceRemark(Result record) {
+  bool isSaturday = false;
 
-        if (checkInMinutes >= 720) {
-          checkInRemark = "Half Day";
-        } else if (checkInMinutes >= 630) {
-          checkInRemark = "Short Leave (AM)";
-        } else if (checkInMinutes >= 610) {
-          checkInRemark = "Late";
+  if (record.date != null && record.date!.isNotEmpty) {
+    try {
+      final attendanceDate = DateTime.parse(record.date!);
+      isSaturday = attendanceDate.weekday == DateTime.saturday;
+    } catch (_) {}
+  }
+
+  // =========================
+  // CHECK-IN (AM) RULES
+  // =========================
+
+  String checkInRemark = "On Time";
+
+  if (record.timestamp != null && record.timestamp!.trim().isNotEmpty) {
+    try {
+      final dt = DateTime.parse(record.timestamp!).toLocal();
+      final checkInMinutes = dt.hour * 60 + dt.minute;
+
+      if (checkInMinutes >= 720) {
+        checkInRemark = "Half Day";
+      } else if (checkInMinutes >= 630) {
+        checkInRemark = "Short Leave (AM)";
+      } else if (checkInMinutes >= 611) {
+        checkInRemark = "Late";
+      }
+    } catch (_) {}
+  }
+
+  // =========================
+  // CHECK-OUT (PM) RULES
+  // =========================
+
+  String checkOutRemark = "On Time";
+
+  if (record.checkoutTimestamp != null &&
+      record.checkoutTimestamp!.trim().isNotEmpty) {
+    try {
+      final dt = DateTime.parse(record.checkoutTimestamp!).toLocal();
+      final checkOutMinutes = dt.hour * 60 + dt.minute;
+
+      if (isSaturday) {
+        // Saturday: before 3:50 PM = Short Leave PM
+        if (checkOutMinutes < 950) {
+          checkOutRemark = "Short Leave (PM)";
         }
-      } catch (_) {}
-    }
-
-    String checkOutRemark = "On Time";
-    if (record.checkoutTimestamp != null &&
-        record.checkoutTimestamp!.trim().isNotEmpty) {
-      try {
-        final dt = DateTime.parse(record.checkoutTimestamp!).toLocal();
-        final checkOutMinutes = dt.hour * 60 + dt.minute;
+      } else {
+        // Weekdays
 
         if (checkOutMinutes < 810) {
           checkOutRemark = "Half Day";
-        } else if (checkOutMinutes >= 960 && checkOutMinutes <= 1090) {
+        } else if (checkOutMinutes >= 960 &&
+            checkOutMinutes <= 1090) {
           checkOutRemark = "Short Leave (PM)";
         }
-      } catch (_) {}
-    }
-
-    int totalMinutes = 0;
-    if (record.timestamp != null &&
-        record.checkoutTimestamp != null &&
-        record.timestamp!.isNotEmpty &&
-        record.checkoutTimestamp!.isNotEmpty) {
-      try {
-        final checkIn = DateTime.parse(record.timestamp!).toLocal();
-        final checkOut = DateTime.parse(record.checkoutTimestamp!).toLocal();
-        totalMinutes = checkOut.difference(checkIn).inMinutes;
-      } catch (_) {}
-    }
-
-    const priority = {
-      "Half Day": 5,
-      "Short Leave (AM)": 4,
-      "Short Leave (PM)": 3,
-      "Late": 2,
-      "Over Time": 1,
-      "On Time": 0,
-    };
-
-    final ciP = priority[checkInRemark] ?? 0;
-    final coP = priority[checkOutRemark] ?? 0;
-    final finalRemark = ciP >= coP ? checkInRemark : checkOutRemark;
-
-    const int overtimeThreshold = 8 * 60 + 35;
-    if (totalMinutes >= overtimeThreshold &&
-        checkInRemark == "On Time" &&
-        checkOutRemark == "On Time") {
-      return "Over Time";
-    }
-
-    return finalRemark;
+      }
+    } catch (_) {}
   }
+
+  // =========================
+  // TOTAL WORKING MINUTES
+  // =========================
+
+  int totalMinutes = 0;
+
+  if (record.timestamp != null &&
+      record.checkoutTimestamp != null &&
+      record.timestamp!.isNotEmpty &&
+      record.checkoutTimestamp!.isNotEmpty) {
+    try {
+      final checkIn = DateTime.parse(record.timestamp!).toLocal();
+      final checkOut =
+          DateTime.parse(record.checkoutTimestamp!).toLocal();
+
+      totalMinutes =
+          checkOut.difference(checkIn).inMinutes;
+
+      // Fix early-leaving cases
+      if (!isSaturday &&
+          checkInRemark == "On Time" &&
+          checkOutRemark == "On Time") {
+        if (totalMinutes < 240) {
+          checkOutRemark = "Half Day";
+        } else if (totalMinutes < 480) {
+          checkOutRemark = "Short Leave (PM)";
+        }
+      }
+    } catch (_) {}
+  }
+
+  // =========================
+  // FINAL PRIORITY
+  // =========================
+
+  const priority = {
+    "Half Day": 5,
+    "Short Leave (AM)": 4,
+    "Short Leave (PM)": 3,
+    "Late": 2,
+    "Over Time": 1,
+    "On Time": 0,
+  };
+
+  final ciP = priority[checkInRemark] ?? 0;
+  final coP = priority[checkOutRemark] ?? 0;
+
+  final finalRemark =
+      ciP >= coP ? checkInRemark : checkOutRemark;
+
+  // =========================
+  // OVERTIME
+  // =========================
+
+  final int overtimeThreshold =
+      isSaturday ? (6 * 60 + 10) : (8 * 60 + 35);
+
+  if (totalMinutes >= overtimeThreshold &&
+      checkInRemark == "On Time" &&
+      checkOutRemark == "On Time") {
+    return "Over Time";
+  }
+
+  return finalRemark;
+}
 
   Color remarkColor(String remark) {
     switch (remark) {

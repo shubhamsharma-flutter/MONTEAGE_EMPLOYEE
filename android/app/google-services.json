@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "740671474630",
+    "project_id": "myattendanceproj-f4022",
+    "storage_bucket": "myattendanceproj-f4022.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:740671474630:android:6a2cc830d600b5fd2600c7",
+        "android_client_info": {
+          "package_name": "com.myattendance.monteage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAWrY_cD_l1y4cLWglh3I9Kw6mzu5Ualw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

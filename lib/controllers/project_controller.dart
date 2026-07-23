@@ -423,6 +423,7 @@ class ProjectController extends GetxController {
   // ── Loading flags ─────────────────────────────────────────────────────────
   final isLoading = true.obs;
   final isTaskWorksLoading = false.obs;
+  final isAllocateLoading = false.obs; // for MobProjectAllocateTL (TL + junior)
 
   // ── Data ──────────────────────────────────────────────────────────────────
  // ── Data ──────────────────────────────────────────────────────────────────
@@ -512,11 +513,11 @@ class ProjectController extends GetxController {
     debugPrint('🔧 ProjectController.onInit | role: "$userRole" | isManager: $isManager | isTeamLeader: $isTeamLeader | employeeId: "$_employeeId"');
     if (isManager) fetchProjects();
     if (isTeamLeader) {
-      fetchTLProjects();           // received projects
-      fetchTLGivenProjects();      // given projects
-      fetchTLTeamMembers();        // team members for employee selector
-      fetchTLAllocateProjects();   // all allocated projects (MobProjectAllocateTL)
+      fetchTLProjects();
+      fetchTLGivenProjects();
+      fetchTLTeamMembers();
     }
+    if (!isManager) fetchTLAllocateProjects(); // TL and junior employees
     fetchProjectTaskWorks();
   }
 
@@ -632,46 +633,33 @@ class ProjectController extends GetxController {
   Future<void> fetchProjectTaskWorks() async {
     try {
       isTaskWorksLoading(true);
-
-      final res = await http.get(
-        Uri.parse(projectTaskWorkApi),
-        headers: _headers,
-      );
-
-      debugPrint('ProjectTaskWork API [${res.statusCode}]: ${res.body}');
-
-      if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-
-        // The API wraps the array in a "data" key
-        final list = decoded['data'] as List?;
-
-        if (list != null) {
-          projectTaskWorks.value = list
-              .map<ProjectTaskWork>(
-                (e) => ProjectTaskWork.fromJson(e as Map<String, dynamic>),
-              )
-              .toList();
-          debugPrint('Loaded ${projectTaskWorks.length} project task-works');
-        } else {
-          // "data" key missing — still a success but nothing to show
-          debugPrint('ProjectTaskWork: no data key in response');
-          projectTaskWorks.clear();
+      for (final useAuth in [false, true]) {
+        try {
+          final res = await http
+              .get(Uri.parse(projectTaskWorkApi),
+                  headers: useAuth ? _headers : {'Accept': 'application/json'})
+              .timeout(const Duration(seconds: 12));
+          debugPrint('ProjectTaskWork API auth=$useAuth [${res.statusCode}]');
+          if (res.statusCode == 200) {
+            final decoded = jsonDecode(res.body);
+            final list = decoded['data'] as List?;
+            if (list != null) {
+              projectTaskWorks.value = list
+                  .map<ProjectTaskWork>(
+                      (e) => ProjectTaskWork.fromJson(e as Map<String, dynamic>))
+                  .toList();
+              debugPrint('Loaded ${projectTaskWorks.length} project task-works');
+              return;
+            }
+            projectTaskWorks.clear();
+            return;
+          }
+        } catch (e) {
+          debugPrint('ProjectTaskWork auth=$useAuth error: $e');
         }
-      } else {
-        Get.snackbar(
-          'Error',
-          'Failed to load project task works: ${res.statusCode}',
-          snackPosition: SnackPosition.BOTTOM,
-        );
       }
     } catch (e) {
       debugPrint('fetchProjectTaskWorks error: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to load project task works: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
     } finally {
       isTaskWorksLoading(false);
     }
@@ -748,10 +736,20 @@ class ProjectController extends GetxController {
           .toList();
     }
 
+    // Newest first — use the highest ProAllocatId across each item's task list.
+    list.sort((a, b) {
+      final aId = a.data?.fold<int>(0, (m, d) => (d.proAllocatId ?? 0) > m ? (d.proAllocatId ?? 0) : m) ?? 0;
+      final bId = b.data?.fold<int>(0, (m, d) => (d.proAllocatId ?? 0) > m ? (d.proAllocatId ?? 0) : m) ?? 0;
+      return bId.compareTo(aId);
+    });
+
     return list;
   }
   List<ProjectModel> get filteredProjects {
-    var list = allProjects.toList();
+    // Newest first — ProjectId is the database's auto-incrementing row id,
+    // a reliable signal even when the date fields below come back empty.
+    var list = allProjects.toList()
+      ..sort((a, b) => b.projectId.compareTo(a.projectId));
 
     if (selectedFilter.value != 'All') {
       list = list
@@ -826,7 +824,7 @@ class ProjectController extends GetxController {
       if (isTeamLeader) fetchTLProjects(),
       if (isTeamLeader) fetchTLGivenProjects(),
       if (isTeamLeader) fetchTLTeamMembers(),
-      if (isTeamLeader) fetchTLAllocateProjects(),
+      if (!isManager) fetchTLAllocateProjects(),
       fetchProjectTaskWorks(),
     ]);
   }
@@ -932,7 +930,8 @@ class ProjectController extends GetxController {
   // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> fetchTLAllocateProjects() async {
-    if (!isTeamLeader) return;
+    if (isManager) return;
+    isAllocateLoading(true);
     try {
       debugPrint('📡 fetchTLAllocateProjects → $tlAllocateProjectsApi');
       for (final useAuth in [false, true]) {
@@ -968,6 +967,8 @@ class ProjectController extends GetxController {
       tlAllocateProjects.clear();
     } catch (e) {
       debugPrint('fetchTLAllocateProjects error: $e');
+    } finally {
+      isAllocateLoading(false);
     }
   }
 
@@ -976,9 +977,21 @@ class ProjectController extends GetxController {
   // ─────────────────────────────────────────────────────────────────────────
 
   List<TLAllocateProject> get filteredTLAllocateProjects {
+    // Newest first — by assignment date when present, otherwise by
+    // SProjectId (falls back gracefully if AssignDate comes back empty).
+    var list = tlAllocateProjects.toList()
+      ..sort((a, b) {
+        if (a.assignDate != null && b.assignDate != null) {
+          return b.assignDate!.compareTo(a.assignDate!);
+        }
+        if (a.assignDate != null) return -1;
+        if (b.assignDate != null) return 1;
+        return b.sProjectId.compareTo(a.sProjectId);
+      });
+
     final q = tlSearchQuery.value.toLowerCase().trim();
-    if (q.isEmpty) return tlAllocateProjects.toList();
-    return tlAllocateProjects
+    if (q.isEmpty) return list;
+    return list
         .where((p) =>
             p.projectName.toLowerCase().contains(q) ||
             p.employeeName.toLowerCase().contains(q) ||

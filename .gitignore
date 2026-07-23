@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# FCM service account key - contains a real private key, never commit it.
+# Copy assets/secrets/fcm_service_account.json.example to
+# assets/secrets/fcm_service_account.json and fill in real values.
+assets/secrets/fcm_service_account.json

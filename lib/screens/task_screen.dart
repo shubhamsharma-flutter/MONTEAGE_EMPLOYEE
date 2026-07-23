@@ -1,19 +1,21 @@
-import 'dart:io';
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:get_storage/get_storage.dart' hide Data;
+import 'package:open_file/open_file.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/task_controller.dart';
-import '../controllers/project_controller.dart' hide Data;
+import '../models/empdropdownmode.dart' as empdrop;
+import '../models/givenmodelpm.dart' as given;
 import '../models/project_model.dart';
+import '../models/recevedmodel.dart' as received;
+import 'employee_tasks_screen.dart';
 
-// ─────────────────────────────────────────────────────────────────────────
-// HELPER
-// ─────────────────────────────────────────────────────────────────────────
+// ── Palette ──────────────────────────────────────────────────────────────────
 
 String get _designation {
   final box = GetStorage();
@@ -126,14 +128,10 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
                       color: Color(0xFFE8DDD9),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.close,
-                      size: 18.sp,
-                      color: const Color(0xFF6A3027),
-                    ),
+                    child: Icon(Icons.close, size: 18.sp, color: const Color(0xFF6A3027)),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
           SizedBox(height: 12.h),
@@ -141,20 +139,11 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
             padding: EdgeInsets.symmetric(horizontal: 20.w),
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
-              style: GoogleFonts.inter(
-                fontSize: 13.sp,
-                color: const Color(0xFF241917),
-              ),
+              style: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF241917)),
               decoration: InputDecoration(
                 hintText: 'Search employee…',
-                hintStyle: GoogleFonts.inter(
-                  fontSize: 13.sp,
-                  color: const Color(0xFF8B7D77),
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: Color(0xFF6A3027),
-                ),
+                hintStyle: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF8B7D77)),
+                prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF6A3027)),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: EdgeInsets.symmetric(vertical: 12.h),
@@ -168,10 +157,7 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14.r),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFB54A3A),
-                    width: 1.5,
-                  ),
+                  borderSide: const BorderSide(color: Color(0xFFB54A3A), width: 1.5),
                 ),
               ),
             ),
@@ -182,36 +168,21 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
             child: Obx(() {
               final c = widget.controller;
               if (c.isLoading.value && c.employees.isEmpty) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-                );
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF6A3027)));
               }
               final filtered = c.employees
-                  .where(
-                    (e) => e.employeeName.toLowerCase().contains(
-                      _search.toLowerCase(),
-                    ),
-                  )
+                  .where((e) => e.employeeName.toLowerCase().contains(_search.toLowerCase()))
                   .toList();
               if (filtered.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.people_outline,
-                        size: 48.sp,
-                        color: const Color(0xFF8B7D77),
-                      ),
+                      Icon(Icons.people_outline, size: 48.sp, color: const Color(0xFF8B7D77)),
                       SizedBox(height: 12.h),
                       Text(
-                        _search.isEmpty
-                            ? 'No employees found'
-                            : 'No results for "$_search"',
-                        style: GoogleFonts.inter(
-                          fontSize: 14.sp,
-                          color: const Color(0xFF8B7D77),
-                        ),
+                        _search.isEmpty ? 'No employees found' : 'No results for "$_search"',
+                        style: GoogleFonts.inter(fontSize: 14.sp, color: const Color(0xFF8B7D77)),
                       ),
                       if (_search.isEmpty) ...[
                         SizedBox(height: 16.h),
@@ -225,24 +196,16 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
                               backgroundColor: Colors.transparent,
                             );
                           },
-                          icon: Icon(
-                            Icons.refresh_rounded,
-                            size: 16.sp,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            'Retry',
-                            style: GoogleFonts.manrope(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+                          icon: Icon(Icons.refresh_rounded, size: 16.sp, color: Colors.white),
+                          label: Text('Retry',
+                              style: GoogleFonts.manrope(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFB54A3A),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
+                                borderRadius: BorderRadius.circular(10.r)),
                             elevation: 0,
                           ),
                         ),
@@ -267,37 +230,31 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
                     },
                     child: Container(
                       margin: EdgeInsets.only(bottom: 10.h),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 14.h,
-                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14.r),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x0A000000),
-                            blurRadius: 6,
-                            offset: Offset(0, 3),
-                          ),
+                              color: Color(0x0A000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 3))
                         ],
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
                             radius: 20.r,
-                            backgroundColor: const Color(
-                              0xFFB54A3A,
-                            ).withOpacity(0.12),
+                            backgroundColor:
+                                const Color(0xFFB54A3A).withOpacity(0.12),
                             child: Text(
                               emp.employeeName.isNotEmpty
                                   ? emp.employeeName[0]
                                   : '?',
                               style: GoogleFonts.manrope(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFFB54A3A),
-                              ),
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFFB54A3A)),
                             ),
                           ),
                           SizedBox(width: 12.w),
@@ -305,30 +262,21 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  emp.employeeName,
-                                  style: GoogleFonts.manrope(
-                                    fontSize: 14.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF241917),
-                                  ),
-                                ),
+                                Text(emp.employeeName,
+                                    style: GoogleFonts.manrope(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF241917))),
                                 SizedBox(height: 3.h),
-                                Text(
-                                  'Code: ${emp.employeeCode}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.sp,
-                                    color: const Color(0xFF8B7D77),
-                                  ),
-                                ),
+                                Text('Code: ${emp.employeeCode}',
+                                    style: GoogleFonts.inter(
+                                        fontSize: 11.sp,
+                                        color: const Color(0xFF8B7D77))),
                               ],
                             ),
                           ),
-                          Icon(
-                            Icons.chevron_right_rounded,
-                            color: const Color(0xFF6A3027),
-                            size: 20.sp,
-                          ),
+                          Icon(Icons.chevron_right_rounded,
+                              color: const Color(0xFF6A3027), size: 20.sp),
                         ],
                       ),
                     ),
@@ -339,8 +287,8 @@ class _EmployeeListSheetState extends State<_EmployeeListSheet> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -366,9 +314,8 @@ class _EmployeeDetailSheet extends StatelessWidget {
             width: 40.w,
             height: 4.h,
             decoration: BoxDecoration(
-              color: const Color(0xFFCBC0BA),
-              borderRadius: BorderRadius.circular(2.r),
-            ),
+                color: const Color(0xFFCBC0BA),
+                borderRadius: BorderRadius.circular(2.r)),
           ),
           SizedBox(height: 14.h),
           Padding(
@@ -380,8 +327,7 @@ class _EmployeeDetailSheet extends StatelessWidget {
                     Get.back();
                     Get.bottomSheet(
                       _EmployeeListSheet(
-                        controller: Get.find<TaskController>(),
-                      ),
+                          controller: Get.find<TaskController>()),
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
                     );
@@ -389,14 +335,9 @@ class _EmployeeDetailSheet extends StatelessWidget {
                   child: Container(
                     padding: EdgeInsets.all(6.w),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFE8DDD9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      size: 16.sp,
-                      color: const Color(0xFF6A3027),
-                    ),
+                        color: Color(0xFFE8DDD9), shape: BoxShape.circle),
+                    child: Icon(Icons.arrow_back_ios_new_rounded,
+                        size: 16.sp, color: const Color(0xFF6A3027)),
                   ),
                 ),
                 SizedBox(width: 10.w),
@@ -408,36 +349,27 @@ class _EmployeeDetailSheet extends StatelessWidget {
                         ? employee.employeeName[0]
                         : '?',
                     style: GoogleFonts.manrope(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFFB54A3A),
-                    ),
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFB54A3A)),
                   ),
                 ),
                 SizedBox(width: 10.w),
                 Expanded(
-                  child: Text(
-                    employee.employeeName,
-                    style: GoogleFonts.manrope(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF241917),
-                    ),
-                  ),
+                  child: Text(employee.employeeName,
+                      style: GoogleFonts.manrope(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF241917))),
                 ),
                 GestureDetector(
                   onTap: () => Get.back(),
                   child: Container(
                     padding: EdgeInsets.all(6.w),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFE8DDD9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      size: 18.sp,
-                      color: const Color(0xFF6A3027),
-                    ),
+                        color: Color(0xFFE8DDD9), shape: BoxShape.circle),
+                    child: Icon(Icons.close,
+                        size: 18.sp, color: const Color(0xFF6A3027)),
                   ),
                 ),
               ],
@@ -451,14 +383,11 @@ class _EmployeeDetailSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Employee Details',
-                    style: GoogleFonts.manrope(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF241917),
-                    ),
-                  ),
+                  Text('Employee Details',
+                      style: GoogleFonts.manrope(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF241917))),
                   SizedBox(height: 20.h),
                   _row('Employee ID', employee.employeeId.toString()),
                   SizedBox(height: 12.h),
@@ -481,26 +410,19 @@ class _EmployeeDetailSheet extends StatelessWidget {
   }
 
   Widget _row(String label, String value) => Row(
-    children: [
-      Text(
-        '$label: ',
-        style: GoogleFonts.inter(
-          fontSize: 14.sp,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF8B7D77),
-        ),
-      ),
-      Expanded(
-        child: Text(
-          value,
-          style: GoogleFonts.inter(
-            fontSize: 14.sp,
-            color: const Color(0xFF241917),
+        children: [
+          Text('$label: ',
+              style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF8B7D77))),
+          Expanded(
+            child: Text(value,
+                style: GoogleFonts.inter(
+                    fontSize: 14.sp, color: const Color(0xFF241917))),
           ),
-        ),
-      ),
-    ],
-  );
+        ],
+      );
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -519,26 +441,21 @@ class TaskScreen extends GetView<TaskController> {
         automaticallyImplyLeading: false,
         backgroundColor: const Color(0xFFF6F1ED),
         elevation: 0,
-        title: Text(
-          'Tasks',
-          style: GoogleFonts.manrope(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF241917),
-          ),
-        ),
+        title: Text('Tasks',
+            style: GoogleFonts.manrope(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF241917))),
         actions: [
-          Obx(
-            () => IconButton(
-              icon: Icon(
-                _c.isSearchExpanded.value
-                    ? Icons.search_off_rounded
-                    : Icons.search_rounded,
-                color: const Color(0xFF6A3027),
-              ),
-              onPressed: _c.toggleSearch,
-            ),
-          ),
+          Obx(() => IconButton(
+                icon: Icon(
+                  _c.isSearchExpanded.value
+                      ? Icons.search_off_rounded
+                      : Icons.search_rounded,
+                  color: const Color(0xFF6A3027),
+                ),
+                onPressed: _c.toggleSearch,
+              )),
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Color(0xFF6A3027)),
             onPressed: _c.fetchAll,
@@ -548,8 +465,7 @@ class TaskScreen extends GetView<TaskController> {
       body: Obx(() {
         if (_c.isLoading.value) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-          );
+              child: CircularProgressIndicator(color: Color(0xFF6A3027)));
         }
         return _Body(c: _c);
       }),
@@ -585,8 +501,7 @@ class _Body extends StatelessWidget {
 
     if ((isManager || isTL) && !Get.isRegistered<ProjectController>()) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!Get.isRegistered<ProjectController>())
-          Get.put(ProjectController());
+        if (!Get.isRegistered<ProjectController>()) Get.put(ProjectController());
       });
     }
 
@@ -604,9 +519,8 @@ class _Body extends StatelessWidget {
                   return Column(
                     children: [
                       _SearchBar(
-                        onChanged: c.setSearch,
-                        hint: 'Search by title or date…',
-                      ),
+                          onChanged: c.setSearch,
+                          hint: 'Search by title or date…'),
                       SizedBox(height: 12.h),
                     ],
                   );
@@ -640,8 +554,8 @@ class _Body extends StatelessWidget {
                     onChanged: isPMProjectsTab
                         ? pc.setSearch
                         : isTLProjectsTab
-                        ? pc.setTLSearch
-                        : c.setSearch,
+                            ? pc.setTLSearch
+                            : c.setSearch,
                     hint: (isPMProjectsTab || isTLProjectsTab)
                         ? 'Search by project name…'
                         : 'Search by title or date…',
@@ -651,8 +565,8 @@ class _Body extends StatelessWidget {
                 isPMProjectsTab
                     ? _ProjectStatsCard(pc: pc)
                     : isTLProjectsTab
-                    ? _TLProjectStatsCard(pc: pc)
-                    : _StatsCard(c: c, showEmpTile: isManager),
+                        ? _TLProjectStatsCard(pc: pc)
+                        : _StatsCard(c: c, showEmpTile: isManager),
                 SizedBox(height: 12.h),
               ],
             );
@@ -672,39 +586,29 @@ class _Body extends StatelessWidget {
     if (isManager && tab == 1) {
       if (!Get.isRegistered<ProjectController>()) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!Get.isRegistered<ProjectController>())
-            Get.put(ProjectController());
+          if (!Get.isRegistered<ProjectController>()) Get.put(ProjectController());
         });
         return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-        );
+            child: CircularProgressIndicator(color: Color(0xFF6A3027)));
       }
       final pc = Get.find<ProjectController>();
       return Obx(() {
         final projects = pc.filteredProjects;
         if (pc.isLoading.value && projects.isEmpty) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-          );
+              child: CircularProgressIndicator(color: Color(0xFF6A3027)));
         }
         if (projects.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.folder_off_outlined,
-                  size: 58.sp,
-                  color: const Color(0xFF8B7D77),
-                ),
+                Icon(Icons.folder_off_outlined,
+                    size: 58.sp, color: const Color(0xFF8B7D77)),
                 SizedBox(height: 12.h),
-                Text(
-                  'No projects found',
-                  style: GoogleFonts.manrope(
-                    fontSize: 15.sp,
-                    color: const Color(0xFF8B7D77),
-                  ),
-                ),
+                Text('No projects found',
+                    style: GoogleFonts.manrope(
+                        fontSize: 15.sp, color: const Color(0xFF8B7D77))),
               ],
             ),
           );
@@ -720,12 +624,10 @@ class _Body extends StatelessWidget {
     if (isTL && tab == 2) {
       if (!Get.isRegistered<ProjectController>()) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!Get.isRegistered<ProjectController>())
-            Get.put(ProjectController());
+          if (!Get.isRegistered<ProjectController>()) Get.put(ProjectController());
         });
         return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-        );
+            child: CircularProgressIndicator(color: Color(0xFF6A3027)));
       }
       final pc = Get.find<ProjectController>();
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -735,8 +637,7 @@ class _Body extends StatelessWidget {
       return Obx(() {
         if (pc.isLoading.value && pc.tlAllocateProjects.isEmpty) {
           return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-          );
+              child: CircularProgressIndicator(color: Color(0xFF6A3027)));
         }
         final projects = pc.filteredTLAllocateProjects;
         if (projects.isEmpty) {
@@ -744,40 +645,27 @@ class _Body extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.folder_off_outlined,
-                  size: 58.sp,
-                  color: const Color(0xFF8B7D77),
-                ),
+                Icon(Icons.folder_off_outlined,
+                    size: 58.sp, color: const Color(0xFF8B7D77)),
                 SizedBox(height: 12.h),
                 Text(
                   'No projects found',
                   style: GoogleFonts.manrope(
-                    fontSize: 15.sp,
-                    color: const Color(0xFF8B7D77),
-                  ),
+                      fontSize: 15.sp, color: const Color(0xFF8B7D77)),
                 ),
                 SizedBox(height: 16.h),
                 ElevatedButton.icon(
                   onPressed: () => pc.fetchTLAllocateProjects(),
-                  icon: Icon(
-                    Icons.refresh_rounded,
-                    size: 16.sp,
-                    color: Colors.white,
-                  ),
-                  label: Text(
-                    'Retry',
-                    style: GoogleFonts.manrope(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
+                  icon: Icon(Icons.refresh_rounded, size: 16.sp, color: Colors.white),
+                  label: Text('Retry',
+                      style: GoogleFonts.manrope(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFB54A3A),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
+                        borderRadius: BorderRadius.circular(10.r)),
                     elevation: 0,
                   ),
                 ),
@@ -800,19 +688,12 @@ class _Body extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.assignment_outlined,
-                size: 58.sp,
-                color: const Color(0xFF8B7D77),
-              ),
+              Icon(Icons.assignment_outlined,
+                  size: 58.sp, color: const Color(0xFF8B7D77)),
               SizedBox(height: 12.h),
-              Text(
-                'No tasks found',
-                style: GoogleFonts.manrope(
-                  fontSize: 15.sp,
-                  color: const Color(0xFF8B7D77),
-                ),
-              ),
+              Text('No tasks found',
+                  style: GoogleFonts.manrope(
+                      fontSize: 15.sp, color: const Color(0xFF8B7D77))),
             ],
           ),
         );
@@ -839,8 +720,7 @@ class _RegularTaskList extends StatelessWidget {
     return Obx(() {
       if (c.isLoading.value) {
         return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF6A3027)),
-        );
+            child: CircularProgressIndicator(color: Color(0xFF6A3027)));
       }
       final tasks = c.filteredTasks;
       if (tasks.isEmpty) {
@@ -848,40 +728,26 @@ class _RegularTaskList extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.assignment_outlined,
-                size: 58.sp,
-                color: const Color(0xFF8B7D77),
-              ),
+              Icon(Icons.assignment_outlined,
+                  size: 58.sp, color: const Color(0xFF8B7D77)),
               SizedBox(height: 12.h),
-              Text(
-                'No tasks assigned to you',
-                style: GoogleFonts.manrope(
-                  fontSize: 15.sp,
-                  color: const Color(0xFF8B7D77),
-                ),
-              ),
+              Text('No tasks assigned to you',
+                  style: GoogleFonts.manrope(
+                      fontSize: 15.sp, color: const Color(0xFF8B7D77))),
               SizedBox(height: 16.h),
               ElevatedButton.icon(
                 onPressed: () => c.fetchAll(),
-                icon: Icon(
-                  Icons.refresh_rounded,
-                  size: 16.sp,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  'Refresh',
-                  style: GoogleFonts.manrope(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
+                icon:
+                    Icon(Icons.refresh_rounded, size: 16.sp, color: Colors.white),
+                label: Text('Refresh',
+                    style: GoogleFonts.manrope(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFB54A3A),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
+                      borderRadius: BorderRadius.circular(10.r)),
                   elevation: 0,
                 ),
               ),
@@ -967,34 +833,31 @@ class _TabToggle extends StatelessWidget {
 // SEARCH BAR
 // ─────────────────────────────────────────────────────────────────────────
 
-class _SearchBar extends StatelessWidget {
-  final Function(String) onChanged;
-  final String hint;
-  const _SearchBar({required this.onChanged, this.hint = 'Search…'});
+class _DetailSection extends StatelessWidget {
+  final String label;
+  final Widget child;
+  const _DetailSection({required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       onChanged: onChanged,
-      style: GoogleFonts.inter(fontSize: 14.sp, color: const Color(0xFF241917)),
+      style:
+          GoogleFonts.inter(fontSize: 14.sp, color: const Color(0xFF241917)),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.inter(
-          fontSize: 13.sp,
-          color: const Color(0xFF8B7D77),
-        ),
+        hintStyle:
+            GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF8B7D77)),
         prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF6A3027)),
         filled: true,
         fillColor: Colors.white,
         contentPadding: EdgeInsets.symmetric(vertical: 12.h),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14.r),
-          borderSide: BorderSide.none,
-        ),
+            borderRadius: BorderRadius.circular(14.r),
+            borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14.r),
-          borderSide: BorderSide.none,
-        ),
+            borderRadius: BorderRadius.circular(14.r),
+            borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14.r),
           borderSide: const BorderSide(color: Color(0xFFB54A3A), width: 1.5),
@@ -1004,14 +867,10 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// STATS CARD
-// ─────────────────────────────────────────────────────────────────────────
-
-class _StatsCard extends StatelessWidget {
-  final TaskController c;
-  final bool showEmpTile;
-  const _StatsCard({required this.c, this.showEmpTile = false});
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _DetailRow(this.icon, this.text);
 
   @override
   Widget build(BuildContext context) {
@@ -1022,74 +881,58 @@ class _StatsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 14,
-            offset: Offset(0, 7),
-          ),
+              color: Color(0x12000000), blurRadius: 14, offset: Offset(0, 7))
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _StatTile(
-            c: c,
-            label: 'Total',
-            value: () => c.totalCount,
-            icon: Icons.view_agenda_rounded,
-            color: const Color(0xFF6A3027),
-            filter: 'All',
-          ),
+              c: c,
+              label: 'Total',
+              value: () => c.totalCount,
+              icon: Icons.view_agenda_rounded,
+              color: const Color(0xFF6A3027),
+              filter: 'All'),
           _divider(),
           _StatTile(
-            c: c,
-            label: 'Active',
-            value: () => c.activeCount,
-            icon: Icons.play_circle_outline_rounded,
-            color: Colors.orange,
-            filter: 'Active',
-          ),
+              c: c,
+              label: 'Active',
+              value: () => c.activeCount,
+              icon: Icons.play_circle_outline_rounded,
+              color: Colors.orange,
+              filter: 'Active'),
           _divider(),
           _StatTile(
-            c: c,
-            label: 'Completed',
-            value: () => c.approvedCount,
-            icon: Icons.check_circle_rounded,
-            color: Colors.green,
-            filter: 'Approved',
-          ),
+              c: c,
+              label: 'Completed',
+              value: () => c.approvedCount,
+              icon: Icons.check_circle_rounded,
+              color: Colors.green,
+              filter: 'Approved'),
           _divider(),
           _StatTile(
-            c: c,
-            label: 'Overdue',
-            value: () => c.overdueCount,
-            icon: Icons.warning_amber_rounded,
-            color: Colors.red,
-            filter: 'Overdue',
-          ),
+              c: c,
+              label: 'Overdue',
+              value: () => c.overdueCount,
+              icon: Icons.warning_amber_rounded,
+              color: Colors.red,
+              filter: 'Overdue'),
           if (showEmpTile) ...[_divider(), _EmpTileWidget(c: c)],
         ],
       ),
     );
   }
-
-  Widget _divider() =>
-      Container(height: 38.h, width: 1, color: const Color(0xFFE8DDD9));
 }
 
-class _StatTile extends StatelessWidget {
-  final TaskController c;
-  final String label;
-  final int Function() value;
+class _AttachmentLink extends StatelessWidget {
   final IconData icon;
-  final Color color;
-  final String filter;
-  const _StatTile({
-    required this.c,
-    required this.label,
-    required this.value,
+  final String label;
+  final VoidCallback onTap;
+  const _AttachmentLink({
     required this.icon,
-    required this.color,
-    required this.filter,
+    required this.label,
+    required this.onTap,
   });
 
   @override
@@ -1110,29 +953,21 @@ class _StatTile extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(
-                icon,
-                size: 24.sp,
-                color: active ? color : color.withOpacity(0.40),
-              ),
+              Icon(icon,
+                  size: 24.sp,
+                  color: active ? color : color.withOpacity(0.40)),
               SizedBox(height: 5.h),
-              Text(
-                '${value()}',
-                style: GoogleFonts.manrope(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w800,
-                  color: active ? color : const Color(0xFF241917),
-                ),
-              ),
+              Text('${value()}',
+                  style: GoogleFonts.manrope(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
+                      color: active ? color : const Color(0xFF241917))),
               SizedBox(height: 2.h),
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.w600,
-                  color: active ? color : const Color(0xFF8B7D77),
-                ),
-              ),
+              Text(label,
+                  style: GoogleFonts.inter(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      color: active ? color : const Color(0xFF8B7D77))),
             ],
           ),
         ),
@@ -1141,22 +976,23 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _EmpTileWidget extends StatelessWidget {
-  final TaskController c;
-  const _EmpTileWidget({required this.c});
+/// Downloads the attachment on tap (Android, via [FileDownloader]) and opens
+/// it with the device's default viewer. Falls back to launching the URL
+/// externally on platforms the downloader plugin doesn't support.
+class _AttachmentDownloadTile extends StatefulWidget {
+  final String url;
+  const _AttachmentDownloadTile({required this.url});
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => _EmpListTile(
-        count: c.employees.length,
-        onTap: () => Get.bottomSheet(
-          _EmployeeListSheet(controller: c),
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-        ),
-      ),
-    );
+    return Obx(() => _EmpListTile(
+          count: c.employees.length,
+          onTap: () => Get.bottomSheet(
+            _EmployeeListSheet(controller: c),
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+          ),
+        ));
   }
 }
 
@@ -1175,48 +1011,37 @@ class _EmpListTileState extends State<_EmpListTile> {
 
   @override
   Widget build(BuildContext context) {
+    final label = _downloading
+        ? 'Downloading… ${_progress.toStringAsFixed(0)}%'
+        : (_localPath != null ? 'Open File' : 'View File');
+
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      onTap: _handleTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 9.h),
         decoration: BoxDecoration(
-          color: _pressed ? _color.withOpacity(0.10) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.r),
-          border: _pressed
-              ? Border.all(color: _color.withOpacity(0.40), width: 1.2)
-              : Border.all(color: Colors.transparent, width: 1.2),
+          color: _kBg,
+          borderRadius: BorderRadius.circular(10.r),
+          border: Border.all(color: _kBorder),
         ),
-        child: Column(
+        child: Row(
           children: [
-            Icon(
-              Icons.people_alt_rounded,
-              size: 24.sp,
-              color: _pressed ? _color : _color.withOpacity(0.40),
-            ),
+            Icon(Icons.people_alt_rounded,
+                size: 24.sp,
+                color: _pressed ? _color : _color.withOpacity(0.40)),
             SizedBox(height: 5.h),
-            Text(
-              '${widget.count}',
-              style: GoogleFonts.manrope(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w800,
-                color: _pressed ? _color : const Color(0xFF241917),
-              ),
-            ),
+            Text('${widget.count}',
+                style: GoogleFonts.manrope(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: _pressed ? _color : const Color(0xFF241917))),
             SizedBox(height: 2.h),
-            Text(
-              'Emp List',
-              style: GoogleFonts.inter(
-                fontSize: 10.sp,
-                fontWeight: FontWeight.w600,
-                color: _pressed ? _color : const Color(0xFF8B7D77),
-              ),
-            ),
+            Text('Emp List',
+                style: GoogleFonts.inter(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    color: _pressed ? _color : const Color(0xFF8B7D77))),
           ],
         ),
       ),
@@ -1224,13 +1049,28 @@ class _EmpListTileState extends State<_EmpListTile> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// PROJECT STATS CARD
-// ─────────────────────────────────────────────────────────────────────────
+// Normalized by stripping everything but letters so stray casing/spacing/
+// punctuation from the API ("Team Leader", "TeamLeader", "team_leader", ...)
+// still matches.
+String _readDesignation() {
+  final box = GetStorage();
+  final raw = (box.read('Designation') ?? box.read('designation') ?? '')
+      .toString();
+  return raw.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
+}
 
-class _ProjectStatsCard extends StatelessWidget {
-  final ProjectController pc;
-  const _ProjectStatsCard({required this.pc});
+bool _isCurrentUserProjectManager() => _readDesignation() == 'projectmanager';
+
+// ── Task Screen ────────────────────────────────────────────────────────────
+
+class TaskScreen extends GetView<TaskController> {
+  const TaskScreen({super.key});
+
+  String get _designation => _readDesignation();
+
+  bool get _isProjectManager => _isCurrentUserProjectManager();
+  bool get _isTeamLeader => _designation == 'teamleader';
+  bool get _isDeveloper => _designation == 'developer';
 
   @override
   Widget build(BuildContext context) {
@@ -1244,50 +1084,38 @@ class _ProjectStatsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24.r),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x12000000),
-              blurRadius: 14,
-              offset: Offset(0, 7),
-            ),
+                color: Color(0x12000000), blurRadius: 14, offset: Offset(0, 7))
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _pTile(
-              'Total',
-              '${projects.length}',
-              Icons.folder_outlined,
-              const Color(0xFF6A3027),
-              'All',
-              current,
-            ),
+            _pTile('Total', '${projects.length}', Icons.folder_outlined,
+                const Color(0xFF6A3027), 'All', current),
             _divider(),
             _pTile(
-              'Running',
-              '${projects.where((p) => p.projectStatus == 'Running').length}',
-              Icons.play_circle_outline_rounded,
-              Colors.green,
-              'Running',
-              current,
-            ),
+                'Running',
+                '${projects.where((p) => p.projectStatus == 'Running').length}',
+                Icons.play_circle_outline_rounded,
+                Colors.green,
+                'Running',
+                current),
             _divider(),
             _pTile(
-              'Complete',
-              '${projects.where((p) => p.projectStatus == 'Complete').length}',
-              Icons.check_circle_outline_rounded,
-              Colors.blue,
-              'Complete',
-              current,
-            ),
+                'Complete',
+                '${projects.where((p) => p.projectStatus == 'Complete').length}',
+                Icons.check_circle_outline_rounded,
+                Colors.blue,
+                'Complete',
+                current),
             _divider(),
             _pTile(
-              'On Hold',
-              '${projects.where((p) => p.projectStatus == 'On Hold').length}',
-              Icons.pause_circle_outline_rounded,
-              Colors.orange,
-              'On Hold',
-              current,
-            ),
+                'On Hold',
+                '${projects.where((p) => p.projectStatus == 'On Hold').length}',
+                Icons.pause_circle_outline_rounded,
+                Colors.orange,
+                'On Hold',
+                current),
           ],
         ),
       );
@@ -1297,14 +1125,8 @@ class _ProjectStatsCard extends StatelessWidget {
   Widget _divider() =>
       Container(height: 38.h, width: 1, color: const Color(0xFFE8DDD9));
 
-  Widget _pTile(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-    String filter,
-    String current,
-  ) {
+  Widget _pTile(String label, String value, IconData icon, Color color,
+      String filter, String current) {
     final active = current == filter;
     return GestureDetector(
       onTap: () => pc.setFilter(filter),
@@ -1320,29 +1142,21 @@ class _ProjectStatsCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              size: 24.sp,
-              color: active ? color : color.withOpacity(0.40),
-            ),
+            Icon(icon,
+                size: 24.sp,
+                color: active ? color : color.withOpacity(0.40)),
             SizedBox(height: 5.h),
-            Text(
-              value,
-              style: GoogleFonts.manrope(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w800,
-                color: active ? color : const Color(0xFF241917),
-              ),
-            ),
+            Text(value,
+                style: GoogleFonts.manrope(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: active ? color : const Color(0xFF241917))),
             SizedBox(height: 2.h),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 10.sp,
-                fontWeight: FontWeight.w600,
-                color: active ? color : const Color(0xFF8B7D77),
-              ),
-            ),
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w600,
+                    color: active ? color : const Color(0xFF8B7D77))),
           ],
         ),
       ),
@@ -1362,8 +1176,10 @@ class _TLProjectStatsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final all = pc.tlAllocateProjects;
-      final uniqueProjects = all.map((p) => p.sProjectId).toSet().length;
-      final uniqueMembers = all.map((p) => p.employeeId).toSet().length;
+      final uniqueProjects =
+          all.map((p) => p.sProjectId).toSet().length;
+      final uniqueMembers =
+          all.map((p) => p.employeeId).toSet().length;
 
       return Container(
         padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
@@ -1372,10 +1188,7 @@ class _TLProjectStatsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24.r),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x12000000),
-              blurRadius: 14,
-              offset: Offset(0, 7),
-            ),
+                color: Color(0x12000000), blurRadius: 14, offset: Offset(0, 7))
           ],
         ),
         child: Row(
@@ -1420,23 +1233,17 @@ class _TLProjectStatsCard extends StatelessWidget {
       children: [
         Icon(icon, size: 22.sp, color: color),
         SizedBox(height: 5.h),
-        Text(
-          value,
-          style: GoogleFonts.manrope(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF241917),
-          ),
-        ),
+        Text(value,
+            style: GoogleFonts.manrope(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF241917))),
         SizedBox(height: 2.h),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 9.sp,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF8B7D77),
-          ),
-        ),
+        Text(label,
+            style: GoogleFonts.inter(
+                fontSize: 9.sp,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF8B7D77))),
       ],
     );
   }
@@ -1488,7 +1295,8 @@ String _statusLabel(String status) {
 
 /// Progress for the linear progress bar — based on Data.effectiveStatus.
 double _taskProgress(Data t) {
-  final hasJunior = (t.juniorId ?? '').trim().isNotEmpty && t.juniorId != '0';
+  final hasJunior =
+      (t.juniorId ?? '').trim().isNotEmpty && t.juniorId != '0';
   final hasTL = t.teamLeadId.trim().isNotEmpty;
   final totalSteps = (hasJunior && hasTL) ? 3 : 2;
 
@@ -1544,22 +1352,15 @@ class _RemarkTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$byLabel: ${remark.rejectedBy}',
-                  style: GoogleFonts.inter(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.red.shade700,
-                  ),
-                ),
+                Text('$byLabel: ${remark.rejectedBy}',
+                    style: GoogleFonts.inter(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.red.shade700)),
                 SizedBox(height: 3.h),
-                Text(
-                  remark.remark,
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                    color: const Color(0xFF241917),
-                  ),
-                ),
+                Text(remark.remark,
+                    style: GoogleFonts.inter(
+                        fontSize: 12.sp, color: const Color(0xFF241917))),
               ],
             ),
           ),
@@ -1580,13 +1381,9 @@ Future<String?> _showRejectDialog(BuildContext context) async {
     builder: (ctx) => AlertDialog(
       backgroundColor: const Color(0xFFF6F1ED),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
-      title: Text(
-        'Rejection Remark',
-        style: GoogleFonts.manrope(
-          fontWeight: FontWeight.w800,
-          color: const Color(0xFF241917),
-        ),
-      ),
+      title: Text('Rejection Remark',
+          style: GoogleFonts.manrope(
+              fontWeight: FontWeight.w800, color: const Color(0xFF241917))),
       content: TextField(
         controller: ctrl,
         maxLines: 3,
@@ -1594,35 +1391,30 @@ Future<String?> _showRejectDialog(BuildContext context) async {
         decoration: InputDecoration(
           hintText: 'Enter reason for rejection…',
           hintStyle: GoogleFonts.inter(
-            fontSize: 13.sp,
-            color: const Color(0xFF8B7D77),
-          ),
+              fontSize: 13.sp, color: const Color(0xFF8B7D77)),
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide.none,
-          ),
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFFB54A3A), width: 1.5),
+            borderSide:
+                const BorderSide(color: Color(0xFFB54A3A), width: 1.5),
           ),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: Text(
-            'Cancel',
-            style: GoogleFonts.manrope(color: const Color(0xFF8B7D77)),
-          ),
+          child: Text('Cancel',
+              style: GoogleFonts.manrope(color: const Color(0xFF8B7D77))),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFB54A3A),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.r),
-            ),
+                borderRadius: BorderRadius.circular(10.r)),
             elevation: 0,
           ),
           onPressed: () {
@@ -1630,17 +1422,13 @@ Future<String?> _showRejectDialog(BuildContext context) async {
             if (text.isEmpty) return;
             Navigator.pop(ctx, text);
           },
-          child: Text(
-            'Reject',
-            style: GoogleFonts.manrope(
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
+          child: Text('Reject',
+              style: GoogleFonts.manrope(
+                  fontWeight: FontWeight.w700, color: Colors.white)),
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1654,66 +1442,54 @@ Future<String?> _showMarkDoneDialog(BuildContext context) async {
     builder: (ctx) => AlertDialog(
       backgroundColor: const Color(0xFFF6F1ED),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
-      title: Text(
-        'Mark as Done',
-        style: GoogleFonts.manrope(
-          fontWeight: FontWeight.w800,
-          color: const Color(0xFF241917),
-        ),
-      ),
+      title: Text('Mark as Done',
+          style: GoogleFonts.manrope(
+              fontWeight: FontWeight.w800, color: const Color(0xFF241917))),
       content: TextField(
         controller: ctrl,
         maxLines: 3,
         autofocus: true,
         decoration: InputDecoration(
-          hintText: 'Describe what you completed (optional)…',
+          hintText: hint,
           hintStyle: GoogleFonts.inter(
-            fontSize: 13.sp,
-            color: const Color(0xFF8B7D77),
-          ),
+              fontSize: 13.sp, color: const Color(0xFF8B7D77)),
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide.none,
-          ),
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: BorderSide.none),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: const BorderSide(color: Color(0xFF4CAF50), width: 1.5),
+            borderSide:
+                const BorderSide(color: Color(0xFF4CAF50), width: 1.5),
           ),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: Text(
-            'Cancel',
-            style: GoogleFonts.manrope(color: const Color(0xFF8B7D77)),
-          ),
+          child: Text('Cancel',
+              style: GoogleFonts.manrope(color: const Color(0xFF8B7D77))),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4CAF50),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.r),
-            ),
+                borderRadius: BorderRadius.circular(10.r)),
             elevation: 0,
           ),
           onPressed: () => Navigator.pop(
-            ctx,
-            ctrl.text.trim().isEmpty ? 'Task completed' : ctrl.text.trim(),
-          ),
-          child: Text(
-            'Submit',
-            style: GoogleFonts.manrope(
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
+              ctx,
+              ctrl.text.trim().isEmpty
+                  ? 'Task completed'
+                  : ctrl.text.trim()),
+          child: Text('Submit',
+              style: GoogleFonts.manrope(
+                  fontWeight: FontWeight.w700, color: Colors.white)),
         ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1721,7 +1497,7 @@ Future<String?> _showMarkDoneDialog(BuildContext context) async {
 // ─────────────────────────────────────────────────────────────────────────
 
 class _TaskCard extends StatefulWidget {
-  final Data task; // ← Data, not old TaskModel
+  final Data task;          // ← Data, not old TaskModel
   final TaskController c;
   const _TaskCard({required this.task, required this.c});
 
@@ -1739,18 +1515,15 @@ class _TaskCardState extends State<_TaskCard>
   void initState() {
     super.initState();
     _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
+        vsync: this, duration: const Duration(milliseconds: 220));
+    _rotate = Tween<double>(begin: 0, end: 0.5).animate(
+      CurvedAnimation(parent: _anim, curve: Curves.easeInOut),
     );
-    _rotate = Tween<double>(
-      begin: 0,
-      end: 0.5,
-    ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    _anim.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -1763,8 +1536,7 @@ class _TaskCardState extends State<_TaskCard>
     final t = widget.task;
     final s = t.effectiveStatus;
     final isApiPendingReview =
-        (t.aStatus == 'Done' || t.aStatus == 'InProgress') &&
-        t.overrideStatus == null;
+        (t.aStatus == 'Done' || t.aStatus == 'InProgress') && t.overrideStatus == null;
     if (_isProjectManager) {
       final isGiven = c.givenTasks.any((g) => g.uniqueId == t.uniqueId);
       return isGiven &&
@@ -1808,10 +1580,7 @@ class _TaskCardState extends State<_TaskCard>
             : Border.all(color: Colors.transparent),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
+              color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 4))
         ],
       ),
       child: Column(
@@ -1833,10 +1602,9 @@ class _TaskCardState extends State<_TaskCard>
                         child: Text(
                           t.title,
                           style: GoogleFonts.manrope(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF241917),
-                          ),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF241917)),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1851,19 +1619,14 @@ class _TaskCardState extends State<_TaskCard>
                           height: 8.w,
                           margin: EdgeInsets.only(right: 4.w),
                           decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
+                              color: Colors.red, shape: BoxShape.circle),
                         );
                       }),
                       SizedBox(width: 2.w),
                       RotationTransition(
                         turns: _rotate,
-                        child: Icon(
-                          Icons.expand_more_rounded,
-                          color: const Color(0xFF6A3027),
-                          size: 22.sp,
-                        ),
+                        child: Icon(Icons.expand_more_rounded,
+                            color: const Color(0xFF6A3027), size: 22.sp),
                       ),
                     ],
                   ),
@@ -1899,9 +1662,8 @@ class _TaskCardState extends State<_TaskCard>
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: _ExpandedTaskBody(task: t, c: widget.c),
-            crossFadeState: _expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
+            crossFadeState:
+                _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 220),
           ),
         ],
@@ -1920,10 +1682,9 @@ class _ExpandedTaskBody extends StatelessWidget {
   const _ExpandedTaskBody({required this.task, required this.c});
 
   /// Always resolve the live copy from the observable list.
-  Data _live() => c.allTasks.firstWhere(
-    (x) => x.uniqueId == task.uniqueId,
-    orElse: () => task,
-  );
+  Data _live() =>
+      c.allTasks.firstWhere((x) => x.uniqueId == task.uniqueId,
+          orElse: () => task);
 
   static bool _isApproved(String s) => TaskStatus.isApproved(s);
   static bool _isRejected(String s) => TaskStatus.isRejected(s);
@@ -1969,8 +1730,7 @@ class _ExpandedTaskBody extends StatelessWidget {
 
       // API returns "Done"/"InProgress" to mean "employee submitted, awaiting review".
       // Don't treat these as fully approved when they're in the given list.
-      final isApiPendingReview =
-          isGiven &&
+      final isApiPendingReview = isGiven &&
           (live.aStatus == 'Done' || live.aStatus == 'InProgress') &&
           live.overrideStatus == null;
 
@@ -1987,16 +1747,14 @@ class _ExpandedTaskBody extends StatelessWidget {
       final canDone = c.canMarkDone(live);
       final isAwaiting = c.isSubmittedAwaitingReview(live);
 
-      final tlShouldReview =
-          isTL &&
+      final tlShouldReview = isTL &&
           currentTab == 0 &&
           isGiven &&
           (status == TaskStatus.awaitingTL ||
               (status == TaskStatus.submitted && is3Way) ||
               isApiPendingReview);
 
-      final pmShouldReview =
-          isPM &&
+      final pmShouldReview = isPM &&
           currentTab == 0 &&
           isGiven &&
           (status == TaskStatus.awaitingPM ||
@@ -2046,33 +1804,25 @@ class _ExpandedTaskBody extends StatelessWidget {
 
                 // ── Description ─────────────────────────────────────
                 if (live.description.isNotEmpty) ...[
-                  Text(
-                    'Description',
-                    style: GoogleFonts.manrope(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF8B7D77),
-                    ),
-                  ),
+                  Text('Description',
+                      style: GoogleFonts.manrope(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF8B7D77))),
                   SizedBox(height: 4.h),
-                  Text(
-                    live.description,
-                    style: GoogleFonts.inter(
-                      fontSize: 13.sp,
-                      color: const Color(0xFF241917),
-                    ),
-                  ),
+                  Text(live.description,
+                      style: GoogleFonts.inter(
+                          fontSize: 13.sp, color: const Color(0xFF241917))),
                   SizedBox(height: 12.h),
                 ],
 
                 // ── Meta ────────────────────────────────────────────
                 if (!isEmp)
                   _MetaRow(
-                    label: 'Assigned by',
-                    value: live.assignedByName.isNotEmpty
-                        ? live.assignedByName
-                        : '—',
-                  ),
+                      label: 'Assigned by',
+                      value: live.assignedByName.isNotEmpty
+                          ? live.assignedByName
+                          : '—'),
                 _MetaRow(
                   label: 'Assigned to',
                   value: () {
@@ -2096,9 +1846,7 @@ class _ExpandedTaskBody extends StatelessWidget {
                   _RemarkTile(byLabel: 'TL', remark: live.leadRemark!),
                 if (live.assignerRemark != null)
                   _RemarkTile(
-                    byLabel: 'Assigner',
-                    remark: live.assignerRemark!,
-                  ),
+                      byLabel: 'Assigner', remark: live.assignerRemark!),
                 if (live.pmRemark != null)
                   _RemarkTile(byLabel: 'PM', remark: live.pmRemark!),
 
@@ -2108,30 +1856,24 @@ class _ExpandedTaskBody extends StatelessWidget {
                 if (approved) ...[
                   Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 8.h,
-                    ),
+                        horizontal: 12.w, vertical: 8.h),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: Colors.green.withOpacity(0.30)),
+                      border:
+                          Border.all(color: Colors.green.withOpacity(0.30)),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 16.sp,
-                          color: Colors.green,
-                        ),
+                        Icon(Icons.check_circle_outline_rounded,
+                            size: 16.sp, color: Colors.green),
                         SizedBox(width: 8.w),
-                        Text(
-                          'Task completed and approved ✓',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green.shade700,
-                          ),
-                        ),
+                        Text('Task completed and approved ✓',
+                            style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.green.shade700)),
                       ],
                     ),
                   ),
@@ -2142,32 +1884,24 @@ class _ExpandedTaskBody extends StatelessWidget {
                 if (rejected && isWorkerCtx) ...[
                   Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
-                    ),
+                        horizontal: 12.w, vertical: 10.h),
                     decoration: BoxDecoration(
                       color: Colors.orange.withOpacity(0.07),
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
-                        color: Colors.orange.withOpacity(0.30),
-                      ),
+                          color: Colors.orange.withOpacity(0.30)),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.replay_rounded,
-                          size: 15.sp,
-                          color: Colors.orange,
-                        ),
+                        Icon(Icons.replay_rounded,
+                            size: 15.sp, color: Colors.orange),
                         SizedBox(width: 8.w),
                         Expanded(
                           child: Text(
-                            'Your submission was rejected. See the remark above and resubmit.',
-                            style: GoogleFonts.inter(
-                              fontSize: 12.sp,
-                              color: Colors.orange.shade800,
-                            ),
-                          ),
+                              'Your submission was rejected. See the remark above and resubmit.',
+                              style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  color: Colors.orange.shade800)),
                         ),
                       ],
                     ),
@@ -2179,30 +1913,23 @@ class _ExpandedTaskBody extends StatelessWidget {
                 if (workerWaitMsg.isNotEmpty && !approved) ...[
                   Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
-                    ),
+                        horizontal: 12.w, vertical: 10.h),
                     decoration: BoxDecoration(
                       color: Colors.blue.withOpacity(0.06),
                       borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: Colors.blue.withOpacity(0.20)),
+                      border: Border.all(
+                          color: Colors.blue.withOpacity(0.20)),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.hourglass_empty_rounded,
-                          size: 15.sp,
-                          color: Colors.blue,
-                        ),
+                        Icon(Icons.hourglass_empty_rounded,
+                            size: 15.sp, color: Colors.blue),
                         SizedBox(width: 8.w),
                         Expanded(
-                          child: Text(
-                            workerWaitMsg,
-                            style: GoogleFonts.inter(
-                              fontSize: 12.sp,
-                              color: Colors.blue.shade800,
-                            ),
-                          ),
+                          child: Text(workerWaitMsg,
+                              style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  color: Colors.blue.shade800)),
                         ),
                       ],
                     ),
@@ -2214,32 +1941,25 @@ class _ExpandedTaskBody extends StatelessWidget {
                 if (anyReviewAction) ...[
                   Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 10.h,
-                    ),
+                        horizontal: 12.w, vertical: 10.h),
                     decoration: BoxDecoration(
                       color: Colors.amber.withOpacity(0.09),
                       borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: Colors.amber.withOpacity(0.35)),
+                      border: Border.all(
+                          color: Colors.amber.withOpacity(0.35)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.notification_important_rounded,
-                          size: 15.sp,
-                          color: Colors.amber.shade800,
-                        ),
+                        Icon(Icons.notification_important_rounded,
+                            size: 15.sp, color: Colors.amber.shade800),
                         SizedBox(width: 8.w),
                         Expanded(
-                          child: Text(
-                            reviewerMsg,
-                            style: GoogleFonts.inter(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.amber.shade900,
-                            ),
-                          ),
+                          child: Text(reviewerMsg,
+                              style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.amber.shade900)),
                         ),
                       ],
                     ),
@@ -2255,12 +1975,11 @@ class _ExpandedTaskBody extends StatelessWidget {
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 10.h),
                       child: const CircularProgressIndicator(
-                        color: Color(0xFF6A3027),
-                        strokeWidth: 2.5,
-                      ),
+                          color: Color(0xFF6A3027), strokeWidth: 2.5),
                     ),
                   )
                 else ...[
+
                   // ── WORKER: Mark Done ────────────────────────────────
                   if (isWorkerCtx) ...[
                     if (canDone || isAwaiting)
@@ -2269,14 +1988,11 @@ class _ExpandedTaskBody extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: canDone
                               ? () async {
-                                  final desc = await _showMarkDoneDialog(
-                                    context,
-                                  );
+                                  final desc =
+                                      await _showMarkDoneDialog(context);
                                   if (desc != null)
-                                    c.markDone(
-                                      live.uniqueId,
-                                      description: desc,
-                                    );
+                                    c.markDone(live.uniqueId,
+                                        description: desc);
                                 }
                               : null,
                           icon: Icon(
@@ -2290,24 +2006,22 @@ class _ExpandedTaskBody extends StatelessWidget {
                             isAwaiting
                                 ? 'Submitted — awaiting review'
                                 : rejected
-                                ? 'Resubmit task'
-                                : 'Mark as done',
+                                    ? 'Resubmit task'
+                                    : 'Mark as done',
                             style: GoogleFonts.manrope(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isAwaiting
                                 ? Colors.grey.shade400
                                 : rejected
-                                ? Colors.orange
-                                : const Color(0xFF4CAF50),
+                                    ? Colors.orange
+                                    : const Color(0xFF4CAF50),
                             disabledBackgroundColor: Colors.grey.shade400,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
+                                borderRadius: BorderRadius.circular(12.r)),
                             elevation: 0,
                             padding: EdgeInsets.symmetric(vertical: 12.h),
                           ),
@@ -2329,111 +2043,39 @@ class _ExpandedTaskBody extends StatelessWidget {
                       onReject: (r) => c.leadReject(live.uniqueId, r),
                       context: context,
                     ),
-                    SizedBox(height: 8.h),
-                  ],
-
-                  // ── PM FINAL REVIEWER ────────────────────────────────
-                  if (canPApprove) ...[
-                    _SectionLabel('PM Final Approval', color: Colors.purple),
-                    SizedBox(height: 8.h),
-                    _ApproveRejectRow(
-                      approveLabel: 'Final Approve',
-                      approveIcon: Icons.workspace_premium_rounded,
-                      approveColor: Colors.purple,
-                      rejectColor: Colors.purple,
-                      onApprove: () => c.pmApprove(live.uniqueId),
-                      onReject: (r) => c.pmReject(live.uniqueId, r),
-                      context: context,
-                    ),
-                    SizedBox(height: 8.h),
-                  ],
-
-                  // ── Edit / Delete ────────────────────────────────────
-                  // if (!approved && isGiven) ...[
-                  //   SizedBox(height: 4.h),
-                  //   Row(
-                  //     mainAxisAlignment: MainAxisAlignment.end,
-                  //     children: [
-                  //       _IconTextBtn(
-                  //         icon: Icons.edit_outlined,
-                  //         label: 'Edit',
-                  //         color: const Color(0xFF6A3027),
-                  //         bg: const Color(0xFFE8DDD9),
-                  //         onTap: () => Get.bottomSheet(
-                  //           _TaskForm(c: c, existing: live),
-                  //           isScrollControlled: true,
-                  //           backgroundColor: Colors.transparent,
-                  //         ),
-                  //       ),
-                  //       SizedBox(width: 8.w),
-                  //       _IconTextBtn(
-                  //         icon: Icons.delete_outline_rounded,
-                  //         label: 'Delete',
-                  //         color: Colors.red,
-                  //         bg: Colors.red.withOpacity(0.10),
-                  //         onTap: () => showDialog(
-                  //           context: context,
-                  //           builder: (ctx) => AlertDialog(
-                  //             backgroundColor: const Color(0xFFF6F1ED),
-                  //             shape: RoundedRectangleBorder(
-                  //                 borderRadius: BorderRadius.circular(18.r)),
-                  //             title: Text('Delete task?',
-                  //                 style: GoogleFonts.manrope(
-                  //                     fontWeight: FontWeight.w800,
-                  //                     color: const Color(0xFF241917))),
-                  //             content: Text('This cannot be undone.',
-                  //                 style: GoogleFonts.inter(
-                  //                     fontSize: 13.sp,
-                  //                     color: const Color(0xFF8B7D77))),
-                  //             actions: [
-                  //               TextButton(
-                  //                 onPressed: () => Navigator.pop(ctx),
-                  //                 child: Text('Cancel',
-                  //                     style: GoogleFonts.manrope(
-                  //                         color: const Color(0xFF8B7D77))),
-                  //               ),
-                  //               ElevatedButton(
-                  //                 style: ElevatedButton.styleFrom(
-                  //                   backgroundColor: Colors.red,
-                  //                   shape: RoundedRectangleBorder(
-                  //                       borderRadius:
-                  //                           BorderRadius.circular(10.r)),
-                  //                   elevation: 0,
-                  //                 ),
-                  //                 onPressed: () {
-                  //                   Navigator.pop(ctx);
-                  //                   c.deleteTask(live.uniqueId);
-                  //                 },
-                  //                 child: Text('Delete',
-                  //                     style: GoogleFonts.manrope(
-                  //                         fontWeight: FontWeight.w700,
-                  //                         color: Colors.white)),
-                  //               ),
-                  //             ],
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ],
-                ],
-              ],
-            ),
-          ),
-        ],
-      );
-    });
+                  ),
+                ),
+              ),
+            SizedBox(width: 4.w),
+            Icon(Icons.chevron_right_rounded, size: 18.sp, color: _kTextMuted),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// APPROVAL CHAIN TIMELINE  — uses Data
-// ─────────────────────────────────────────────────────────────────────────
+// ── Tab 3: Received Projects ──────────────────────────────────────────────────
 
-class _ApprovalChain extends StatelessWidget {
-  final Data task;
-  final bool is3Way;
-  const _ApprovalChain({required this.task, required this.is3Way});
+class _ReceivedProjectsTab extends StatefulWidget {
+  final bool canAssign;
+  final bool canUpdate;
+  const _ReceivedProjectsTab({this.canAssign = false, this.canUpdate = false});
+
+  @override
+  State<_ReceivedProjectsTab> createState() => _ReceivedProjectsTabState();
+}
+
+class _ReceivedProjectsTabState extends State<_ReceivedProjectsTab> {
+  final _c = Get.find<TaskController>();
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2452,7 +2094,11 @@ class _ApprovalChain extends StatelessWidget {
           sub: task.teamLeadName,
           state: _tlState(status),
         ),
-        _ChainStep(label: 'PM Approve', sub: 'PM', state: _pmState(status)),
+        _ChainStep(
+          label: 'PM Approve',
+          sub: 'PM',
+          state: _pmState(status),
+        ),
       ]);
     } else {
       steps.addAll([
@@ -2461,99 +2107,82 @@ class _ApprovalChain extends StatelessWidget {
           sub: task.teamLeadName.isNotEmpty ? task.teamLeadName : '—',
           state: _empState(status),
         ),
-        _ChainStep(label: 'PM Approve', sub: 'PM', state: _pmState(status)),
+        _ChainStep(
+          label: 'PM Approve',
+          sub: 'PM',
+          state: _pmState(status),
+        ),
       ]);
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+      margin: EdgeInsets.only(bottom: 14.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F1ED),
-        borderRadius: BorderRadius.circular(12.r),
+        color: _kSurface,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: _kBrand.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(steps.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            final leftDone = steps[i ~/ 2].state == _StepState.done;
-            return Expanded(
-              child: Container(
-                height: 2,
-                color: leftDone
-                    ? const Color(0xFF4CAF50)
-                    : const Color(0xFFE0D5D0),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 5.w, color: accentColor),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
+                child: child,
               ),
-            );
-          }
-          return Flexible(child: _ChainNode(step: steps[i ~/ 2]));
-        }),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  static _StepState _empState(String s) {
-    if (TaskStatus.isApproved(s)) return _StepState.done;
-    if (TaskStatus.isRejected(s)) return _StepState.rejected;
-    if (s == 'Pending') return _StepState.pending;
-    return _StepState.done;
-  }
+class _CardTitleRow extends StatelessWidget {
+  final String title;
+  final String status;
+  final Color statusColor;
+  const _CardTitleRow({
+    required this.title,
+    required this.status,
+    required this.statusColor,
+  });
 
-  static _StepState _tlState(String s) {
-    if (TaskStatus.isApproved(s)) return _StepState.done;
-    if (s == TaskStatus.tlRejected) return _StepState.rejected;
-    if (s == TaskStatus.awaitingTL) return _StepState.active;
-    if (s == TaskStatus.awaitingPM || s == 'AwaitingAssignerApproval')
-      return _StepState.done;
-    return _StepState.pending;
-  }
-
-  static _StepState _pmState(String s) {
-    if (TaskStatus.isApproved(s)) return _StepState.done;
-    if (s == TaskStatus.pmRejected) return _StepState.rejected;
-    if (s == TaskStatus.awaitingPM || s == TaskStatus.submitted)
-      return _StepState.active;
-    return _StepState.pending;
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.manrope(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w700,
+              color: _kTextPrimary,
+            ),
+          ),
+        ),
+        SizedBox(width: 8.w),
+        _StatusPill(label: status, color: statusColor),
+      ],
+    );
   }
 }
 
-enum _StepState { done, active, pending, rejected }
-
-class _ChainStep {
+class _StatusPill extends StatelessWidget {
   final String label;
-  final String? sub;
-  final _StepState state;
-  const _ChainStep({required this.label, this.sub, required this.state});
-}
-
-class _ChainNode extends StatelessWidget {
-  final _ChainStep step;
-  const _ChainNode({required this.step});
-
-  Color get _color {
-    switch (step.state) {
-      case _StepState.done:
-        return Colors.green;
-      case _StepState.active:
-        return const Color(0xFFB54A3A);
-      case _StepState.rejected:
-        return Colors.red;
-      case _StepState.pending:
-        return const Color(0xFFCBC0BA);
-    }
-  }
-
-  IconData get _icon {
-    switch (step.state) {
-      case _StepState.done:
-        return Icons.check_rounded;
-      case _StepState.active:
-        return Icons.more_horiz_rounded;
-      case _StepState.rejected:
-        return Icons.close_rounded;
-      case _StepState.pending:
-        return Icons.radio_button_unchecked;
-    }
-  }
+  final Color color;
+  const _StatusPill({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -2565,78 +2194,61 @@ class _ChainNode extends StatelessWidget {
           height: 20.w,
           decoration: BoxDecoration(
             color: _color.withOpacity(
-              step.state == _StepState.pending ? 0.10 : 0.16,
-            ),
+                step.state == _StepState.pending ? 0.10 : 0.16),
             shape: BoxShape.circle,
             border: Border.all(color: _color, width: 1.4),
           ),
           child: Icon(_icon, size: 10.sp, color: _color),
         ),
         SizedBox(height: 3.h),
-        Text(
-          step.label,
-          style: GoogleFonts.inter(
-            fontSize: 8.sp,
-            fontWeight: FontWeight.w700,
-            color: _color,
-          ),
-        ),
+        Text(step.label,
+            style: GoogleFonts.inter(
+                fontSize: 8.sp, fontWeight: FontWeight.w700, color: _color)),
         if (step.sub != null && step.sub!.isNotEmpty)
           Text(
-            step.sub!,
+            label,
             style: GoogleFonts.inter(
-              fontSize: 7.sp,
-              color: const Color(0xFF8B7D77),
-            ),
+                fontSize: 7.sp, color: const Color(0xFF8B7D77)),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
           ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// SMALL HELPERS
-// ─────────────────────────────────────────────────────────────────────────
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _SectionLabel(this.text, {this.color = const Color(0xFF6A3027)});
+class _PriorityPill extends StatelessWidget {
+  final String priority;
+  const _PriorityPill({required this.priority});
 
   @override
   Widget build(BuildContext context) {
+    if (priority.isEmpty) return const SizedBox.shrink();
+    final color = _priorityColor(priority);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8.r),
       ),
-      child: Text(
-        text,
-        style: GoogleFonts.inter(
-          fontSize: 10.sp,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
+      child: Text(text,
+          style: GoogleFonts.inter(
+              fontSize: 10.sp, fontWeight: FontWeight.w700, color: color)),
     );
   }
 }
 
-class _IconTextBtn extends StatelessWidget {
+class _MetaChip extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final Color color;
-  final Color bg;
-  final VoidCallback onTap;
-  const _IconTextBtn({
+  final String? label;
+  final String value;
+  final bool highlight;
+  const _MetaChip({
     required this.icon,
-    required this.label,
-    required this.color,
-    required this.bg,
-    required this.onTap,
+    this.label,
+    required this.value,
+    this.highlight = false,
   });
 
   @override
@@ -2646,73 +2258,73 @@ class _IconTextBtn extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
         decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(10.r),
-        ),
+            color: bg, borderRadius: BorderRadius.circular(10.r)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14.sp, color: color),
             SizedBox(width: 4.w),
-            Text(
-              label,
-              style: GoogleFonts.manrope(
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
+            Text(label,
+                style: GoogleFonts.manrope(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: color)),
           ],
-        ),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 10.5.sp,
+              fontWeight: highlight ? FontWeight.w700 : FontWeight.w400,
+              color: textColor,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// APPROVE / REJECT ROW
-// ─────────────────────────────────────────────────────────────────────────
-
-class _ApproveRejectRow extends StatelessWidget {
-  final String approveLabel;
-  final IconData approveIcon;
-  final Color approveColor;
-  final Color rejectColor;
-  final VoidCallback onApprove;
-  final void Function(String remark) onReject;
-  final BuildContext context;
-
-  const _ApproveRejectRow({
-    required this.approveLabel,
-    required this.approveIcon,
-    required this.approveColor,
-    required this.rejectColor,
-    required this.onApprove,
-    required this.onReject,
-    required this.context,
-  });
+class _PersonRow extends StatelessWidget {
+  final String name;
+  const _PersonRow({required this.name});
 
   @override
-  Widget build(BuildContext ctx) {
+  Widget build(BuildContext context) {
+    if (name.isEmpty) return const SizedBox.shrink();
     return Row(
       children: [
+        Container(
+          width: 22.w,
+          height: 22.w,
+          decoration: BoxDecoration(
+            color: _kBrand.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              _initials(name),
+              style: GoogleFonts.manrope(
+                fontSize: 9.5.sp,
+                fontWeight: FontWeight.w800,
+                color: _kBrand,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 8.w),
         Expanded(
           child: ElevatedButton.icon(
             onPressed: onApprove,
             icon: Icon(approveIcon, size: 15.sp, color: Colors.white),
-            label: Text(
-              approveLabel,
-              style: GoogleFonts.manrope(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
+            label: Text(approveLabel,
+                style: GoogleFonts.manrope(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white)),
             style: ElevatedButton.styleFrom(
               backgroundColor: approveColor,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
+                  borderRadius: BorderRadius.circular(12.r)),
               elevation: 0,
               padding: EdgeInsets.symmetric(vertical: 11.h),
             ),
@@ -2726,19 +2338,15 @@ class _ApproveRejectRow extends StatelessWidget {
               if (remark != null) onReject(remark);
             },
             icon: Icon(Icons.cancel_outlined, size: 15.sp, color: rejectColor),
-            label: Text(
-              'Reject',
-              style: GoogleFonts.manrope(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w700,
-                color: rejectColor,
-              ),
-            ),
+            label: Text('Reject',
+                style: GoogleFonts.manrope(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: rejectColor)),
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: rejectColor, width: 1.4),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
-              ),
+                  borderRadius: BorderRadius.circular(12.r)),
               padding: EdgeInsets.symmetric(vertical: 11.h),
             ),
           ),
@@ -2748,41 +2356,66 @@ class _ApproveRejectRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// META ROW
-// ─────────────────────────────────────────────────────────────────────────
+// ── Received Card ─────────────────────────────────────────────────────────────
 
-class _MetaRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MetaRow({required this.label, required this.value});
+class _ReceivedCard extends StatelessWidget {
+  final received.RData item;
+  final bool canAssign;
+  final bool canUpdate;
+  const _ReceivedCard({
+    required this.item,
+    this.canAssign = false,
+    this.canUpdate = false,
+  });
+
+  void _showAssignSheet(BuildContext context) {
+    Get.bottomSheet(
+      _AssignTaskSheet(
+        projectId: item.sProjectId ?? 0,
+        projectName: item.projectName ?? item.taskTittle ?? '',
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  void _showUpdateSheet(BuildContext context) {
+    Get.bottomSheet(
+      _UpdateProgressSheet(
+        proAllocatId: item.proAllocatId ?? 0,
+        taskTitle: item.taskTittle ?? item.projectName ?? '',
+        currentProgress: item.progress,
+        notifyEmployeeId: item.employeeId1,
+        notifyEmployeeName: item.employeeName1,
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 5.h),
-      child: Row(
+    final status = item.aStatus ?? '';
+    final priority = item.priority ?? '';
+    final person = item.employeeName ?? '';
+
+    return _CardShell(
+      accentColor: _statusColor(status),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 90.w,
-            child: Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF8B7D77),
-              ),
-            ),
+            child: Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF8B7D77))),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: GoogleFonts.inter(
-                fontSize: 11.sp,
-                color: const Color(0xFF241917),
-              ),
-            ),
+            child: Text(value,
+                style: GoogleFonts.inter(
+                    fontSize: 11.sp, color: const Color(0xFF241917))),
           ),
         ],
       ),
@@ -2790,13 +2423,11 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// TASK FORM  — existing task is now Data
-// ─────────────────────────────────────────────────────────────────────────
+// ── My Project Card ───────────────────────────────────────────────────────────
 
 class _TaskForm extends StatefulWidget {
   final TaskController c;
-  final Data? existing; // ← Data, not old TaskModel
+  final Data? existing;          // ← Data, not old TaskModel
   final String? preselectedProjectId;
   final String? preselectedProjectName;
   const _TaskForm({
@@ -2840,9 +2471,8 @@ class _TaskFormState extends State<_TaskForm> {
     _priority = e?.priority ?? 'Medium';
     _recurrence = e?.recurrence ?? 'None';
     // Pre-fill assigned employee from Data.teamLeadId
-    _selectedEmployeeIds = (e?.teamLeadId.isNotEmpty == true)
-        ? [e!.teamLeadId]
-        : [];
+    _selectedEmployeeIds =
+        (e?.teamLeadId.isNotEmpty == true) ? [e!.teamLeadId] : [];
     _selectedJuniorId = e?.juniorId;
     _projectId = widget.preselectedProjectId ?? e?.sProjectId?.toString();
     _projectName = widget.preselectedProjectName ?? e?.projectName;
@@ -2851,8 +2481,7 @@ class _TaskFormState extends State<_TaskForm> {
         ? DateTime.tryParse(e!.startDate) ?? DateTime.now()
         : DateTime.now();
     _startDate = TextEditingController(
-      text: DateFormat('dd-MM-yyyy').format(_startDt),
-    );
+        text: DateFormat('dd-MM-yyyy').format(_startDt));
   }
 
   @override
@@ -2886,18 +2515,14 @@ class _TaskFormState extends State<_TaskForm> {
   }
 
   Future<void> _pickCamera() async {
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-    );
+    final picked = await ImagePicker()
+        .pickImage(source: ImageSource.camera, imageQuality: 85);
     if (picked == null) return;
-    setState(
-      () => _attachments.add({
-        'name': picked.name,
-        'path': picked.path,
-        'type': 'image',
-      }),
-    );
+    setState(() => _attachments.add({
+          'name': picked.name,
+          'path': picked.path,
+          'type': 'image',
+        }));
   }
 
   @override
@@ -2918,9 +2543,8 @@ class _TaskFormState extends State<_TaskForm> {
               width: 40.w,
               height: 4.h,
               decoration: BoxDecoration(
-                color: const Color(0xFFCBC0BA),
-                borderRadius: BorderRadius.circular(2.r),
-              ),
+                  color: const Color(0xFFCBC0BA),
+                  borderRadius: BorderRadius.circular(2.r)),
             ),
             SizedBox(height: 14.h),
             Padding(
@@ -2931,24 +2555,18 @@ class _TaskFormState extends State<_TaskForm> {
                   Text(
                     _isEdit ? 'Edit Task' : 'Assign New Task',
                     style: GoogleFonts.manrope(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF241917),
-                    ),
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF241917)),
                   ),
                   GestureDetector(
                     onTap: () => Get.back(),
                     child: Container(
                       padding: EdgeInsets.all(6.w),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFE8DDD9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.close,
-                        size: 18.sp,
-                        color: const Color(0xFF6A3027),
-                      ),
+                          color: Color(0xFFE8DDD9), shape: BoxShape.circle),
+                      child: Icon(Icons.close,
+                          size: 18.sp, color: const Color(0xFF6A3027)),
                     ),
                   ),
                 ],
@@ -3024,46 +2642,40 @@ class _TaskFormState extends State<_TaskForm> {
                     colors: {
                       'High': Colors.red,
                       'Medium': Colors.orange,
-                      'Low': Colors.green,
+                      'Low': Colors.green
                     },
                   ),
                   SizedBox(height: 28.h),
-                  Obx(
-                    () => SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: widget.c.isSubmitting.value ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFB54A3A),
-                          disabledBackgroundColor: const Color(
-                            0xFFB54A3A,
-                          ).withOpacity(0.5),
-                          padding: EdgeInsets.symmetric(vertical: 16.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14.r),
+                  Obx(() => SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed:
+                              widget.c.isSubmitting.value ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFB54A3A),
+                            disabledBackgroundColor:
+                                const Color(0xFFB54A3A).withOpacity(0.5),
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14.r)),
+                            elevation: 0,
                           ),
-                          elevation: 0,
+                          child: widget.c.isSubmitting.value
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2),
+                                )
+                              : Text(
+                                  _isEdit ? 'Save Changes' : 'Assign Task',
+                                  style: GoogleFonts.manrope(
+                                      fontSize: 15.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white),
+                                ),
                         ),
-                        child: widget.c.isSubmitting.value
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                _isEdit ? 'Save Changes' : 'Assign Task',
-                                style: GoogleFonts.manrope(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
+                      )),
                 ],
               ),
             ),
@@ -3088,11 +2700,9 @@ class _TaskFormState extends State<_TaskForm> {
                 final emps = widget.c.employees;
                 final isLoading = widget.c.isLoading.value;
                 final filtered = emps
-                    .where(
-                      (e) => e.employeeName.toLowerCase().contains(
-                        search.toLowerCase(),
-                      ),
-                    )
+                    .where((e) => e.employeeName
+                        .toLowerCase()
+                        .contains(search.toLowerCase()))
                     .toList();
 
                 if (isLoading && emps.isEmpty) {
@@ -3100,24 +2710,19 @@ class _TaskFormState extends State<_TaskForm> {
                     height: MediaQuery.of(context).size.height * 0.65,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF6F1ED),
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(24.r),
-                      ),
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(24.r)),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const CircularProgressIndicator(
-                          color: Color(0xFF6A3027),
-                        ),
+                            color: Color(0xFF6A3027)),
                         SizedBox(height: 16.h),
-                        Text(
-                          'Loading employees…',
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            color: const Color(0xFF241917),
-                          ),
-                        ),
+                        Text('Loading employees…',
+                            style: GoogleFonts.inter(
+                                fontSize: 14.sp,
+                                color: const Color(0xFF241917))),
                       ],
                     ),
                   );
@@ -3128,47 +2733,33 @@ class _TaskFormState extends State<_TaskForm> {
                     height: MediaQuery.of(context).size.height * 0.65,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF6F1ED),
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(24.r),
-                      ),
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(24.r)),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 48.sp,
-                          color: const Color(0xFF8B7D77),
-                        ),
+                        Icon(Icons.people_outline,
+                            size: 48.sp, color: const Color(0xFF8B7D77)),
                         SizedBox(height: 12.h),
-                        Text(
-                          'No employees loaded yet',
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            color: const Color(0xFF8B7D77),
-                          ),
-                        ),
+                        Text('No employees loaded yet',
+                            style: GoogleFonts.inter(
+                                fontSize: 14.sp,
+                                color: const Color(0xFF8B7D77))),
                         SizedBox(height: 16.h),
                         ElevatedButton.icon(
                           onPressed: () async => widget.c.fetchAll(),
-                          icon: Icon(
-                            Icons.refresh_rounded,
-                            size: 16.sp,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            'Retry',
-                            style: GoogleFonts.manrope(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+                          icon: Icon(Icons.refresh_rounded,
+                              size: 16.sp, color: Colors.white),
+                          label: Text('Retry',
+                              style: GoogleFonts.manrope(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFB54A3A),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
+                                borderRadius: BorderRadius.circular(10.r)),
                             elevation: 0,
                           ),
                         ),
@@ -3181,9 +2772,8 @@ class _TaskFormState extends State<_TaskForm> {
                   height: MediaQuery.of(context).size.height * 0.65,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF6F1ED),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24.r),
-                    ),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24.r)),
                   ),
                   child: Column(
                     children: [
@@ -3192,21 +2782,17 @@ class _TaskFormState extends State<_TaskForm> {
                         width: 40.w,
                         height: 4.h,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFCBC0BA),
-                          borderRadius: BorderRadius.circular(2.r),
-                        ),
+                            color: const Color(0xFFCBC0BA),
+                            borderRadius: BorderRadius.circular(2.r)),
                       ),
                       SizedBox(height: 14.h),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 20.w),
-                        child: Text(
-                          'Select Employees',
-                          style: GoogleFonts.manrope(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF241917),
-                          ),
-                        ),
+                        child: Text('Select Employees',
+                            style: GoogleFonts.manrope(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF241917))),
                       ),
                       SizedBox(height: 10.h),
                       Padding(
@@ -3218,38 +2804,29 @@ class _TaskFormState extends State<_TaskForm> {
                             setModal(() {});
                           },
                           style: GoogleFonts.inter(
-                            fontSize: 13.sp,
-                            color: const Color(0xFF241917),
-                          ),
+                              fontSize: 13.sp,
+                              color: const Color(0xFF241917)),
                           decoration: InputDecoration(
                             hintText: 'Search by name…',
                             hintStyle: GoogleFonts.inter(
-                              fontSize: 13.sp,
-                              color: const Color(0xFF8B7D77),
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              color: Color(0xFF6A3027),
-                            ),
+                                fontSize: 13.sp,
+                                color: const Color(0xFF8B7D77)),
+                            prefixIcon: const Icon(Icons.search_rounded,
+                                color: Color(0xFF6A3027)),
                             filled: true,
                             fillColor: Colors.white,
-                            contentPadding: EdgeInsets.symmetric(
-                              vertical: 11.h,
-                            ),
+                            contentPadding:
+                                EdgeInsets.symmetric(vertical: 11.h),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide.none,
-                            ),
+                                borderRadius: BorderRadius.circular(12.r),
+                                borderSide: BorderSide.none),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.r),
-                              borderSide: BorderSide.none,
-                            ),
+                                borderRadius: BorderRadius.circular(12.r),
+                                borderSide: BorderSide.none),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.r),
                               borderSide: const BorderSide(
-                                color: Color(0xFFB54A3A),
-                                width: 1.5,
-                              ),
+                                  color: Color(0xFFB54A3A), width: 1.5),
                             ),
                           ),
                         ),
@@ -3259,9 +2836,7 @@ class _TaskFormState extends State<_TaskForm> {
                       Expanded(
                         child: ListView.builder(
                           padding: EdgeInsets.symmetric(
-                            vertical: 8.h,
-                            horizontal: 16.w,
-                          ),
+                              vertical: 8.h, horizontal: 16.w),
                           itemCount: filtered.length,
                           itemBuilder: (_, i) {
                             final emp = filtered[i];
@@ -3287,48 +2862,42 @@ class _TaskFormState extends State<_TaskForm> {
                                       : const Color(0xFFE8DDD9),
                                 ),
                                 child: sel
-                                    ? Icon(
-                                        Icons.check,
-                                        size: 14.sp,
-                                        color: Colors.white,
-                                      )
+                                    ? Icon(Icons.check,
+                                        size: 14.sp, color: Colors.white)
                                     : null,
                               ),
-                              title: Text(
-                                emp.employeeName,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  color: const Color(0xFF241917),
-                                ),
-                              ),
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 4.w,
-                              ),
+                              title: Text(emp.employeeName,
+                                  style: GoogleFonts.inter(
+                                      fontSize: 13.sp,
+                                      color: const Color(0xFF241917))),
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 4.w),
                             );
                           },
                         ),
                       ),
                       Padding(
-                        padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 24.h),
+                        padding:
+                            EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 24.h),
                         child: SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () => Navigator.pop(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFB54A3A),
-                              padding: EdgeInsets.symmetric(vertical: 14.h),
+                              padding:
+                                  EdgeInsets.symmetric(vertical: 14.h),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14.r),
-                              ),
+                                  borderRadius:
+                                      BorderRadius.circular(14.r)),
                               elevation: 0,
                             ),
                             child: Text(
                               'Done (${_selectedEmployeeIds.length} selected)',
                               style: GoogleFonts.manrope(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white),
                             ),
                           ),
                         ),
@@ -3350,11 +2919,8 @@ class _TaskFormState extends State<_TaskForm> {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.people_outline_rounded,
-              size: 17.sp,
-              color: const Color(0xFF6A3027),
-            ),
+            Icon(Icons.people_outline_rounded,
+                size: 17.sp, color: const Color(0xFF6A3027)),
             SizedBox(width: 10.w),
             Expanded(
               child: _selectedEmployeeIds.isEmpty
@@ -3363,45 +2929,38 @@ class _TaskFormState extends State<_TaskForm> {
                           ? 'Loading employees…'
                           : 'Tap to select employees',
                       style: GoogleFonts.inter(
-                        fontSize: 13.sp,
-                        color: const Color(0xFF8B7D77),
-                      ),
+                          fontSize: 13.sp,
+                          color: const Color(0xFF8B7D77)),
                     )
                   : Wrap(
                       spacing: 6.w,
                       runSpacing: 4.h,
                       children: _selectedEmployeeIds.map((id) {
                         final emp = employees.firstWhereOrNull(
-                          (e) => e.employeeId.toString() == id,
-                        );
+                            (e) => e.employeeId.toString() == id);
                         return Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 4.h,
-                          ),
+                              horizontal: 8.w, vertical: 4.h),
                           decoration: BoxDecoration(
                             color: const Color(0xFFB54A3A).withOpacity(0.10),
                             borderRadius: BorderRadius.circular(8.r),
                             border: Border.all(
-                              color: const Color(0xFFB54A3A).withOpacity(0.35),
-                            ),
+                                color: const Color(0xFFB54A3A)
+                                    .withOpacity(0.35)),
                           ),
                           child: Text(
                             emp?.employeeName ?? id,
                             style: GoogleFonts.inter(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFFB54A3A),
-                            ),
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFB54A3A)),
                           ),
                         );
                       }).toList(),
                     ),
             ),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: const Color(0xFF6A3027),
-            ),
+            Icon(Icons.keyboard_arrow_down_rounded,
+                color: const Color(0xFF6A3027)),
           ],
         ),
       ),
@@ -3425,10 +2984,8 @@ class _TaskFormState extends State<_TaskForm> {
       }
     } else {
       for (final p in pc.allProjects) {
-        projectOptions.add({
-          'id': p.projectId.toString(),
-          'name': p.projectName,
-        });
+        projectOptions.add(
+            {'id': p.projectId.toString(), 'name': p.projectName});
       }
     }
     final selectedId = _projectId?.isEmpty == true ? null : _projectId;
@@ -3438,67 +2995,53 @@ class _TaskFormState extends State<_TaskForm> {
     final items = <DropdownMenuItem<String>>[
       DropdownMenuItem<String>(
         value: null,
-        child: Text(
-          'None (standalone task)',
-          style: GoogleFonts.inter(fontSize: 13.sp),
-        ),
+        child: Text('None (standalone task)',
+            style: GoogleFonts.inter(fontSize: 13.sp)),
       ),
     ];
 
     if (locked && selectedId != null) {
       seenIds.add(selectedId);
-      items.add(
-        DropdownMenuItem<String>(
-          value: selectedId,
-          child: Row(
-            children: [
-              Icon(
-                Icons.folder_outlined,
-                size: 14.sp,
-                color: const Color(0xFF6A3027),
+      items.add(DropdownMenuItem<String>(
+        value: selectedId,
+        child: Row(
+          children: [
+            Icon(Icons.folder_outlined,
+                size: 14.sp, color: const Color(0xFF6A3027)),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                _projectName?.isNotEmpty == true
+                    ? _projectName!
+                    : 'Selected Project',
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(fontSize: 13.sp),
               ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  _projectName?.isNotEmpty == true
-                      ? _projectName!
-                      : 'Selected Project',
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(fontSize: 13.sp),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ));
     }
 
     for (final project in projectOptions) {
       final id = project['id'];
       if (id == null || id.isEmpty || seenIds.contains(id)) continue;
       seenIds.add(id);
-      items.add(
-        DropdownMenuItem<String>(
-          value: id,
-          child: Row(
-            children: [
-              Icon(
-                Icons.folder_outlined,
-                size: 14.sp,
-                color: const Color(0xFF6A3027),
-              ),
-              SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  project['name'] ?? '',
+      items.add(DropdownMenuItem<String>(
+        value: id,
+        child: Row(
+          children: [
+            Icon(Icons.folder_outlined,
+                size: 14.sp, color: const Color(0xFF6A3027)),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(project['name'] ?? '',
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(fontSize: 13.sp),
-                ),
-              ),
-            ],
-          ),
+                  style: GoogleFonts.inter(fontSize: 13.sp)),
+            ),
+          ],
         ),
-      );
+      ));
     }
 
     return Container(
@@ -3514,53 +3057,52 @@ class _TaskFormState extends State<_TaskForm> {
           onChanged: locked
               ? null
               : (v) => setState(() {
-                  _projectId = v;
-                  if (v == null) {
-                    _projectName = null;
-                    return;
-                  }
-                  final sel = projectOptions.firstWhereOrNull(
-                    (p) => p['id'] == v,
-                  );
-                  _projectName = sel?['name'] ?? _projectName;
-                }),
-          hint: Text(
-            'None (standalone task)',
-            style: GoogleFonts.inter(
-              fontSize: 13.sp,
-              color: const Color(0xFF8B7D77),
-            ),
-          ),
+                    _projectId = v;
+                    if (v == null) {
+                      _projectName = null;
+                      return;
+                    }
+                    final sel = projectOptions
+                        .firstWhereOrNull((p) => p['id'] == v);
+                    _projectName = sel?['name'] ?? _projectName;
+                  }),
+          hint: Text('None (standalone task)',
+              style: GoogleFonts.inter(
+                  fontSize: 13.sp, color: const Color(0xFF8B7D77))),
           isExpanded: true,
-          icon: const Icon(
-            Icons.keyboard_arrow_down_rounded,
-            color: Color(0xFF6A3027),
-          ),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF6A3027)),
           items: items,
         ),
       ),
     );
   }
+}
 
-  Widget _attachmentSection() {
+// ── Shared bottom-sheet chrome ──────────────────────────────────────────────
+
+class _SheetHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  const _SheetHeader({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            _attachBtn(
-              Icons.image_outlined,
-              'Photo / PDF',
-              const Color(0xFF6A3027),
-              _pickFiles,
-            ),
+            _attachBtn(Icons.image_outlined, 'Photo / PDF',
+                const Color(0xFF6A3027), _pickFiles),
             SizedBox(width: 10.w),
-            _attachBtn(
-              Icons.camera_alt_outlined,
-              'Camera',
-              const Color(0xFFB54A3A),
-              _pickCamera,
-            ),
+            _attachBtn(Icons.camera_alt_outlined, 'Camera',
+                const Color(0xFFB54A3A), _pickCamera),
           ],
         ),
         if (_attachments.isNotEmpty) ...[
@@ -3589,32 +3131,26 @@ class _TaskFormState extends State<_TaskForm> {
                               File(a['path'] as String),
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => const Icon(
-                                Icons.broken_image_outlined,
-                                color: Color(0xFF8B7D77),
-                              ),
+                                  Icons.broken_image_outlined,
+                                  color: Color(0xFF8B7D77)),
                             ),
                           )
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.picture_as_pdf_rounded,
-                                color: Colors.red.shade400,
-                                size: 28.sp,
-                              ),
+                              Icon(Icons.picture_as_pdf_rounded,
+                                  color: Colors.red.shade400, size: 28.sp),
                               SizedBox(height: 4.h),
                               Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 4.w),
-                                child: Text(
-                                  a['name'] as String,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9.sp,
-                                    color: const Color(0xFF241917),
-                                  ),
-                                ),
+                                padding:
+                                    EdgeInsets.symmetric(horizontal: 4.w),
+                                child: Text(a['name'] as String,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 9.sp,
+                                        color: const Color(0xFF241917))),
                               ),
                             ],
                           ),
@@ -3623,19 +3159,15 @@ class _TaskFormState extends State<_TaskForm> {
                     top: -6.h,
                     right: -6.w,
                     child: GestureDetector(
-                      onTap: () => setState(() => _attachments.removeAt(i)),
+                      onTap: () =>
+                          setState(() => _attachments.removeAt(i)),
                       child: Container(
                         width: 18.w,
                         height: 18.w,
                         decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.close,
-                          size: 11.sp,
-                          color: Colors.white,
-                        ),
+                            color: Colors.red, shape: BoxShape.circle),
+                        child: Icon(Icons.close,
+                            size: 11.sp, color: Colors.white),
                       ),
                     ),
                   ),
@@ -3649,169 +3181,151 @@ class _TaskFormState extends State<_TaskForm> {
   }
 
   Widget _attachBtn(
-    IconData icon,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: color.withOpacity(0.25)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16.sp, color: color),
-          SizedBox(width: 6.w),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
+          IconData icon, String label, Color color, VoidCallback onTap) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: color.withOpacity(0.25)),
           ),
-        ],
-      ),
-    ),
-  );
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16.sp, color: color),
+              SizedBox(width: 6.w),
+              Text(label,
+                  style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: color)),
+            ],
+          ),
+        ),
+      );
 
-  Widget _label(String t) => Text(
-    t,
-    style: GoogleFonts.manrope(
-      fontSize: 13.sp,
-      fontWeight: FontWeight.w700,
-      color: const Color(0xFF241917),
-    ),
-  );
+  Widget _label(String t) => Text(t,
+      style: GoogleFonts.manrope(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF241917)));
 
-  Widget _field(
-    TextEditingController ctrl,
-    String hint, {
-    int maxLines = 1,
-  }) => TextField(
-    controller: ctrl,
-    maxLines: maxLines,
-    style: GoogleFonts.inter(fontSize: 14.sp, color: const Color(0xFF241917)),
-    decoration: InputDecoration(
-      hintText: hint,
-      hintStyle: GoogleFonts.inter(
-        fontSize: 13.sp,
-        color: const Color(0xFF8B7D77),
-      ),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        borderSide: const BorderSide(color: Color(0xFFE0D5D0)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        borderSide: const BorderSide(color: Color(0xFFE0D5D0)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        borderSide: const BorderSide(color: Color(0xFFB54A3A), width: 1.5),
-      ),
-    ),
-  );
+  Widget _field(TextEditingController ctrl, String hint,
+          {int maxLines = 1}) =>
+      TextField(
+        controller: ctrl,
+        maxLines: maxLines,
+        style: GoogleFonts.inter(
+            fontSize: 14.sp, color: const Color(0xFF241917)),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.inter(
+              fontSize: 13.sp, color: const Color(0xFF8B7D77)),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: const BorderSide(color: Color(0xFFE0D5D0))),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide:
+                  const BorderSide(color: Color(0xFFB54A3A), width: 1.5)),
+        ),
+      );
 
   Widget _datePicker({
     required TextEditingController ctrl,
     required Function(DateTime) onPicked,
     DateTime? selected,
     String hint = 'Select date',
-  }) => GestureDetector(
-    onTap: () async {
-      final p = await showDatePicker(
-        context: context,
-        initialDate: selected ?? DateTime.now(),
-        firstDate: DateTime(2020),
-        lastDate: DateTime(2101),
-        builder: (ctx, child) => Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(primary: Color(0xFFB54A3A)),
+  }) =>
+      GestureDetector(
+        onTap: () async {
+          final p = await showDatePicker(
+            context: context,
+            initialDate: selected ?? DateTime.now(),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2101),
+            builder: (ctx, child) => Theme(
+              data: Theme.of(ctx).copyWith(
+                  colorScheme: const ColorScheme.light(
+                      primary: Color(0xFFB54A3A))),
+              child: child!,
+            ),
+          );
+          if (p != null) onPicked(p);
+        },
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: const Color(0xFFE0D5D0)),
           ),
-          child: child!,
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today_rounded,
+                  size: 17.sp, color: const Color(0xFF6A3027)),
+              SizedBox(width: 10.w),
+              Text(
+                ctrl.text.isEmpty ? hint : ctrl.text,
+                style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: ctrl.text.isEmpty
+                        ? const Color(0xFF8B7D77)
+                        : const Color(0xFF241917)),
+              ),
+            ],
+          ),
         ),
       );
-      if (p != null) onPicked(p);
-    },
-    child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: const Color(0xFFE0D5D0)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.calendar_today_rounded,
-            size: 17.sp,
-            color: const Color(0xFF6A3027),
-          ),
-          SizedBox(width: 10.w),
-          Text(
-            ctrl.text.isEmpty ? hint : ctrl.text,
-            style: GoogleFonts.inter(
-              fontSize: 14.sp,
-              color: ctrl.text.isEmpty
-                  ? const Color(0xFF8B7D77)
-                  : const Color(0xFF241917),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 
   Widget _chips(
     List<String> opts,
     String selected,
     ValueChanged<String> onSel, {
     Map<String, Color>? colors,
-  }) => Wrap(
-    spacing: 8.w,
-    runSpacing: 8.h,
-    children: opts.map((o) {
-      final sel = selected == o;
-      final color = colors?[o] ?? const Color(0xFFB54A3A);
-      return GestureDetector(
-        onTap: () => onSel(o),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
-          decoration: BoxDecoration(
-            color: sel ? color.withOpacity(0.12) : Colors.white,
-            borderRadius: BorderRadius.circular(10.r),
-            border: Border.all(color: sel ? color : const Color(0xFFE0D5D0)),
-          ),
-          child: Text(
-            o,
-            style: GoogleFonts.inter(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: sel ? color : const Color(0xFF241917),
+  }) =>
+      Wrap(
+        spacing: 8.w,
+        runSpacing: 8.h,
+        children: opts.map((o) {
+          final sel = selected == o;
+          final color = colors?[o] ?? const Color(0xFFB54A3A);
+          return GestureDetector(
+            onTap: () => onSel(o),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding:
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
+              decoration: BoxDecoration(
+                color: sel ? color.withOpacity(0.12) : Colors.white,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                    color: sel ? color : const Color(0xFFE0D5D0)),
+              ),
+              child: Text(o,
+                  style: GoogleFonts.inter(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: sel ? color : const Color(0xFF241917))),
             ),
-          ),
-        ),
+          );
+        }).toList(),
       );
-    }).toList(),
-  );
 
   void _submit() {
     if (_title.text.trim().isEmpty || _selectedEmployeeIds.isEmpty) {
-      Get.snackbar(
-        'Missing Info',
-        'Title and at least one employee are required',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Missing Info',
+          'Title and at least one employee are required',
+          snackPosition: SnackPosition.BOTTOM);
       return;
     }
     if (_isEdit) {
@@ -3854,62 +3368,74 @@ class _ProjectCard extends StatefulWidget {
   const _ProjectCard({required this.project});
 
   @override
-  State<_ProjectCard> createState() => _ProjectCardState();
+  State<_AssignTaskSheet> createState() => _AssignTaskSheetState();
 }
 
-class _ProjectCardState extends State<_ProjectCard>
-    with SingleTickerProviderStateMixin {
-  bool _expanded = false;
-  late final AnimationController _anim;
-  late final Animation<double> _rotate;
-  late String _localStatus;
+class _AssignTaskSheetState extends State<_AssignTaskSheet> {
+  final _c = Get.find<TaskController>();
+  final _titleCtrl = TextEditingController();
+  final _empNameCtrl = TextEditingController();
+  final _descCtrl = TextEditingController();
+  final _deliveryCtrl = TextEditingController();
+  final _endDeliveryCtrl = TextEditingController();
+  String _priority = 'High';
+  final String _recurrence = 'Daily';
+  int? _selectedEmpId;
+  String? _selectedEmpName;
 
-  static const _toggleMap = {
-    'Active': 'Running',
-    'Inactive': 'On Hold',
-    'Done': 'Complete',
-  };
-  static const _reverseMap = {
-    'Running': 'Active',
-    'On Hold': 'Inactive',
-    'Complete': 'Done',
-  };
+  bool get _hasFixedEmployee => widget.initialEmployeeId != null;
+
+  static const _priorities = ['High', 'Medium', 'Low'];
 
   @override
   void initState() {
     super.initState();
     _localStatus = widget.project.projectStatus;
     _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
+        vsync: this, duration: const Duration(milliseconds: 220));
+    _rotate = Tween<double>(begin: 0, end: 0.5).animate(
+      CurvedAnimation(parent: _anim, curve: Curves.easeInOut),
     );
-    _rotate = Tween<double>(
-      begin: 0,
-      end: 0.5,
-    ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    _anim.dispose();
+    _titleCtrl.dispose();
+    _empNameCtrl.dispose();
+    _descCtrl.dispose();
+    _deliveryCtrl.dispose();
+    _endDeliveryCtrl.dispose();
     super.dispose();
   }
 
-  void _toggle() {
-    setState(() => _expanded = !_expanded);
-    _expanded ? _anim.forward() : _anim.reverse();
+  Future<void> _pickDate(TextEditingController ctrl) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(
+          ctx,
+        ).copyWith(colorScheme: const ColorScheme.light(primary: _kBrand)),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      ctrl.text = _fmtDate(
+        '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}',
+      );
+    }
   }
 
-  Color _statusColor(String s) {
-    switch (s) {
-      case 'Running':
-        return Colors.green;
-      case 'Complete':
-        return Colors.blue;
-      case 'On Hold':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  Future<void> _submit() async {
+    if (_titleCtrl.text.trim().isEmpty) {
+      Get.snackbar(
+        'Missing',
+        'Task title is required',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
     }
   }
 
@@ -3918,97 +3444,93 @@ class _ProjectCardState extends State<_ProjectCard>
     if (_localStatus == ns) return;
     setState(() => _localStatus = ns);
     if (!Get.isRegistered<ProjectController>()) Get.put(ProjectController());
-    Get.find<ProjectController>().updateProjectStatus(
-      widget.project.projectId.toString(),
-      ns,
-    );
+    Get.find<ProjectController>()
+        .updateProjectStatus(widget.project.projectId.toString(), ns);
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.project;
-    final color = _statusColor(_localStatus);
-
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+              color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 4))
         ],
       ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: _toggle,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(18.r),
-              bottom: Radius.circular(_expanded ? 0 : 18.r),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SheetHeader(
+              icon: Icons.add_task_rounded,
+              title: 'Assign Task',
+              subtitle: widget.projectName,
             ),
-            child: Padding(
-              padding: EdgeInsets.all(14.w),
-              child: Row(
-                children: [
-                  Container(
-                    width: 4.w,
-                    height: 44.h,
+            SizedBox(height: 20.h),
+            _sheetLabel('Task Title *'),
+            TextField(
+              controller: _titleCtrl,
+              style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+              decoration: _sheetFieldDecoration(
+                'Enter task title',
+                prefixIcon: Icons.title_rounded,
+              ),
+            ),
+            SizedBox(height: 14.h),
+            _sheetLabel('Employee *'),
+            if (_hasFixedEmployee)
+              TextField(
+                controller: _empNameCtrl,
+                readOnly: true,
+                style: GoogleFonts.inter(fontSize: 14.sp, color: _kTextPrimary),
+                decoration: _sheetFieldDecoration(
+                  'Employee name',
+                  prefixIcon: Icons.person_rounded,
+                ),
+              )
+            else
+              Obx(() {
+                if (_c.isEmpLoading.value) {
+                  return Container(
+                    height: 48.h,
                     decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
+                        color: color,
+                        borderRadius: BorderRadius.circular(4.r)),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          p.projectName,
-                          style: GoogleFonts.manrope(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF241917),
-                          ),
-                        ),
+                        Text(p.projectName,
+                            style: GoogleFonts.manrope(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF241917))),
                         SizedBox(height: 4.h),
                         Row(
                           children: [
-                            Icon(
-                              Icons.person_outline_rounded,
-                              size: 12.sp,
-                              color: const Color(0xFF8B7D77),
-                            ),
+                            Icon(Icons.person_outline_rounded,
+                                size: 12.sp, color: const Color(0xFF8B7D77)),
                             SizedBox(width: 4.w),
-                            Text(
-                              p.clientName,
-                              style: GoogleFonts.inter(
-                                fontSize: 11.sp,
-                                color: const Color(0xFF8B7D77),
-                              ),
-                            ),
+                            Text(p.clientName,
+                                style: GoogleFonts.inter(
+                                    fontSize: 11.sp,
+                                    color: const Color(0xFF8B7D77))),
                             SizedBox(width: 8.w),
                             Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 3.h,
-                              ),
+                                  horizontal: 8.w, vertical: 3.h),
                               decoration: BoxDecoration(
-                                color: color.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
-                              child: Text(
-                                _localStatus,
-                                style: GoogleFonts.inter(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: color,
-                                ),
-                              ),
+                                  color: color.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(20.r)),
+                              child: Text(_localStatus,
+                                  style: GoogleFonts.inter(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: color)),
                             ),
                           ],
                         ),
@@ -4017,11 +3539,8 @@ class _ProjectCardState extends State<_ProjectCard>
                   ),
                   RotationTransition(
                     turns: _rotate,
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 22.sp,
-                      color: const Color(0xFF6A3027),
-                    ),
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 22.sp, color: const Color(0xFF6A3027)),
                   ),
                 ],
               ),
@@ -4047,28 +3566,53 @@ class _ProjectCardState extends State<_ProjectCard>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// PROJECT EXPANDED BODY
-// ─────────────────────────────────────────────────────────────────────────
+// ── Update Progress Bottom Sheet ────────────────────────────────────────────
 
-class _ProjectExpandedBody extends StatelessWidget {
-  final ProjectModel project;
-  final String localStatus;
-  final void Function(String) onStatusChange;
-  final Map<String, String> reverseMap;
-  final Color Function(String) statusColor;
-
-  const _ProjectExpandedBody({
-    required this.project,
-    required this.localStatus,
-    required this.onStatusChange,
-    required this.reverseMap,
-    required this.statusColor,
+class _Assignprojecttotl extends StatefulWidget {
+  final int projectId;
+  final String projectName;
+  const _Assignprojecttotl({
+    required this.projectId,
+    required this.projectName,
   });
 
-  ProjectController get _pc {
-    if (!Get.isRegistered<ProjectController>()) Get.put(ProjectController());
-    return Get.find<ProjectController>();
+  @override
+  State<_Assignprojecttotl> createState() => _AssignprojecttotlState();
+}
+
+class _AssignprojecttotlState extends State<_Assignprojecttotl> {
+  final _c = Get.find<TaskController>();
+  int? _selectedEmpId;
+
+  @override
+  void initState() {
+    super.initState();
+    _c.fetchProjectManagerTeamList();
+  }
+
+  Future<void> _submit() async {
+    if (_selectedEmpId == null) {
+      Get.snackbar(
+        'Missing',
+        'Please select a team leader',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    final ok = await _c.assignProjectToTeamLead(
+      sProjectId: widget.projectId,
+      employeeId: _selectedEmpId!,
+    );
+    if (ok) {
+      Get.back();
+      Get.snackbar(
+        'Success',
+        'Project assigned to team leader',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: _kSuccess,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
@@ -4076,11 +3620,10 @@ class _ProjectExpandedBody extends StatelessWidget {
     return Column(
       children: [
         Divider(
-          color: const Color(0xFFF0E8E4),
-          height: 1,
-          indent: 14.w,
-          endIndent: 14.w,
-        ),
+            color: const Color(0xFFF0E8E4),
+            height: 1,
+            indent: 14.w,
+            endIndent: 14.w),
         Padding(
           padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 14.h),
           child: Column(
@@ -4091,37 +3634,28 @@ class _ProjectExpandedBody extends StatelessWidget {
               _row(Icons.folder_outlined, 'Project', project.projectName),
               SizedBox(height: 8.h),
               if (project.assignedTo.isNotEmpty) ...[
-                _row(
-                  Icons.assignment_ind_outlined,
-                  'Assigned To',
-                  project.assignedTo,
-                ),
+                _row(Icons.assignment_ind_outlined, 'Assigned To',
+                    project.assignedTo),
                 SizedBox(height: 8.h),
               ],
               _row(Icons.info_outline_rounded, 'Status', localStatus),
               if (project.description != null &&
                   project.description!.isNotEmpty) ...[
                 SizedBox(height: 8.h),
-                _row(
-                  Icons.description_outlined,
-                  'Description',
-                  project.description!,
-                ),
+                _row(Icons.description_outlined, 'Description',
+                    project.description!),
               ],
               SizedBox(height: 14.h),
               Obx(() {
                 final pc = _pc;
-                final taskWorks = pc.taskWorksByProject(
-                  project.projectId.toString(),
-                );
+                final taskWorks = pc
+                    .taskWorksByProject(project.projectId.toString());
                 if (pc.isTaskWorksLoading.value) {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(8),
                       child: CircularProgressIndicator(
-                        color: Color(0xFF6A3027),
-                        strokeWidth: 2,
-                      ),
+                          color: Color(0xFF6A3027), strokeWidth: 2),
                     ),
                   );
                 }
@@ -4131,20 +3665,14 @@ class _ProjectExpandedBody extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.work_outline_rounded,
-                          size: 13.sp,
-                          color: const Color(0xFF6A3027),
-                        ),
+                        Icon(Icons.work_outline_rounded,
+                            size: 13.sp, color: const Color(0xFF6A3027)),
                         SizedBox(width: 6.w),
-                        Text(
-                          'Allocated Work (${taskWorks.length})',
-                          style: GoogleFonts.manrope(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF241917),
-                          ),
-                        ),
+                        Text('Allocated Work (${taskWorks.length})',
+                            style: GoogleFonts.manrope(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF241917))),
                       ],
                     ),
                     SizedBox(height: 8.h),
@@ -4153,14 +3681,11 @@ class _ProjectExpandedBody extends StatelessWidget {
                 );
               }),
               SizedBox(height: 14.h),
-              Text(
-                'Change Status',
-                style: GoogleFonts.manrope(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF8B7D77),
-                ),
-              ),
+              Text('Change Status',
+                  style: GoogleFonts.manrope(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF8B7D77))),
               SizedBox(height: 8.h),
               Row(
                 children: [
@@ -4180,60 +3705,105 @@ class _ProjectExpandedBody extends StatelessWidget {
                     Get.bottomSheet(
                       _TaskForm(
                         c: Get.find<TaskController>(),
-                        preselectedProjectId: project.projectId.toString(),
+                        preselectedProjectId:
+                            project.projectId.toString(),
                         preselectedProjectName: project.projectName,
                       ),
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
                     );
                   },
-                  icon: Icon(
-                    Icons.add_task_rounded,
-                    size: 16.sp,
-                    color: Colors.white,
-                  ),
+                  icon: Icon(Icons.add_task_rounded,
+                      size: 16.sp, color: Colors.white),
                   label: Text(
-                    localStatus == 'On Hold' ? 'Reassign Task' : 'Assign Task',
+                    localStatus == 'On Hold'
+                        ? 'Reassign Task'
+                        : 'Assign Task',
                     style: GoogleFonts.manrope(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white),
                   ),
+                ),
+              );
+            }),
+            SizedBox(height: 24.h),
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _c.isAssigningToTl.value ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: localStatus == 'On Hold'
                         ? Colors.orange
                         : const Color(0xFFB54A3A),
                     padding: EdgeInsets.symmetric(vertical: 12.h),
                     shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r)),
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
-                    elevation: 0,
                   ),
+                  child: _c.isAssigningToTl.value
+                      ? SizedBox(
+                          height: 20.h,
+                          width: 20.h,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Assign Project',
+                          style: GoogleFonts.manrope(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
+}
 
-  Widget _chip(String label, Color color) {
-    final current = reverseMap[localStatus] ?? '';
-    final selected = current == label;
-    return GestureDetector(
-      onTap: () => onStatusChange(label),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+// ── Update Progress Bottom Sheet ────────────────────────────────────────────
+
+class _StatusOption {
+  final String label;
+  final IconData icon;
+  final Color color;
+  const _StatusOption(this.label, this.icon, this.color);
+}
+
+class _StatusCard extends StatelessWidget {
+  final _StatusOption option;
+  final bool selected;
+  final VoidCallback onTap;
+  const _StatusCard({
+    required this.option,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 6.w),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.15) : Colors.white,
-          borderRadius: BorderRadius.circular(20.r),
+          color: selected ? option.color.withValues(alpha: 0.12) : _kSurface,
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
-            color: selected ? color : const Color(0xFFE0D5D0),
-            width: selected ? 1.5 : 1,
-          ),
+              color: selected ? color : const Color(0xFFE0D5D0),
+              width: selected ? 1.5 : 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -4242,19 +3812,15 @@ class _ProjectExpandedBody extends StatelessWidget {
               width: 7.w,
               height: 7.w,
               decoration: BoxDecoration(
-                color: selected ? color : color.withOpacity(0.4),
-                shape: BoxShape.circle,
-              ),
+                  color: selected ? color : color.withOpacity(0.4),
+                  shape: BoxShape.circle),
             ),
             SizedBox(width: 5.w),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w700,
-                color: selected ? color : const Color(0xFF8B7D77),
-              ),
-            ),
+            Text(label,
+                style: GoogleFonts.inter(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                    color: selected ? color : const Color(0xFF8B7D77))),
           ],
         ),
       ),
@@ -4262,111 +3828,137 @@ class _ProjectExpandedBody extends StatelessWidget {
   }
 
   Widget _row(IconData icon, String label, String value) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Icon(icon, size: 14.sp, color: const Color(0xFF6A3027)),
-      SizedBox(width: 8.w),
-      Expanded(
-        child: RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: '$label: ',
-                style: GoogleFonts.manrope(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF8B7D77),
-                ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 14.sp, color: const Color(0xFF6A3027)),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$label: ',
+                    style: GoogleFonts.manrope(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF8B7D77)),
+                  ),
+                  TextSpan(
+                    text: value,
+                    style: GoogleFonts.inter(
+                        fontSize: 12.sp, color: const Color(0xFF241917)),
+                  ),
+                ],
               ),
-              TextSpan(
-                text: value,
-                style: GoogleFonts.inter(
-                  fontSize: 12.sp,
-                  color: const Color(0xFF241917),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-    ],
-  );
+        ],
+      );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// TL PROJECT CARD — unchanged, uses TLProjectItem
-// ─────────────────────────────────────────────────────────────────────────
-
-class _TLProjectCard extends StatefulWidget {
-  final TLProjectItem project;
-  const _TLProjectCard({required this.project});
+class _UpdateProgressSheet extends StatefulWidget {
+  final int proAllocatId;
+  final String taskTitle;
+  final String? currentProgress;
+  final int? notifyEmployeeId;
+  final String? notifyEmployeeName;
+  const _UpdateProgressSheet({
+    required this.proAllocatId,
+    required this.taskTitle,
+    this.currentProgress,
+    this.notifyEmployeeId,
+    this.notifyEmployeeName,
+  });
 
   @override
-  State<_TLProjectCard> createState() => _TLProjectCardState();
+  State<_UpdateProgressSheet> createState() => _UpdateProgressSheetState();
 }
 
-class _TLProjectCardState extends State<_TLProjectCard>
-    with SingleTickerProviderStateMixin {
-  bool _expanded = false;
-  late final AnimationController _anim;
-  late final Animation<double> _rotate;
+class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
+  final _c = Get.find<TaskController>();
+  final _descCtrl = TextEditingController();
+  final _progressCtrl = TextEditingController();
+  String? _selectedStatus;
+
+  static const _statusOptions = [
+    _StatusOption('Pending', Icons.hourglass_empty_rounded, _kDanger),
+    _StatusOption('Running', Icons.autorenew_rounded, _kWarning),
+    _StatusOption('Completed', Icons.check_circle_rounded, _kSuccess),
+  ];
 
   @override
   void initState() {
     super.initState();
     _anim = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 220),
+        vsync: this, duration: const Duration(milliseconds: 220));
+    _rotate = Tween<double>(begin: 0, end: 0.5).animate(
+      CurvedAnimation(parent: _anim, curve: Curves.easeInOut),
     );
-    _rotate = Tween<double>(
-      begin: 0,
-      end: 0.5,
-    ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
-    _anim.dispose();
+    _descCtrl.dispose();
+    _progressCtrl.dispose();
     super.dispose();
   }
 
-  void _toggle() {
-    setState(() => _expanded = !_expanded);
-    _expanded ? _anim.forward() : _anim.reverse();
-  }
-
-  Color get _statusColor {
-    switch (widget.project.data
-        ?.firstWhereOrNull((d) => d.aStatus != null)
-        ?.aStatus
-        ?.toLowerCase()) {
-      case 'approved':
-      case 'done':
-      case 'complete':
-        return Colors.green;
-      case 'pending':
-        return Colors.orange;
-      case 'rejected':
-        return Colors.red;
-      default:
-        return Colors.blue;
+  Future<void> _submit() async {
+    if (_descCtrl.text.trim().isEmpty) {
+      Get.snackbar(
+        'Missing',
+        'Description is required',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    final progress = int.tryParse(_progressCtrl.text.trim());
+    if (progress == null || progress < 0 || progress > 100) {
+      Get.snackbar(
+        'Missing',
+        'Enter a valid progress (0-100)',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    if (_selectedStatus == null) {
+      Get.snackbar(
+        'Missing',
+        'Please select a status',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    final ok = await _c.updateProgress(
+      proAllocatId: widget.proAllocatId,
+      empDescription: _descCtrl.text.trim(),
+      progress: progress,
+      status: _selectedStatus!,
+      taskTitle: widget.taskTitle,
+      notifyEmployeeId: widget.notifyEmployeeId,
+      notifyEmployeeName: widget.notifyEmployeeName,
+    );
+    if (ok) {
+      Get.back();
+      Get.snackbar(
+        'Success',
+        'Progress updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: _kSuccess,
+        colorText: Colors.white,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = widget.project;
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+              color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 4))
         ],
       ),
       child: Column(
@@ -4385,9 +3977,8 @@ class _TLProjectCardState extends State<_TLProjectCard>
                     width: 4.w,
                     height: 44.h,
                     decoration: BoxDecoration(
-                      color: _statusColor,
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
+                        color: _statusColor,
+                        borderRadius: BorderRadius.circular(4.r)),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -4397,59 +3988,48 @@ class _TLProjectCardState extends State<_TLProjectCard>
                         Text(
                           p.data
                                       ?.firstWhereOrNull(
-                                        (d) => d.projectName != null,
-                                      )
+                                          (d) => d.projectName != null)
                                       ?.projectName
                                       ?.isNotEmpty ==
                                   true
                               ? p.data!
-                                    .firstWhere((d) => d.projectName != null)
-                                    .projectName!
+                                  .firstWhere((d) => d.projectName != null)
+                                  .projectName!
                               : 'Unnamed Project',
                           style: GoogleFonts.manrope(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF241917),
-                          ),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF241917)),
                         ),
                         SizedBox(height: 4.h),
                         Row(
                           children: [
-                            Icon(
-                              Icons.person_outline_rounded,
-                              size: 12.sp,
-                              color: const Color(0xFF8B7D77),
-                            ),
+                            Icon(Icons.person_outline_rounded,
+                                size: 12.sp, color: const Color(0xFF8B7D77)),
                             SizedBox(width: 4.w),
                             Container(
                               padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 3.h,
-                              ),
+                                  horizontal: 8.w, vertical: 3.h),
                               decoration: BoxDecoration(
-                                color: _statusColor.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
+                                  color: _statusColor.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(20.r)),
                               child: Text(
                                 (p.data
                                                 ?.firstWhereOrNull(
-                                                  (d) => d.aStatus != null,
-                                                )
+                                                    (d) => d.aStatus != null)
                                                 ?.aStatus
                                                 ?.isEmpty ==
                                             true
                                         ? null
                                         : p.data
-                                              ?.firstWhereOrNull(
-                                                (d) => d.aStatus != null,
-                                              )
-                                              ?.aStatus) ??
+                                            ?.firstWhereOrNull(
+                                                (d) => d.aStatus != null)
+                                            ?.aStatus) ??
                                     'Pending',
                                 style: GoogleFonts.inter(
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: _statusColor,
-                                ),
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: _statusColor),
                               ),
                             ),
                           ],
@@ -4459,11 +4039,8 @@ class _TLProjectCardState extends State<_TLProjectCard>
                   ),
                   RotationTransition(
                     turns: _rotate,
-                    child: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 22.sp,
-                      color: const Color(0xFF6A3027),
-                    ),
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 22.sp, color: const Color(0xFF6A3027)),
                   ),
                 ],
               ),
@@ -4497,10 +4074,7 @@ class _TLAllocateProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18.r),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+              color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 4))
         ],
       ),
       child: Padding(
@@ -4512,9 +4086,8 @@ class _TLAllocateProjectCard extends StatelessWidget {
               width: 4.w,
               height: 56.h,
               decoration: BoxDecoration(
-                color: const Color(0xFF6A3027),
-                borderRadius: BorderRadius.circular(4.r),
-              ),
+                  color: const Color(0xFF6A3027),
+                  borderRadius: BorderRadius.circular(4.r)),
             ),
             SizedBox(width: 12.w),
             Expanded(
@@ -4526,19 +4099,15 @@ class _TLAllocateProjectCard extends StatelessWidget {
                         ? project.projectName
                         : 'Unnamed Project',
                     style: GoogleFonts.manrope(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF241917),
-                    ),
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF241917)),
                   ),
                   SizedBox(height: 6.h),
                   Row(
                     children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 12.sp,
-                        color: const Color(0xFF8B7D77),
-                      ),
+                      Icon(Icons.person_outline_rounded,
+                          size: 12.sp, color: const Color(0xFF8B7D77)),
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
@@ -4546,9 +4115,8 @@ class _TLAllocateProjectCard extends StatelessWidget {
                               ? project.employeeName
                               : '—',
                           style: GoogleFonts.inter(
-                            fontSize: 12.sp,
-                            color: const Color(0xFF241917),
-                          ),
+                              fontSize: 12.sp,
+                              color: const Color(0xFF241917)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -4557,11 +4125,8 @@ class _TLAllocateProjectCard extends StatelessWidget {
                   SizedBox(height: 4.h),
                   Row(
                     children: [
-                      Icon(
-                        Icons.assignment_ind_outlined,
-                        size: 12.sp,
-                        color: const Color(0xFF8B7D77),
-                      ),
+                      Icon(Icons.assignment_ind_outlined,
+                          size: 12.sp, color: const Color(0xFF8B7D77)),
                       SizedBox(width: 4.w),
                       Expanded(
                         child: Text(
@@ -4569,24 +4134,19 @@ class _TLAllocateProjectCard extends StatelessWidget {
                               ? 'By ${project.assignBy}'
                               : '—',
                           style: GoogleFonts.inter(
-                            fontSize: 11.sp,
-                            color: const Color(0xFF8B7D77),
-                          ),
+                              fontSize: 11.sp,
+                              color: const Color(0xFF8B7D77)),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 11.sp,
-                        color: const Color(0xFF8B7D77),
-                      ),
+                      Icon(Icons.calendar_today_outlined,
+                          size: 11.sp, color: const Color(0xFF8B7D77)),
                       SizedBox(width: 3.w),
                       Text(
                         dateLabel,
                         style: GoogleFonts.inter(
-                          fontSize: 11.sp,
-                          color: const Color(0xFF8B7D77),
-                        ),
+                            fontSize: 11.sp,
+                            color: const Color(0xFF8B7D77)),
                       ),
                     ],
                   ),
@@ -4600,44 +4160,74 @@ class _TLAllocateProjectCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// TASK WORK TILE — unchanged, uses ProjectTaskWork
-// ─────────────────────────────────────────────────────────────────────────
+// ── Update Project Status Bottom Sheet (PM) ─────────────────────────────────
 
-class _TaskWorkTile extends StatelessWidget {
-  final ProjectTaskWork taskWork;
-  const _TaskWorkTile({required this.taskWork});
+class _UpdateStatusSheet extends StatefulWidget {
+  final int projectId;
+  final String projectName;
+  final String? currentStatus;
+  const _UpdateStatusSheet({
+    required this.projectId,
+    required this.projectName,
+    this.currentStatus,
+  });
 
-  Color get _statusColor {
-    switch (taskWork.aStatus) {
-      case 'Done':
-      case 'Complete':
-        return Colors.green;
-      case 'Pending':
-        return Colors.orange;
-      default:
-        return Colors.blue;
+  @override
+  State<_UpdateStatusSheet> createState() => _UpdateStatusSheetState();
+}
+
+class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
+  final _c = Get.find<TaskController>();
+  String? _selectedStatus;
+
+  static const _statusOptions = [
+    _StatusOption('Pending', Icons.hourglass_empty_rounded, _kDanger),
+    _StatusOption('In Progress', Icons.autorenew_rounded, _kWarning),
+    _StatusOption('On-Hold', Icons.autorenew_rounded, _kWarning),
+    _StatusOption('Completed', Icons.check_circle_rounded, _kSuccess),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = widget.currentStatus;
+  }
+
+  Future<void> _submit() async {
+    if (_selectedStatus == null) {
+      Get.snackbar(
+        'Missing',
+        'Please select a status',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+    final ok = await _c.updateProjectStatus(
+      sProjectId: widget.projectId,
+      status: _selectedStatus!,
+    );
+    if (ok) {
+      Get.back();
+      Get.snackbar(
+        'Success',
+        'Status updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: _kSuccess,
+        colorText: Colors.white,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('dd MMM yyyy');
-    final dueLabel = taskWork.deliveryEstimateDate != null
-        ? fmt.format(taskWork.deliveryEstimateDate!)
-        : '—';
-
     return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
         color: const Color(0xFFF6F1ED),
         borderRadius: BorderRadius.circular(10.r),
         border: Border.all(
-          color: taskWork.isOverdue
-              ? Colors.red.shade200
-              : const Color(0xFFE0D5D0),
-        ),
+            color: taskWork.isOverdue
+                ? Colors.red.shade200
+                : const Color(0xFFE0D5D0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4650,52 +4240,44 @@ class _TaskWorkTile extends StatelessWidget {
                       ? taskWork.taskTittle!
                       : taskWork.proDescription ?? 'No title',
                   style: GoogleFonts.manrope(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF241917),
-                  ),
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF241917)),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               SizedBox(width: 8.w),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                padding:
+                    EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                 decoration: BoxDecoration(
-                  color: _statusColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  taskWork.aStatus,
-                  style: GoogleFonts.inter(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w700,
-                    color: _statusColor,
-                  ),
-                ),
+                    color: _statusColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20.r)),
+                child: Text(taskWork.aStatus,
+                    style: GoogleFonts.inter(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w700,
+                        color: _statusColor)),
               ),
             ],
           ),
           SizedBox(height: 6.h),
           Row(
             children: [
-              Icon(
-                Icons.people_outline_rounded,
-                size: 12.sp,
-                color: const Color(0xFF6A3027),
-              ),
+              Icon(Icons.people_outline_rounded,
+                  size: 12.sp, color: const Color(0xFF6A3027)),
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
                   [
-                    if (taskWork.employeeName.isNotEmpty) taskWork.employeeName,
+                    if (taskWork.employeeName.isNotEmpty)
+                      taskWork.employeeName,
                     if (taskWork.employeeName1.isNotEmpty)
                       taskWork.employeeName1,
                   ].join(' → '),
                   style: GoogleFonts.inter(
-                    fontSize: 11.sp,
-                    color: const Color(0xFF241917),
-                  ),
+                      fontSize: 11.sp, color: const Color(0xFF241917)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -4705,35 +4287,25 @@ class _TaskWorkTile extends StatelessWidget {
           SizedBox(height: 4.h),
           Row(
             children: [
-              Icon(
-                Icons.calendar_today_rounded,
-                size: 11.sp,
-                color: const Color(0xFF8B7D77),
-              ),
+              Icon(Icons.calendar_today_rounded,
+                  size: 11.sp, color: const Color(0xFF8B7D77)),
               SizedBox(width: 4.w),
-              Text(
-                'Due: $dueLabel',
-                style: GoogleFonts.inter(
-                  fontSize: 11.sp,
-                  color: const Color(0xFF8B7D77),
-                ),
-              ),
+              Text('Due: $dueLabel',
+                  style: GoogleFonts.inter(
+                      fontSize: 11.sp, color: const Color(0xFF8B7D77))),
               if (taskWork.isOverdue) ...[
                 SizedBox(width: 8.w),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 6.w, vertical: 2.h),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    'Overdue',
-                    style: GoogleFonts.inter(
-                      fontSize: 9.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.red,
-                    ),
-                  ),
+                      color: Colors.red.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(8.r)),
+                  child: Text('Overdue',
+                      style: GoogleFonts.inter(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.red)),
                 ),
               ],
               if (taskWork.priority != null) ...[
@@ -4746,8 +4318,8 @@ class _TaskWorkTile extends StatelessWidget {
                     color: taskWork.priority == 'High'
                         ? Colors.red
                         : taskWork.priority == 'Low'
-                        ? Colors.green
-                        : Colors.orange,
+                            ? Colors.green
+                            : Colors.orange,
                   ),
                 ),
               ],

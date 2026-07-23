@@ -181,11 +181,14 @@ class LoginController extends GetxController {
   }
 }*/
 import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:monteage_employee/infrastructure/utils/pref_manager.dart';
 import 'package:monteage_employee/models/login_response_model.dart';
+import 'package:monteage_employee/services/push_notification_service.dart';
 
 class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
@@ -225,6 +228,7 @@ class LoginController extends GetxController {
           )
           .timeout(const Duration(seconds: 15));
 
+
       debugPrint("STATUS: ${response.statusCode}");
       debugPrint("BODY: ${response.body}");
 
@@ -246,6 +250,7 @@ class LoginController extends GetxController {
           Get.snackbar("Error", "User data missing from API");
           return;
         }
+      
 
         // Save data
         box.write("EmployeeName", emp.employeeName);
@@ -261,7 +266,10 @@ class LoginController extends GetxController {
         box.write("contact_no", emp.contactNo);
         box.write("photo", emp.photo);
         box.write("is_logged_in", true);
-        
+
+        FirebaseMessaging.instance.subscribeToTopic(
+          PushNotificationService.topicForEmployee(emp.employeeId.toString()),
+        );
 
         Get.offAllNamed("/main");
       } else {
@@ -283,7 +291,13 @@ class LoginController extends GetxController {
     }
   }
   void logout() {
-  box.erase(); 
-  Get.offAllNamed("/login");
-}
+    final employeeId = box.read("EmployeeId")?.toString();
+    if (employeeId != null && employeeId.isNotEmpty) {
+      FirebaseMessaging.instance.unsubscribeFromTopic(
+        PushNotificationService.topicForEmployee(employeeId),
+      );
+    }
+    box.erase();
+    Get.offAllNamed("/login");
+  }
 }

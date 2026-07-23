@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:monteage_employee/models/totalattendanceview_model.dart';
 import 'package:monteage_employee/controllers/totalattendanceview_controller.dart';
 
@@ -95,6 +96,436 @@ Widget _buildBadgeChip(_Badge badge) => Container(
     Text(badge.label, style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w700, color: badge.fg)),
   ]),
 );
+
+// ─────────────────────────────────────────────────────────────
+//  SHARED HISTORY TILE (used by both the list and calendar views)
+// ─────────────────────────────────────────────────────────────
+String _formatDate(String? date) {
+  if (date == null || date.trim().isEmpty) return 'N/A';
+  try { return DateFormat('dd MMM yyyy').format(DateTime.parse(date)); }
+  catch (_) { return date; }
+}
+
+Widget _buildStatusChip(String? status) {
+  final n = (status ?? 'N/A').trim();
+  final color = n.toLowerCase() == 'verified' ? Colors.green
+      : n.toLowerCase() == 'pending'  ? Colors.orange
+      : n.toLowerCase() == 'rejected' ? Colors.red
+      : Colors.blueGrey;
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(n, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+  );
+}
+
+Widget _buildKeyValue(String label, String? value) => RichText(
+  text: TextSpan(
+    style: const TextStyle(color: Colors.black87, fontSize: 12),
+    children: [
+      TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+      TextSpan(text: (value == null || value.trim().isEmpty) ? 'N/A' : value),
+    ],
+  ),
+);
+
+Widget _imageBlock(String title, String? url, TotalAttendanceViewController controller) {
+  final full = controller.fullImageUrl(url);
+  if (full.isEmpty) return const SizedBox();
+  return Padding(
+    padding: EdgeInsets.only(top: 10.h),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(title, style: GoogleFonts.manrope(
+        fontSize: 13.sp, fontWeight: FontWeight.w700,
+        color: const Color(0xFF241917),
+      )),
+      SizedBox(height: 8.h),
+      ClipRRect(
+        borderRadius: BorderRadius.circular(14.r),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Image.network(full, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              color: const Color(0xFFF1F1F1), alignment: Alignment.center,
+              child: Text('Image unavailable',
+                  style: GoogleFonts.inter(
+                    fontSize: 11.sp, color: const Color(0xFF8B7D77),
+                  )),
+            ),
+            loadingBuilder: (_, child, p) {
+              if (p == null) return child;
+              return Container(color: const Color(0xFFF1F1F1),
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator());
+            },
+          ),
+        ),
+      ),
+    ]),
+  );
+}
+
+Widget _buildHistoryTile(AttendanceHistory item, TotalAttendanceViewController controller) {
+  final badges = _AttendanceLogic.getBadges(item.checkInTime, item.checkOutTime);
+  return Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: Colors.grey.shade200),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.03),
+          blurRadius: 8, offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        const Icon(Icons.calendar_today, size: 15, color: Colors.blueGrey),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(_formatDate(item.date),
+              style: GoogleFonts.manrope(
+                fontSize: 13, fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E1E1E),
+              )),
+        ),
+        _buildStatusChip(item.status),
+      ]),
+      const SizedBox(height: 10),
+      if (badges.isNotEmpty) ...[
+        Wrap(spacing: 6, runSpacing: 6,
+            children: badges.map(_buildBadgeChip).toList()),
+        const SizedBox(height: 10),
+      ],
+      Wrap(spacing: 12, runSpacing: 6, children: [
+        _buildKeyValue('Check in',        item.checkInTime),
+        _buildKeyValue('Check out',       item.checkOutTime),
+        _buildKeyValue('Total',           item.totalTime),
+        _buildKeyValue('Checkout status', item.checkoutStatus),
+      ]),
+      _imageBlock('Check-in Photo',  item.imageUrl, controller),
+      _imageBlock('Check-out Photo', item.checkoutImageUrl, controller),
+      if ((item.isSuspicious ?? false) ||
+          (item.suspiciousReason?.trim().isNotEmpty ?? false)) ...[
+        const SizedBox(height: 8),
+        Row(children: [
+          const Icon(Icons.flag, size: 14, color: Colors.redAccent),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Flag: ${item.suspiciousReason?.trim().isNotEmpty == true ? item.suspiciousReason : 'Marked suspicious'}',
+              style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+            ),
+          ),
+        ]),
+      ],
+      if (item.locationAddress?.trim().isNotEmpty ?? false) ...[
+        const SizedBox(height: 6),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(item.locationAddress!,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+          ),
+        ]),
+      ],
+    ]),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+//  HISTORY BODY — toggles between List and Calendar views
+// ─────────────────────────────────────────────────────────────
+class _HistoryBody extends StatefulWidget {
+  final List<AttendanceHistory> history;
+  final TotalAttendanceViewController controller;
+  const _HistoryBody({required this.history, required this.controller});
+
+  @override
+  State<_HistoryBody> createState() => _HistoryBodyState();
+}
+
+class _HistoryBodyState extends State<_HistoryBody> {
+  bool _showCalendar = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: _ViewToggle(
+            showCalendar: _showCalendar,
+            onChanged: (v) => setState(() => _showCalendar = v),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: _showCalendar
+              ? _AttendanceCalendarView(
+                  history: widget.history, controller: widget.controller)
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: widget.history.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) =>
+                      _buildHistoryTile(widget.history[i], widget.controller),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ViewToggle extends StatelessWidget {
+  final bool showCalendar;
+  final ValueChanged<bool> onChanged;
+  const _ViewToggle({required this.showCalendar, required this.onChanged});
+
+  Widget _seg(String label, IconData icon, bool active, VoidCallback onTap) =>
+      Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: active ? const Color(0xFF4361EE) : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(icon, size: 15, color: active ? Colors.white : Colors.black54),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: GoogleFonts.manrope(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: active ? Colors.white : Colors.black54,
+                  )),
+            ]),
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F2F8),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(children: [
+        _seg('Calendar', Icons.calendar_month_rounded, showCalendar,
+            () => onChanged(true)),
+        _seg('List', Icons.list_rounded, !showCalendar, () => onChanged(false)),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  CALENDAR VIEW — per-day P/A markers + tap-to-see-details
+// ─────────────────────────────────────────────────────────────
+class _AttendanceCalendarView extends StatefulWidget {
+  final List<AttendanceHistory> history;
+  final TotalAttendanceViewController controller;
+  const _AttendanceCalendarView(
+      {required this.history, required this.controller});
+
+  @override
+  State<_AttendanceCalendarView> createState() =>
+      _AttendanceCalendarViewState();
+}
+
+class _AttendanceCalendarViewState extends State<_AttendanceCalendarView> {
+  static const _blue = Color(0xFF4361EE);
+  static const _present = Color(0xFF1E8E3E);
+  static const _absent = Color(0xFFD93025);
+
+  late final Map<DateTime, AttendanceHistory> _byDate;
+  late DateTime _firstRecordDay;
+  late DateTime _lastRecordDay;
+  late DateTime _focusedDay;
+  DateTime? _selectedDay;
+
+  static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  static DateTime? _parseDate(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _byDate = {};
+    for (final r in widget.history) {
+      final d = _parseDate(r.date);
+      if (d != null) _byDate[_dateOnly(d)] = r;
+    }
+    final dates = _byDate.keys.toList()..sort();
+    final today = _dateOnly(DateTime.now());
+    _firstRecordDay = dates.isNotEmpty ? dates.first : today;
+    _lastRecordDay = dates.isNotEmpty ? dates.last : today;
+    _focusedDay = _lastRecordDay;
+    _selectedDay = _byDate.containsKey(today) ? today : _lastRecordDay;
+  }
+
+  /// 'P' if a record exists, 'A' if the day is within the loaded history
+  /// range and already past with no record, otherwise no marker.
+  String? _markerFor(DateTime day) {
+    final key = _dateOnly(day);
+    if (_byDate.containsKey(key)) return 'P';
+    if (key.isBefore(_firstRecordDay) || key.isAfter(_lastRecordDay)) {
+      return null;
+    }
+    if (key.isAfter(_dateOnly(DateTime.now()))) return null;
+    return 'A';
+  }
+
+  Widget _dayCell(DateTime day, {bool isToday = false, bool isSelected = false}) {
+    final marker = _markerFor(day);
+    Color bg = Colors.transparent;
+    Color fg = const Color(0xFF1E1E1E);
+    if (isSelected) {
+      bg = _blue;
+      fg = Colors.white;
+    } else if (marker == 'P') {
+      bg = _present.withValues(alpha: 0.12);
+      fg = _present;
+    } else if (marker == 'A') {
+      bg = _absent.withValues(alpha: 0.12);
+      fg = _absent;
+    }
+
+    return Container(
+      margin: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: bg,
+        shape: BoxShape.circle,
+        border: isToday && !isSelected
+            ? Border.all(color: _blue, width: 1.4)
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${day.day}',
+              style: GoogleFonts.inter(
+                  fontSize: 12.sp, fontWeight: FontWeight.w600, color: fg)),
+          if (marker != null)
+            Text(marker,
+                style: GoogleFonts.manrope(
+                    fontSize: 8.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected ? Colors.white : fg)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedRecord =
+        _selectedDay != null ? _byDate[_dateOnly(_selectedDay!)] : null;
+
+    return Column(
+      children: [
+        TableCalendar<AttendanceHistory>(
+          firstDay: DateTime(_firstRecordDay.year, _firstRecordDay.month - 1, 1),
+          lastDay: DateTime(_lastRecordDay.year, _lastRecordDay.month + 1, 0),
+          focusedDay: _focusedDay,
+          selectedDayPredicate: (day) =>
+              _selectedDay != null && isSameDay(_selectedDay, day),
+          onDaySelected: (selected, focused) {
+            setState(() {
+              _selectedDay = selected;
+              _focusedDay = focused;
+            });
+          },
+          onPageChanged: (focused) => _focusedDay = focused,
+          calendarFormat: CalendarFormat.month,
+          availableCalendarFormats: const {CalendarFormat.month: 'Month'},
+          headerStyle: HeaderStyle(
+            formatButtonVisible: false,
+            titleCentered: true,
+            titleTextStyle: GoogleFonts.manrope(
+                fontSize: 15, fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E1E1E)),
+            leftChevronIcon: const Icon(Icons.chevron_left_rounded, color: _blue),
+            rightChevronIcon:
+                const Icon(Icons.chevron_right_rounded, color: _blue),
+          ),
+          daysOfWeekStyle: DaysOfWeekStyle(
+            weekdayStyle: GoogleFonts.inter(
+                fontSize: 11, color: Colors.black45, fontWeight: FontWeight.w600),
+            weekendStyle: GoogleFonts.inter(
+                fontSize: 11, color: Colors.black45, fontWeight: FontWeight.w600),
+          ),
+          calendarStyle: const CalendarStyle(outsideDaysVisible: false),
+          calendarBuilders: CalendarBuilders(
+            defaultBuilder: (context, day, focusedDay) => _dayCell(day),
+            todayBuilder: (context, day, focusedDay) =>
+                _dayCell(day, isToday: true),
+            selectedBuilder: (context, day, focusedDay) =>
+                _dayCell(day, isSelected: true),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            _legendDot(_present, 'Present'),
+            const SizedBox(width: 16),
+            _legendDot(_absent, 'Absent'),
+          ]),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: selectedRecord != null
+              ? SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: _buildHistoryTile(selectedRecord, widget.controller),
+                )
+              : Center(
+                  child: Text(
+                    _selectedDay == null
+                        ? 'Select a day to view details'
+                        : 'Absent — no attendance record for this day',
+                    style: GoogleFonts.inter(
+                        fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _legendDot(Color color, String label) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8, height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(label,
+              style: GoogleFonts.inter(fontSize: 11, color: Colors.grey.shade700)),
+        ],
+      );
+}
 
 // ─────────────────────────────────────────────────────────────
 //  PDF GENERATOR
@@ -923,157 +1354,12 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
               ),
               const Divider(height: 1),
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: history.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) => _buildHistoryTile(history[i]),
-                ),
+                child: _HistoryBody(history: history, controller: controller),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  // ── History Tile ──────────────────────────────────────────────
-  Widget _buildHistoryTile(AttendanceHistory item) {
-    final badges = _AttendanceLogic.getBadges(item.checkInTime, item.checkOutTime);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8, offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          const Icon(Icons.calendar_today, size: 15, color: Colors.blueGrey),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(_formatDate(item.date),
-                style: GoogleFonts.manrope(
-                  fontSize: 13, fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1E1E1E),
-                )),
-          ),
-          _buildStatusChip(item.status),
-        ]),
-        const SizedBox(height: 10),
-        if (badges.isNotEmpty) ...[
-          Wrap(spacing: 6, runSpacing: 6,
-              children: badges.map(_buildBadgeChip).toList()),
-          const SizedBox(height: 10),
-        ],
-        Wrap(spacing: 12, runSpacing: 6, children: [
-          _buildKeyValue('Check in',        item.checkInTime),
-          _buildKeyValue('Check out',       item.checkOutTime),
-          _buildKeyValue('Total',           item.totalTime),
-          _buildKeyValue('Checkout status', item.checkoutStatus),
-        ]),
-        _imageBlock('Check-in Photo',  item.imageUrl),
-        _imageBlock('Check-out Photo', item.checkoutImageUrl),
-        if ((item.isSuspicious ?? false) ||
-            (item.suspiciousReason?.trim().isNotEmpty ?? false)) ...[
-          const SizedBox(height: 8),
-          Row(children: [
-            const Icon(Icons.flag, size: 14, color: Colors.redAccent),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                'Flag: ${item.suspiciousReason?.trim().isNotEmpty == true ? item.suspiciousReason : 'Marked suspicious'}',
-                style: const TextStyle(color: Colors.redAccent, fontSize: 12),
-              ),
-            ),
-          ]),
-        ],
-        if (item.locationAddress?.trim().isNotEmpty ?? false) ...[
-          const SizedBox(height: 6),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(item.locationAddress!,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            ),
-          ]),
-        ],
-      ]),
-    );
-  }
-
-  Widget _buildStatusChip(String? status) {
-    final n = (status ?? 'N/A').trim();
-    final color = n.toLowerCase() == 'verified' ? Colors.green
-        : n.toLowerCase() == 'pending'  ? Colors.orange
-        : n.toLowerCase() == 'rejected' ? Colors.red
-        : Colors.blueGrey;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(n, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-    );
-  }
-
-  Widget _buildKeyValue(String label, String? value) => RichText(
-    text: TextSpan(
-      style: const TextStyle(color: Colors.black87, fontSize: 12),
-      children: [
-        TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
-        TextSpan(text: (value == null || value.trim().isEmpty) ? 'N/A' : value),
-      ],
-    ),
-  );
-
-  String _formatDate(String? date) {
-    if (date == null || date.trim().isEmpty) return 'N/A';
-    try { return DateFormat('dd MMM yyyy').format(DateTime.parse(date)); }
-    catch (_) { return date; }
-  }
-
-  Widget _imageBlock(String title, String? url) {
-    final full = controller.fullImageUrl(url);
-    if (full.isEmpty) return const SizedBox();
-    return Padding(
-      padding: EdgeInsets.only(top: 10.h),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: GoogleFonts.manrope(
-          fontSize: 13.sp, fontWeight: FontWeight.w700,
-          color: const Color(0xFF241917),
-        )),
-        SizedBox(height: 8.h),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14.r),
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Image.network(full, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFFF1F1F1), alignment: Alignment.center,
-                child: Text('Image unavailable',
-                    style: GoogleFonts.inter(
-                      fontSize: 11.sp, color: const Color(0xFF8B7D77),
-                    )),
-              ),
-              loadingBuilder: (_, child, p) {
-                if (p == null) return child;
-                return Container(color: const Color(0xFFF1F1F1),
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator());
-              },
-            ),
-          ),
-        ),
-      ]),
     );
   }
 

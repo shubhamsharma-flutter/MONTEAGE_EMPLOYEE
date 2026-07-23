@@ -7,7 +7,7 @@ import '../screens/home_screen.dart';
 import '../screens/task_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/employee_profile_screen.dart';
-import 'totalattendanceview.dart';
+import 'all_attendance_screen.dart';
 import '../bindings/task_binding.dart';
 import '../bindings/profile_binding.dart';
 import '../controllers/task_controller.dart';
@@ -16,6 +16,7 @@ import '../bindings/home_binding.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/employee_data_controller.dart';
 import '../controllers/totalattendanceview_controller.dart';
+import '../controllers/hr_today_attendance_controller.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -41,6 +42,9 @@ void initState() {
    if (!Get.isRegistered<TotalAttendanceViewController>()) {
     Get.put(TotalAttendanceViewController());
   }
+  if (!Get.isRegistered<HrTodayAttendanceController>()) {
+    Get.put(HrTodayAttendanceController());
+  }
 
   // Get employee controller to check role
   final employeeC = Get.find<EmployeeDataController>();
@@ -49,7 +53,7 @@ void initState() {
   if (employeeC.isHrManager) {
     _screens = [
       HomeScreen(),
-      Totalattendanceview(),
+      const AllAttendanceScreen(),
       CalendarScreen(),
       EmployeeProfileScreen(),
     ];

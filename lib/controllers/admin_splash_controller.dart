@@ -5,6 +5,8 @@ import '../infrastructure/routes/admin_routes.dart';
 
 class AdminSplashController extends GetxController {
   final box = GetStorage();
+  
+
 
   @override
   void onInit() {
