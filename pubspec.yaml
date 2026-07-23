@@ -30,6 +30,8 @@ dependencies:
   printing:
   http:
   qr_flutter:
+  firebase_core:
+  firebase_messaging:
   geolocator:
   open_file:
   file_picker:
