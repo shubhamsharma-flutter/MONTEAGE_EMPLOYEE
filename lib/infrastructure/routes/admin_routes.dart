@@ -37,6 +37,8 @@ import '../../screens/task_screen.dart';
 import '../../screens/main_screen.dart';
 import '../../screens/attendance_screen.dart';
 import '../../screens/calendar_screen.dart';
+import '../../bindings/crm_binding.dart';
+import '../../screens/crm_home_screen.dart';
 
 class AdminRoutes {
   // ==================
@@ -62,7 +64,8 @@ class AdminRoutes {
   static const mainScreen = '/main';
   static const projects = '/projects';
   static const allEmployeeAttendance = '/all-employee-attendance';
-  
+  static const crmHome = '/crm-home';
+
 
   // New Task Routes
   static const taskGiven = '/task-given';
@@ -227,8 +230,16 @@ GetPage(
   binding: TotalAttendanceViewBinding(),
 ),
 
+GetPage(
+  name: crmHome,
+  page: () => const CrmHomeScreen(),
+  transition: Transition.rightToLeft,
+  binding: CrmBinding(),
+),
+
 
 
 
   ];
 }
+

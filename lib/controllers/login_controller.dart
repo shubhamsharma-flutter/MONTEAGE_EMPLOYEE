@@ -225,6 +225,7 @@ class LoginController extends GetxController {
               "EmployeeCode": userId,
               "Password": password,
             }),
+
           )
           .timeout(const Duration(seconds: 15));
 
