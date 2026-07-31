@@ -1,4 +1,3 @@
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +49,6 @@ class AdminApp extends StatelessWidget {
       initialRoute: AdminRoutes.ADMIN_SPLASH,
 
       theme: ThemeData(useMaterial3: true),
-
 
       builder: (context, child) {
         return ScreenUtilInit(

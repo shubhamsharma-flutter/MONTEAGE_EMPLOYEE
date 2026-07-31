@@ -1,13 +1,15 @@
 import 'dart:convert';
 import 'dart:math' show Random;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
-import '../models/project_model.dart';
-import '../models/givenmodelpm.dart' as given;
-import '../models/recevedmodel.dart' as received;
+
 import '../models/empdropdownmode.dart' as empdrop;
+import '../models/givenmodelpm.dart' as given;
+import '../models/project_model.dart';
+import '../models/recevedmodel.dart' as received;
 import '../services/push_notification_service.dart';
 
 class TaskController extends GetxController {
@@ -39,38 +41,39 @@ class TaskController extends GetxController {
 
   // ── Auth ───────────────────────────────────────────────────────────────────
   Map<String, String> get _headers => {
-        'Authorization': 'Bearer ${(_box.read('access_token') ?? '').toString().trim()}',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      };
+    'Authorization':
+        'Bearer ${(_box.read('access_token') ?? '').toString().trim()}',
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
 
   // ── Designation ────────────────────────────────────────────────────────────
   // Normalized by stripping everything but letters so stray casing/spacing/
   // punctuation from the API ("Team Leader", "TeamLeader", "team_leader", ...)
   // still matches.
   String get _normalizedDesignation {
-    final raw =
-        (_box.read('Designation') ?? _box.read('designation') ?? '')
-            .toString();
+    final raw = (_box.read('Designation') ?? _box.read('designation') ?? '')
+        .toString();
     final normalized = raw.toLowerCase().replaceAll(RegExp('[^a-z]'), '');
     debugPrint(
-        'TaskController designation raw="$raw" normalized="$normalized"');
+      'TaskController designation raw="$raw" normalized="$normalized"',
+    );
     return normalized;
   }
 
   bool get _isTeamLeader => _normalizedDesignation == 'teamleader';
+  bool get _isProjectManager => _normalizedDesignation == 'projectmanager';
 
   // ── API URLs ───────────────────────────────────────────────────────────────
   String get _projectsUrl => _isTeamLeader
       ? '$_apiBase/MobProjectAllocateTL/${empid.value}'
       : '$_apiBase/AppPMAssignProjectList/${empid.value}';
 
-  String get _taskWorksUrl => _isTeamLeader
+  String get _taskWorksUrl => (_isTeamLeader || _isProjectManager)
       ? '$_apiBase/MObProjectGivenWorkTL/${empid.value}'
       : '$_apiBase/MObProjectTaskWork/${empid.value}';
 
-  String get _receivedUrl =>
-      '$_apiBase/MObProjectReciveWorkTL/${empid.value}';
+  String get _receivedUrl => '$_apiBase/MObProjectReciveWorkTL/${empid.value}';
 
   @override
   void onInit() {
@@ -95,8 +98,9 @@ class TaskController extends GetxController {
         final decoded = jsonDecode(res.body);
         final list = decoded['data'] as List?;
         if (list != null) {
-          projects.value =
-              list.map<ProjectModel>((e) => ProjectModel.fromJson(e)).toList();
+          projects.value = list
+              .map<ProjectModel>((e) => ProjectModel.fromJson(e))
+              .toList();
         }
       } else {
         errorMessage('Server error: ${res.statusCode}');
@@ -168,7 +172,8 @@ class TaskController extends GetxController {
           ? '$_apiBase/MObTeamLeaderTeamList/${empid.value}'
           : '$_apiBase/AppBindEmployee';
       debugPrint(
-          'fetchBindEmployees url: $url (isTeamLeader=$_isTeamLeader, empid=${empid.value})');
+        'fetchBindEmployees url: $url (isTeamLeader=$_isTeamLeader, empid=${empid.value})',
+      );
       final res = await http
           .get(Uri.parse(url), headers: _headers)
           .timeout(const Duration(seconds: 12));
@@ -194,7 +199,9 @@ class TaskController extends GetxController {
       final res = await http
           .get(Uri.parse(url), headers: _headers)
           .timeout(const Duration(seconds: 12));
-      debugPrint('fetchProjectManagerTeamList [${res.statusCode}]: ${res.body}');
+      debugPrint(
+        'fetchProjectManagerTeamList [${res.statusCode}]: ${res.body}',
+      );
       if (res.statusCode == 200) {
         final parsed = empdrop.empdropdown.fromJson(jsonDecode(res.body));
         teamLeaders.value = parsed.data ?? [];
@@ -226,34 +233,47 @@ class TaskController extends GetxController {
       debugPrint('assignProjectToTeamLead body: ${jsonEncode(body)}');
 
       final res = await http
-          .post(Uri.parse(_assignToTlUrl),
-              headers: _headers, body: jsonEncode(body))
+          .post(
+            Uri.parse(_assignToTlUrl),
+            headers: _headers,
+            body: jsonEncode(body),
+          )
           .timeout(const Duration(seconds: 12));
 
       debugPrint('assignProjectToTeamLead [${res.statusCode}]: ${res.body}');
 
       if (res.statusCode == 200) {
         fetchProjects();
-        final assignedBy = (_box.read('EmployeeName') ?? 'Your manager').toString();
+        final assignedBy = (_box.read('EmployeeName') ?? 'Your manager')
+            .toString();
         PushNotificationService.instance.sendToEmployee(
           employeeId: employeeId.toString(),
           title: 'New Project Assigned',
           body: '$assignedBy assigned you a project',
-          data: {'type': 'project_assigned', 'sProjectId': sProjectId.toString()},
+          data: {
+            'type': 'project_assigned',
+            'sProjectId': sProjectId.toString(),
+          },
         );
         return true;
       } else {
-        Get.snackbar('Failed', 'Server error: ${res.statusCode}',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFFB54A3A),
-            colorText: Colors.white);
+        Get.snackbar(
+          'Failed',
+          'Server error: ${res.statusCode}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFB54A3A),
+          colorText: Colors.white,
+        );
         return false;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not assign project: $e',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
-          colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Could not assign project: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFB54A3A),
+        colorText: Colors.white,
+      );
       debugPrint('assignProjectToTeamLead error: $e');
       return false;
     } finally {
@@ -264,14 +284,15 @@ class TaskController extends GetxController {
   // ── Assign Task ────────────────────────────────────────────────────────────
   final isAssigning = false.obs;
 
-  static const String _assignUrl =
-      '$_apiBase/MobProjectAllocateTeam';
+  static const String _assignUrl = '$_apiBase/MobProjectAllocateTeam';
 
   String _generateToken() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final rng = Random();
-    final suffix =
-        List.generate(6, (_) => chars[rng.nextInt(chars.length)]).join();
+    final suffix = List.generate(
+      6,
+      (_) => chars[rng.nextInt(chars.length)],
+    ).join();
     return 'TKN$suffix';
   }
 
@@ -304,15 +325,19 @@ class TaskController extends GetxController {
       debugPrint('assignTask body: ${jsonEncode(body)}');
 
       final res = await http
-          .post(Uri.parse(_assignUrl),
-              headers: _headers, body: jsonEncode(body))
+          .post(
+            Uri.parse(_assignUrl),
+            headers: _headers,
+            body: jsonEncode(body),
+          )
           .timeout(const Duration(seconds: 12));
 
       debugPrint('assignTask [${res.statusCode}]: ${res.body}');
 
       if (res.statusCode == 200) {
         fetchTaskWorks();
-        final assignedBy = (_box.read('EmployeeName') ?? 'Your manager').toString();
+        final assignedBy = (_box.read('EmployeeName') ?? 'Your manager')
+            .toString();
         PushNotificationService.instance.sendToEmployee(
           employeeId: employeeId.toString(),
           title: 'New Task Assigned',
@@ -321,17 +346,23 @@ class TaskController extends GetxController {
         );
         return true;
       } else {
-        Get.snackbar('Failed', 'Server error: ${res.statusCode}',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFFB54A3A),
-            colorText: Colors.white);
+        Get.snackbar(
+          'Failed',
+          'Server error: ${res.statusCode}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFB54A3A),
+          colorText: Colors.white,
+        );
         return false;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not assign task: $e',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
-          colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Could not assign task: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFB54A3A),
+        colorText: Colors.white,
+      );
       debugPrint('assignTask error: $e');
       return false;
     } finally {
@@ -342,8 +373,7 @@ class TaskController extends GetxController {
   // ── Progress Update ────────────────────────────────────────────────────────
   final isUpdatingProgress = false.obs;
 
-  static const String _progressUpdateUrl =
-      '$_apiBase/MObProjectProgressUpdate';
+  static const String _progressUpdateUrl = '$_apiBase/MObProjectProgressUpdate';
 
   Future<bool> updateProgress({
     required int proAllocatId,
@@ -367,8 +397,11 @@ class TaskController extends GetxController {
       debugPrint('updateProgress body: ${jsonEncode(body)}');
 
       final res = await http
-          .post(Uri.parse(_progressUpdateUrl),
-              headers: _headers, body: jsonEncode(body))
+          .post(
+            Uri.parse(_progressUpdateUrl),
+            headers: _headers,
+            body: jsonEncode(body),
+          )
           .timeout(const Duration(seconds: 12));
 
       debugPrint('updateProgress [${res.statusCode}]: ${res.body}');
@@ -377,13 +410,15 @@ class TaskController extends GetxController {
         fetchReceivedWorks();
         fetchTaskWorks();
         if (notifyEmployeeId != null && notifyEmployeeId > 0) {
-          final updatedBy = (_box.read('EmployeeName') ?? 'A team member').toString();
+          final updatedBy = (_box.read('EmployeeName') ?? 'A team member')
+              .toString();
           final recipientName = (notifyEmployeeName ?? '').trim();
           final greeting = recipientName.isEmpty ? '' : 'Hi $recipientName, ';
           PushNotificationService.instance.sendToEmployee(
             employeeId: notifyEmployeeId.toString(),
             title: 'Progress Updated',
-            body: '$greeting$updatedBy updated progress on ${taskTitle ?? 'a task'} to $progress%',
+            body:
+                '$greeting$updatedBy updated progress on ${taskTitle ?? 'a task'} to $progress%',
             data: {
               'type': 'progress_updated',
               'proAllocatId': proAllocatId.toString(),
@@ -392,17 +427,23 @@ class TaskController extends GetxController {
         }
         return true;
       } else {
-        Get.snackbar('Failed', 'Server error: ${res.statusCode}',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFFB54A3A),
-            colorText: Colors.white);
+        Get.snackbar(
+          'Failed',
+          'Server error: ${res.statusCode}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFB54A3A),
+          colorText: Colors.white,
+        );
         return false;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not update progress: $e',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
-          colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Could not update progress: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFB54A3A),
+        colorText: Colors.white,
+      );
       debugPrint('updateProgress error: $e');
       return false;
     } finally {
@@ -413,8 +454,7 @@ class TaskController extends GetxController {
   // ── Project Status Update (PM) ────────────────────────────────────────────
   final isUpdatingStatus = false.obs;
 
-  static const String _statusUpdateUrl =
-      '$_apiBase/MObProjectStatusUpdate';
+  static const String _statusUpdateUrl = '$_apiBase/MObProjectStatusUpdate';
 
   Future<bool> updateProjectStatus({
     required int sProjectId,
@@ -432,8 +472,11 @@ class TaskController extends GetxController {
       debugPrint('updateProjectStatus url: $_statusUpdateUrl');
 
       final res = await http
-          .post(Uri.parse(_statusUpdateUrl),
-              headers: _headers, body: jsonEncode(body))
+          .post(
+            Uri.parse(_statusUpdateUrl),
+            headers: _headers,
+            body: jsonEncode(body),
+          )
           .timeout(const Duration(seconds: 12));
 
       debugPrint('updateProjectStatus [${res.statusCode}]: ${res.body}');
@@ -442,17 +485,23 @@ class TaskController extends GetxController {
         fetchProjects();
         return true;
       } else {
-        Get.snackbar('Failed', 'Server error: ${res.statusCode}',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: const Color(0xFFB54A3A),
-            colorText: Colors.white);
+        Get.snackbar(
+          'Failed',
+          'Server error: ${res.statusCode}',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFB54A3A),
+          colorText: Colors.white,
+        );
         return false;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not update status: $e',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
-          colorText: Colors.white);
+      Get.snackbar(
+        'Error',
+        'Could not update status: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFB54A3A),
+        colorText: Colors.white,
+      );
       debugPrint('updateProjectStatus error: $e');
       return false;
     } finally {
@@ -460,4 +509,3 @@ class TaskController extends GetxController {
     }
   }
 }
-

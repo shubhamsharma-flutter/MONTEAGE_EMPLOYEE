@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(firebase --version)",
+      "Bash(dart pub *)",
+      "Bash(firebase login *)",
+      "Bash(firebase login:list)"
+    ]
+  }
+}
