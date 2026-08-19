@@ -11,7 +11,7 @@ import '../models/attendance_history_model.dart';
 class AttendanceHistoryController extends GetxController {
   final box = GetStorage();
 
-  final String baseUrl = "http://att.monteage.pl.in/";
+  final String baseUrl = "http://att.monteage.co.in/";
   final String historyApi =
       "http://att.monteage.co.in/attendance/api/attendance/history/";
   final String refreshApi =
