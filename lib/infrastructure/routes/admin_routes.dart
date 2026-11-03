@@ -29,6 +29,10 @@ import '../../screens/mark_face_attendance_screen.dart';
 import '../../screens/register_screen.dart';
 import '../../bindings/leave_management_binding.dart';
 import '../../screens/leave_management_screen.dart';
+import '../../bindings/leave_list_binding.dart';
+import '../../screens/leave_list_screen.dart';
+import '../../bindings/team_leave_binding.dart';
+import '../../screens/team_leave_screen.dart';
 import '../../bindings/totalattendanceview_binding.dart';
 import '../../screens/totalattendanceview.dart';
 
@@ -59,6 +63,8 @@ class AdminRoutes {
   static const profile = "/profile";
   static const forgotpassword = "/forgotpassword";
   static const leaveManagement = "/leave-management";
+  static const leaveList = "/leave-list";
+  static const teamLeave = "/team-leave";
   static const faceidlogin = "/faceid-login";
   static const attendance = '/attendance';
   static const mainScreen = '/main';
@@ -203,6 +209,20 @@ class AdminRoutes {
      page: () => LeaveManagementScreen(),
      transition: Transition.rightToLeft,
      binding: LeaveManagementBinding(),
+),
+
+  GetPage(
+     name: leaveList,
+     page: () => const LeaveListScreen(),
+     transition: Transition.rightToLeft,
+     binding: LeaveListBinding(),
+),
+
+  GetPage(
+     name: teamLeave,
+     page: () => const TeamLeaveScreen(),
+     transition: Transition.rightToLeft,
+     binding: TeamLeaveBinding(),
 ),
 
 
