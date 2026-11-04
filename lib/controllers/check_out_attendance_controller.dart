@@ -380,7 +380,7 @@ class CheckOutAttendanceController extends GetxController {
       latText.value = pos.latitude.toStringAsFixed(6);
       lngText.value = pos.longitude.toStringAsFixed(6);
 
-      final placemarks = await placemarkFromCoordinates(
+      final placemarks = await Geocoding().placemarkFromCoordinates(
         pos.latitude,
         pos.longitude,
       );

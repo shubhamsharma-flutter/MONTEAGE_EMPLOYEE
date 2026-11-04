@@ -84,3 +84,4 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/secrets/

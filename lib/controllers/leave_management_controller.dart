@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 import '../models/myleavemodel.dart';
+import '../services/push_notification_service.dart';
 import 'leave_list_controller.dart';
 
 class LeaveTypeModel {
@@ -94,6 +95,15 @@ class LeaveManagementController extends GetxController {
       }
     }
     return row;
+  }
+
+  /// Balance for one leave type, or null if no row exists for it.
+  int? balanceFor(int leaveTypeId) {
+    int? balance;
+    for (final leave in leaves) {
+      if (leave.leaveTypeId == leaveTypeId) balance = leave.totalBalanceLeave;
+    }
+    return balance;
   }
 
   /// Null when the balance is unknown; the backend still enforces the limit.
@@ -267,6 +277,14 @@ class LeaveManagementController extends GetxController {
             to: toDate.value!,
           );
 
+      // Runs in the background so a slow or failed push can't hold up the form.
+      _notifyApprovers(
+        leaveType: selectedLeaveType.value!.leaveType,
+        from: fromDate.value!,
+        to: toDate.value!,
+        days: numberOfDays,
+      );
+
       fetchMyLeaves();
       Get.snackbar(
         'Submitted',
@@ -347,6 +365,80 @@ class LeaveManagementController extends GetxController {
     } catch (e) {
       print('saveInitialApprovals error: $e');
       return false;
+    }
+  }
+
+  Future<bool> _isInTeamOf(String teamLeaderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/MObTeamLeaderTeamList/$teamLeaderId'),
+        headers: _headers,
+      );
+      if (response.statusCode != 200) return false;
+
+      final team = (jsonDecode(response.body)['data'] as List?) ?? [];
+      return team.any((member) => member['EmployeeId']?.toString() == _empId);
+    } catch (e) {
+      logLeaveApi('NOTIFY team lookup failed for $teamLeaderId: $e');
+      return false;
+    }
+  }
+
+  // Notifies the approvers this leave still needs: the applicant's own Team
+  // Leaders, plus everyone holding the Project Manager or HR Manager role.
+  Future<void> _notifyApprovers({
+    required String leaveType,
+    required DateTime from,
+    required DateTime to,
+    required int days,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/MobEmployeelist'),
+        headers: _headers,
+      );
+      if (response.statusCode != 200) {
+        logLeaveApi('NOTIFY employee list failed: ${response.statusCode}');
+        return;
+      }
+
+      final applicantIndex = approverIndex(box);
+      final employees = (jsonDecode(response.body)['data'] as List?) ?? [];
+      final recipients = <String>{};
+      for (final employee in employees) {
+        final id = (employee['EmployeeId'] ?? '').toString();
+        final index = approverIndexFor(
+          (employee['Designation'] ?? '').toString(),
+        );
+        if (id.isEmpty ||
+            id == _empId ||
+            index == null ||
+            !waitsOnApprover(applicantIndex, index)) {
+          continue;
+        }
+        // Team Leaders are only notified for people in their own team.
+        if (index != 0 || await _isInTeamOf(id)) recipients.add(id);
+      }
+
+      final name = (box.read('EmployeeName') ?? 'An employee').toString();
+      final dates = DateFormat('dd MMM yyyy');
+      final body =
+          '$name applied for $leaveType: ${dates.format(from)} to '
+          '${dates.format(to)} ($days ${days == 1 ? 'day' : 'days'})';
+
+      var sent = 0;
+      for (final id in recipients) {
+        final delivered = await PushNotificationService.instance.sendToEmployee(
+          employeeId: id,
+          title: 'New Leave Request',
+          body: body,
+          data: {'type': 'leave_applied'},
+        );
+        if (delivered) sent++;
+      }
+      logLeaveApi('NOTIFY sent $sent of ${recipients.length}: $recipients');
+    } catch (e) {
+      logLeaveApi('NOTIFY error: $e');
     }
   }
 

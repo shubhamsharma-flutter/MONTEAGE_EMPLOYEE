@@ -1,25 +1,105 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import '../controllers/leave_list_controller.dart';
+import 'leave_ui.dart';
 
-String _fmtDate(String? raw) {
-  final date = parseLeaveDate(raw);
-  return date == null ? '' : DateFormat('dd-MM-yyyy').format(date);
-}
+/// Filter bar and list states shared by My Leave Requests and Team Leave.
+class LeaveRequestsView extends StatelessWidget {
+  final bool isLoading;
+  final String errorMessage;
+  final String selectedFilter;
+  final int Function(String filter) countFor;
+  final ValueChanged<String> onFilterSelected;
+  final Future<void> Function() onRefresh;
+  final IconData emptyIcon;
+  final String emptyTitle;
+  final String emptyText;
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
+  final Widget? header;
 
-Color _statusColor(String status) {
-  switch (status) {
-    case 'Approved':
-      return const Color(0xFF2AB673);
-    case 'Rejected':
-      return const Color(0xFFD85E5E);
-    case 'Pending':
-      return const Color(0xFFF0A43C);
-    default:
-      return const Color(0xFF6A3027);
+  const LeaveRequestsView({
+    super.key,
+    required this.isLoading,
+    required this.errorMessage,
+    required this.selectedFilter,
+    required this.countFor,
+    required this.onFilterSelected,
+    required this.onRefresh,
+    required this.emptyIcon,
+    required this.emptyTitle,
+    required this.emptyText,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.header,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
+        child: const LeaveLoadingCards(),
+      );
+    }
+
+    if (errorMessage.isNotEmpty) {
+      return Center(
+        child: SingleChildScrollView(
+          child: LeaveMessage(
+            icon: Icons.cloud_off_rounded,
+            title: 'Something went wrong',
+            text: errorMessage,
+            actionLabel: 'Try again',
+            onAction: onRefresh,
+          ),
+        ),
+      );
+    }
+
+    final filter = selectedFilter.toLowerCase();
+
+    return Column(
+      children: [
+        LeaveFilterBar(
+          selected: selectedFilter,
+          countFor: countFor,
+          onSelected: onFilterSelected,
+        ),
+        ?header,
+        Expanded(
+          child: itemCount == 0
+              ? Center(
+                  child: SingleChildScrollView(
+                    child: LeaveMessage(
+                      icon: emptyIcon,
+                      title: selectedFilter == 'Total'
+                          ? emptyTitle
+                          : 'No $filter leaves',
+                      text: selectedFilter == 'Total'
+                          ? emptyText
+                          : 'Nothing is $filter right now.',
+                      actionLabel: 'Refresh',
+                      onAction: onRefresh,
+                    ),
+                  ),
+                )
+              : RefreshIndicator(
+                  color: LeaveColors.accent,
+                  onRefresh: onRefresh,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 24.h),
+                    itemCount: itemCount,
+                    separatorBuilder: (_, _) => SizedBox(height: 12.h),
+                    itemBuilder: itemBuilder,
+                  ),
+                ),
+        ),
+      ],
+    );
   }
 }
 
@@ -38,49 +118,54 @@ class LeaveFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 12.h),
+      margin: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 12.h),
       padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
-      ),
+      decoration: leaveCardDecoration(),
       child: Row(
         children: leaveStatusFilters.map((filter) {
           final isSelected = selected == filter;
-          final color = _statusColor(filter);
+          final color = leaveStatusColor(filter);
 
           return Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16.r),
-              onTap: () => onSelected(filter),
-              child: Container(
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? color.withValues(alpha: 0.12)
-                      : Colors.transparent,
+            child: Semantics(
+              button: true,
+              selected: isSelected,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
                   borderRadius: BorderRadius.circular(16.r),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '${countFor(filter)}',
-                      style: GoogleFonts.manrope(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w800,
-                        color: color,
-                      ),
+                  onTap: () => onSelected(filter),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: EdgeInsets.symmetric(vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: isSelected ? color : Colors.transparent,
+                      borderRadius: BorderRadius.circular(16.r),
                     ),
-                    Text(
-                      filter,
-                      style: GoogleFonts.inter(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF756A66),
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '${countFor(filter)}',
+                          style: LeaveText.heading(
+                            18,
+                            color: isSelected ? Colors.white : color,
+                          ),
+                        ),
+                        Text(
+                          filter,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: LeaveText.body(
+                            11,
+                            weight: FontWeight.w600,
+                            color: isSelected
+                                ? Colors.white
+                                : LeaveColors.muted,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -121,197 +206,268 @@ class LeaveRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reasonText = (reason ?? '').trim();
-    final name = employeeName?.trim();
-    final hasName = name != null && name.isNotEmpty;
+    final name = employeeName?.trim() ?? '';
+    final type = (leaveType ?? '-').trim();
 
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
-      ),
+      decoration: leaveCardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              name.isEmpty
+                  ? _TypeBadge(leaveType: leaveType)
+                  : _NameAvatar(name: name),
+              SizedBox(width: 12.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (hasName)
-                      Text(
-                        name,
-                        style: GoogleFonts.manrope(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF241917),
-                        ),
-                      ),
                     Text(
-                      (leaveType ?? '-').trim(),
-                      style: hasName
-                          ? GoogleFonts.inter(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF756A66),
-                            )
-                          : GoogleFonts.manrope(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF241917),
-                            ),
+                      name.isEmpty ? type : name,
+                      style: LeaveText.heading(15),
+                    ),
+                    Text(
+                      name.isEmpty ? leaveDayLabel(days) : type,
+                      style: LeaveText.body(12),
                     ),
                   ],
                 ),
               ),
-              _StatusBadge(status: status),
+              SizedBox(width: 8.w),
+              _StatusPill(status: status),
             ],
           ),
-          SizedBox(height: 10.h),
-          _Detail(
-            icon: Icons.date_range_rounded,
-            text:
-                '${_fmtDate(fromDate)} - ${_fmtDate(toDate)} '
-                '($days ${days == 1 ? 'day' : 'days'})',
+          SizedBox(height: 12.h),
+          _DateRange(
+            from: formatLeaveDate(fromDate),
+            to: formatLeaveDate(toDate),
+            days: days,
           ),
           if (reasonText.isNotEmpty) ...[
-            SizedBox(height: 6.h),
-            _Detail(icon: Icons.notes_rounded, text: reasonText),
+            SizedBox(height: 12.h),
+            LeaveDetailRow(icon: Icons.notes_rounded, text: reasonText),
           ],
-          Divider(height: 24.h, color: const Color(0xFFEDE2DC)),
-          ...approvals.map((approval) => _ApprovalRow(approval: approval)),
-          if (footer != null) ...[SizedBox(height: 12.h), footer!],
-        ],
-      ),
-    );
-  }
-}
-
-class _ApprovalRow extends StatelessWidget {
-  final LeaveApproval approval;
-
-  const _ApprovalRow({required this.approval});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 3.h),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              approval.approvedBy.isEmpty
-                  ? approval.approver
-                  : '${approval.approver} · ${approval.approvedBy}',
-              style: GoogleFonts.inter(
-                fontSize: 12.sp,
-                color: const Color(0xFF756A66),
-              ),
-            ),
-          ),
-          SizedBox(width: 8.w),
+          SizedBox(height: 12.h),
+          const Divider(height: 1, color: LeaveColors.border),
+          SizedBox(height: 12.h),
           Text(
-            approval.status,
-            style: GoogleFonts.inter(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w700,
-              color: _statusColor(approval.status),
+            'Approvals',
+            style: LeaveText.body(
+              11,
+              weight: FontWeight.w700,
+              color: LeaveColors.muted,
             ),
           ),
+          SizedBox(height: 8.h),
+          for (var i = 0; i < approvals.length; i++) ...[
+            if (i > 0)
+              Container(
+                width: 2,
+                height: 10.h,
+                margin: EdgeInsets.only(left: 13.w),
+                color: LeaveColors.border,
+              ),
+            _ApprovalStep(approval: approvals[i]),
+          ],
+          if (footer != null) ...[SizedBox(height: 16.h), footer!],
         ],
       ),
     );
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final String status;
+class _TypeBadge extends StatelessWidget {
+  final String? leaveType;
 
-  const _StatusBadge({required this.status});
+  const _TypeBadge({required this.leaveType});
 
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(status);
+    final color = leaveTypeColor(leaveType);
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      width: 44.w,
+      height: 44.w,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Icon(leaveTypeIcon(leaveType), size: 22.sp, color: color),
+    );
+  }
+}
+
+class _NameAvatar extends StatelessWidget {
+  final String name;
+
+  const _NameAvatar({required this.name});
+
+  String get _initials => name
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .take(2)
+      .map((word) => word[0].toUpperCase())
+      .join();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44.w,
+      height: 44.w,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: LeaveColors.accent.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        _initials,
+        style: LeaveText.heading(14, color: LeaveColors.accent),
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final String status;
+
+  const _StatusPill({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = leaveStatusColor(status);
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20.r),
       ),
-      child: Text(
-        status,
-        style: GoogleFonts.inter(
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(leaveStatusIcon(status), size: 12.sp, color: color),
+          SizedBox(width: 4.w),
+          Text(
+            status,
+            style: LeaveText.body(11, weight: FontWeight.w700, color: color),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _Detail extends StatelessWidget {
-  final IconData icon;
-  final String text;
+class _DateRange extends StatelessWidget {
+  final String from;
+  final String to;
+  final int days;
 
-  const _Detail({required this.icon, required this.text});
+  const _DateRange({required this.from, required this.to, required this.days});
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget _date(String label, String value) => Expanded(
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16.sp, color: const Color(0xFF756A66)),
-        SizedBox(width: 6.w),
-        Expanded(
-          child: Text(
-            text,
-            style: GoogleFonts.inter(
-              fontSize: 13.sp,
-              color: const Color(0xFF241917),
-            ),
+        Text(label, style: LeaveText.body(11)),
+        SizedBox(height: 2.h),
+        Text(
+          value,
+          style: LeaveText.body(
+            13,
+            weight: FontWeight.w700,
+            color: LeaveColors.ink,
           ),
         ),
       ],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: LeaveColors.background,
+        borderRadius: BorderRadius.circular(14.r),
+      ),
+      child: Row(
+        children: [
+          _date('From', from),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              size: 16.sp,
+              color: LeaveColors.muted,
+            ),
+          ),
+          _date('To', to),
+          SizedBox(width: 8.w),
+          Text(
+            leaveDayLabel(days),
+            style: LeaveText.body(
+              12,
+              weight: FontWeight.w700,
+              color: LeaveColors.accent,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class LeaveMessage extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback onRetry;
+class _ApprovalStep extends StatelessWidget {
+  final LeaveApproval approval;
 
-  const LeaveMessage({
-    super.key,
-    required this.icon,
-    required this.text,
-    required this.onRetry,
-  });
+  const _ApprovalStep({required this.approval});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 48.sp, color: const Color(0xFF756A66)),
-          SizedBox(height: 12.h),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 14.sp,
-              color: const Color(0xFF756A66),
-            ),
+    final color = leaveStatusColor(approval.status);
+
+    return Row(
+      children: [
+        Container(
+          width: 28.w,
+          height: 28.w,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
           ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
+          child: Icon(
+            leaveStatusIcon(approval.status),
+            size: 15.sp,
+            color: color,
+          ),
+        ),
+        SizedBox(width: 10.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                approval.approver,
+                style: LeaveText.body(
+                  13,
+                  weight: FontWeight.w600,
+                  color: LeaveColors.ink,
+                ),
+              ),
+              if (approval.approvedBy.isNotEmpty)
+                Text(approval.approvedBy, style: LeaveText.body(11)),
+            ],
+          ),
+        ),
+        SizedBox(width: 8.w),
+        Text(
+          approval.status,
+          style: LeaveText.body(12, weight: FontWeight.w700, color: color),
+        ),
+      ],
     );
   }
 }

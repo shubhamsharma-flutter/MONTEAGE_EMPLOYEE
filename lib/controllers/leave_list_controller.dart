@@ -39,27 +39,33 @@ void logLeaveApi(String message) {
   if (kDebugMode) debugPrint('[LeaveAPI] $message');
 }
 
-bool isTeamLeader(GetStorage box) {
-  final designation = (box.read('Designation') ?? box.read('designation') ?? '')
-      .toString()
-      .toLowerCase();
-  return designation.contains('team') && designation.contains('lead');
-}
-
-/// Index of the approval this person signs: 0 = Team Leader, 1 = Project
-/// Manager, 2 = HR Manager. Null when they don't approve leaves.
-int? approverIndex(GetStorage box) {
-  final designation = (box.read('Designation') ?? box.read('designation') ?? '')
-      .toString()
-      .toLowerCase();
+/// Index of the approval a designation signs: 0 = Team Leader, 1 = Project
+/// Manager, 2 = HR Manager. Null when it doesn't approve leaves.
+int? approverIndexFor(String rawDesignation) {
+  final designation = rawDesignation.toLowerCase();
   if (RegExp(r'\bhr\b').hasMatch(designation) ||
       designation.contains('human resource')) {
     return 2;
   }
-  if (designation.contains('manager')) return 1;
-  if (isTeamLeader(box)) return 0;
+  if (designation.contains('project') && designation.contains('manager')) {
+    return 1;
+  }
+  if (designation.contains('team') && designation.contains('lead')) return 0;
   return null;
 }
+
+int? approverIndex(GetStorage box) => approverIndexFor(
+  (box.read('Designation') ?? box.read('designation') ?? '').toString(),
+);
+
+/// Whether an applicant's leave still needs this approver; an applicant's own
+/// role and the roles below it are approved automatically:
+///   Employee        → Team Leader, Project Manager, HR Manager
+///   Team Leader     → Project Manager, HR Manager
+///   Project Manager → HR Manager
+///   HR Manager      → Project Manager
+bool waitsOnApprover(int? applicantIndex, int approver) =>
+    approver == 0 ? applicantIndex == null : applicantIndex != approver;
 
 String overallLeaveStatus(List<LeaveApproval> approvals) {
   if (approvals.any((a) => a.status == 'Rejected')) return 'Rejected';
@@ -104,19 +110,19 @@ class LeaveListController extends GetxController {
   List<LeaveApproval> approvalsOf(Data leave) {
     final index = approverIndex(box);
     return [
-      if (index == null)
+      if (waitsOnApprover(index, 0))
         LeaveApproval.fromApi(
           'Team Leader',
           leave.approveStatus1,
           leave.approveby1,
         ),
-      if (index != 1)
+      if (waitsOnApprover(index, 1))
         LeaveApproval.fromApi(
           'Project Manager',
           leave.approveStatus2,
           leave.approveby2,
         ),
-      if (index != 2)
+      if (waitsOnApprover(index, 2))
         LeaveApproval.fromApi(
           'HR Manager',
           leave.approveStatus3,

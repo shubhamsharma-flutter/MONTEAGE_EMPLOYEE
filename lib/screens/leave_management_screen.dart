@@ -2,122 +2,345 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
+import '../controllers/leave_list_controller.dart';
 import '../controllers/leave_management_controller.dart';
 import '../infrastructure/routes/admin_routes.dart';
 import '../models/myleavemodel.dart';
-import '../widgets/bottom_nav_wrapper.dart';
-
-// The API sends 0001-01-01 for rows that have no applied dates.
-String _fmtDate(String? raw) {
-  final dt = DateTime.tryParse(raw ?? '');
-  if (dt == null || dt.year <= 1) return '';
-  return DateFormat('dd-MM-yyyy').format(dt);
-}
+import '../widgets/leave_ui.dart';
 
 class LeaveManagementScreen extends GetView<LeaveManagementController> {
   const LeaveManagementScreen({super.key});
 
+  void _openApplySheet(BuildContext context) {
+    controller.resetForm();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: LeaveColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+      ),
+      builder: (_) => const _ApplyLeaveSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BottomNavWrapper(
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6F1ED),
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: const Color(0xFFF6F1ED),
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              color: Color(0xFF241917),
-            ),
-            onPressed: () => Get.back(),
+    return LeaveScaffold(
+      title: 'My Leaves',
+      subtitle: 'Your balance and requests',
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: LeaveColors.accent,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Apply Leave'),
+        onPressed: () => _openApplySheet(context),
+      ),
+      body: Obx(() {
+        final leaves = controller.leaves.toList();
+        final loading = controller.isLoading.value && leaves.isEmpty;
+        final error = controller.errorMessage.value;
+
+        return RefreshIndicator(
+          color: LeaveColors.accent,
+          onRefresh: controller.fetchMyLeaves,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            // Bottom space keeps the last card clear of the Apply button.
+            padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 96.h),
+            children: [
+              if (!loading && error.isEmpty && leaves.isNotEmpty) ...[
+                _BalanceSummary(leaves: leaves),
+                SizedBox(height: 12.h),
+              ],
+              _QuickActions(showTeamLeave: controller.canViewTeamLeave),
+              SizedBox(height: 20.h),
+              if (loading)
+                const LeaveLoadingCards(count: 3)
+              else if (error.isNotEmpty)
+                LeaveMessage(
+                  icon: Icons.cloud_off_rounded,
+                  title: 'Something went wrong',
+                  text: error,
+                  actionLabel: 'Try again',
+                  onAction: controller.fetchMyLeaves,
+                )
+              else if (leaves.isEmpty)
+                LeaveMessage(
+                  icon: Icons.event_busy_rounded,
+                  title: 'No leave balance found',
+                  text: 'Your leave types will appear here once assigned.',
+                  actionLabel: 'Refresh',
+                  onAction: controller.fetchMyLeaves,
+                )
+              else ...[
+                Text('Leave balance', style: LeaveText.heading(16)),
+                SizedBox(height: 10.h),
+                for (final leave in leaves) ...[
+                  _BalanceCard(leave: leave),
+                  SizedBox(height: 12.h),
+                ],
+              ],
+            ],
           ),
-          titleSpacing: 0,
-          title: Text(
-            'My Leaves',
-            style: GoogleFonts.manrope(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF241917),
-            ),
-          ),
-          actions: [
-            if (controller.canViewTeamLeave)
-              IconButton(
-                tooltip: 'Team Leave',
-                icon: const Icon(
-                  Icons.groups_rounded,
-                  color: Color(0xFF241917),
+        );
+      }),
+    );
+  }
+}
+
+class _BalanceSummary extends StatelessWidget {
+  final List<Data> leaves;
+
+  const _BalanceSummary({required this.leaves});
+
+  int _sum(int? Function(Data) field) =>
+      leaves.fold(0, (sum, leave) => sum + (field(leave) ?? 0));
+
+  Widget _stat(String label, int value) => Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$value', style: LeaveText.heading(18, color: Colors.white)),
+        Text(label, style: LeaveText.body(11, color: Colors.white)),
+      ],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final types = leaves.length;
+
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.r),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [LeaveColors.accent, LeaveColors.accentDark],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Total balance',
+                  style: LeaveText.body(
+                    13,
+                    weight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
-                onPressed: () => Get.toNamed(AdminRoutes.teamLeave),
               ),
-            IconButton(
-              tooltip: 'My Leave Requests',
-              icon: const Icon(Icons.history_rounded, color: Color(0xFF241917)),
-              onPressed: () => Get.toNamed(AdminRoutes.leaveList),
+              Text(
+                leaves.first.years ?? '',
+                style: LeaveText.body(12, color: Colors.white),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            '${_sum((leave) => leave.totalBalanceLeave)}',
+            style: LeaveText.heading(38, color: Colors.white),
+          ),
+          Text(
+            'across $types leave ${types == 1 ? 'type' : 'types'}',
+            style: LeaveText.body(12, color: Colors.white),
+          ),
+          SizedBox(height: 14.h),
+          Row(
+            children: [
+              _stat('Taken', _sum((leave) => leave.totalTakenLeave)),
+              _stat('Allotted', _sum((leave) => leave.totalLeave)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  final bool showTeamLeave;
+
+  const _QuickActions({required this.showTeamLeave});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _ActionTile(
+            icon: Icons.history_rounded,
+            title: 'My Requests',
+            subtitle: 'Track status',
+            onTap: () => Get.toNamed(AdminRoutes.leaveList),
+          ),
+        ),
+        if (showTeamLeave) ...[
+          SizedBox(width: 12.w),
+          Expanded(
+            child: _ActionTile(
+              icon: Icons.groups_rounded,
+              title: 'Team Leave',
+              subtitle: 'Review requests',
+              onTap: () => Get.toNamed(AdminRoutes.teamLeave),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: leaveCardDecoration(),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20.r),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(12.w),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: LeaveColors.accent.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Icon(icon, size: 20.sp, color: LeaveColors.accent),
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: LeaveText.heading(13)),
+                      Text(subtitle, style: LeaveText.body(11)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BalanceCard extends StatelessWidget {
+  final Data leave;
+
+  const _BalanceCard({required this.leave});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = leaveTypeColor(leave.leaveType);
+    final total = leave.totalLeave ?? 0;
+    final taken = leave.totalTakenLeave ?? 0;
+    final hasDates =
+        parseLeaveDate(leave.fromDate) != null ||
+        parseLeaveDate(leave.toDate) != null;
+    final reason = (leave.leaveReason ?? '').trim();
+
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: leaveCardDecoration(),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44.w,
+                height: 44.w,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+                child: Icon(
+                  leaveTypeIcon(leave.leaveType),
+                  size: 22.sp,
+                  color: color,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (leave.leaveType ?? '-').trim(),
+                      style: LeaveText.heading(14),
+                    ),
+                    Text('Taken $taken of $total', style: LeaveText.body(12)),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Column(
+                children: [
+                  Text(
+                    '${leave.totalBalanceLeave ?? 0}',
+                    style: LeaveText.heading(22, color: color),
+                  ),
+                  Text('left', style: LeaveText.body(11)),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6.r),
+            child: LinearProgressIndicator(
+              value: total > 0 ? (taken / total).clamp(0.0, 1.0) : 0,
+              minHeight: 6.h,
+              color: color,
+              backgroundColor: color.withValues(alpha: 0.12),
+              semanticsLabel: '${leave.leaveType} used',
+            ),
+          ),
+          if (hasDates) ...[
+            SizedBox(height: 12.h),
+            LeaveDetailRow(
+              icon: Icons.date_range_rounded,
+              text:
+                  '${formatLeaveDate(leave.fromDate)} - '
+                  '${formatLeaveDate(leave.toDate)} '
+                  '(${leaveDayLabel(leave.leaveNoofday ?? 0)})',
             ),
           ],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: const Color(0xFFB54A3A),
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Apply Leave'),
-          onPressed: () {
-            controller.resetForm();
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              useSafeArea: true,
-              backgroundColor: const Color(0xFFF6F1ED),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-              ),
-              builder: (_) => const _ApplyLeaveSheet(),
-            );
-          },
-        ),
-        body: SafeArea(
-          top: false,
-          child: Obx(() {
-            if (controller.isLoading.value && controller.leaves.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (controller.errorMessage.value.isNotEmpty) {
-              return _Message(
-                icon: Icons.error_outline_rounded,
-                text: controller.errorMessage.value,
-                onRetry: controller.fetchMyLeaves,
-              );
-            }
-
-            if (controller.leaves.isEmpty) {
-              return _Message(
-                icon: Icons.event_busy_rounded,
-                text: 'No leaves found',
-                onRetry: controller.fetchMyLeaves,
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: controller.fetchMyLeaves,
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                // Bottom space keeps the last card clear of the Apply button.
-                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 88.h),
-                itemCount: controller.leaves.length,
-                separatorBuilder: (_, __) => SizedBox(height: 12.h),
-                itemBuilder: (_, i) => _LeaveCard(leave: controller.leaves[i]),
-              ),
-            );
-          }),
-        ),
+          if (reason.isNotEmpty) ...[
+            SizedBox(height: 6.h),
+            LeaveDetailRow(icon: Icons.notes_rounded, text: reason),
+          ],
+        ],
       ),
     );
   }
@@ -161,7 +384,7 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
       lastDate: DateTime(2101),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFFB54A3A)),
+          colorScheme: const ColorScheme.light(primary: LeaveColors.accent),
         ),
         child: child!,
       ),
@@ -197,18 +420,24 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
   }
 
   void _showAttachmentOptions() {
-    Widget option(IconData icon, String label, Future<void> Function() onTap) {
+    Widget option(
+      IconData icon,
+      String label,
+      String description,
+      Future<void> Function() onTap,
+    ) {
       return Builder(
         builder: (ctx) => ListTile(
-          leading: Icon(icon, color: const Color(0xFFB54A3A)),
-          title: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF241917),
+          leading: Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: LeaveColors.accent.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
             ),
+            child: Icon(icon, size: 20.sp, color: LeaveColors.accent),
           ),
+          title: Text(label, style: LeaveText.heading(14)),
+          subtitle: Text(description, style: LeaveText.body(12)),
           onTap: () {
             Navigator.pop(ctx);
             onTap();
@@ -219,7 +448,8 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFFF6F1ED),
+      showDragHandle: true,
+      backgroundColor: LeaveColors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
@@ -230,14 +460,21 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
             option(
               Icons.camera_alt_rounded,
               'Take a Photo',
+              'Capture the prescription with your camera',
               () => _pickImage(ImageSource.camera),
             ),
             option(
               Icons.photo_library_rounded,
               'Choose from Gallery',
+              'Select an existing image',
               () => _pickImage(ImageSource.gallery),
             ),
-            option(Icons.picture_as_pdf_rounded, 'Upload PDF', _pickPdf),
+            option(
+              Icons.picture_as_pdf_rounded,
+              'Upload PDF',
+              'Pick a PDF from your files',
+              _pickPdf,
+            ),
           ],
         ),
       ),
@@ -277,11 +514,19 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14.r),
+      borderSide: const BorderSide(color: LeaveColors.border),
+    );
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
         child: Obx(() {
+          final types = _c.leaveTypes.toList();
+          final selectedId = _c.selectedLeaveType.value?.leaveTypeId;
+          final loadingTypes = _c.isLoadingTypes.value;
           final balance = _c.currentBalance;
           final days = _c.numberOfDays;
           final submitting = _c.isSubmitting.value;
@@ -290,46 +535,68 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text('Apply Leave', style: LeaveText.heading(20)),
               Text(
-                'Apply Leave',
-                style: GoogleFonts.manrope(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF241917),
-                ),
+                'Fill in the details to send your request',
+                style: LeaveText.body(13),
               ),
-              SizedBox(height: 16.h),
-              DropdownButtonFormField<LeaveTypeModel>(
-                isExpanded: true,
-                decoration: _fieldDecoration(
-                  _c.isLoadingTypes.value
-                      ? 'Loading leave types...'
-                      : 'Leave Type',
+              const _FieldLabel('Leave type'),
+              if (types.isEmpty)
+                loadingTypes
+                    ? Text('Loading leave types...', style: LeaveText.body(13))
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Could not load leave types.',
+                              style: LeaveText.body(13),
+                            ),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              foregroundColor: LeaveColors.accent,
+                            ),
+                            onPressed: _c.fetchLeaveTypes,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      )
+              else
+                LayoutBuilder(
+                  builder: (_, constraints) {
+                    final width = (constraints.maxWidth - 10.w) / 2;
+                    return Wrap(
+                      spacing: 10.w,
+                      runSpacing: 10.h,
+                      children: [
+                        for (final type in types)
+                          SizedBox(
+                            width: width,
+                            child: _LeaveTypeOption(
+                              type: type,
+                              balance: _c.balanceFor(type.leaveTypeId),
+                              selected: type.leaveTypeId == selectedId,
+                              onTap: () => _c.selectLeaveType(type),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
-                items: _c.leaveTypes
-                    .map(
-                      (type) => DropdownMenuItem(
-                        value: type,
-                        child: Text(type.leaveType),
-                      ),
-                    )
-                    .toList(),
-                onChanged: _c.selectLeaveType,
-              ),
-              SizedBox(height: 12.h),
+              const _FieldLabel('Dates'),
               Row(
                 children: [
                   Expanded(
                     child: _DateField(
-                      label: 'From Date',
+                      label: 'From',
                       date: _c.fromDate.value,
                       onTap: () => _pickDate(isFrom: true),
                     ),
                   ),
-                  SizedBox(width: 12.w),
+                  SizedBox(width: 10.w),
                   Expanded(
                     child: _DateField(
-                      label: 'To Date',
+                      label: 'To',
                       date: _c.toDate.value,
                       onTap: () => _pickDate(isFrom: false),
                     ),
@@ -337,53 +604,70 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
                 ],
               ),
               if (days > 0) ...[
-                SizedBox(height: 8.h),
-                Text(
-                  balance == null
-                      ? '$days day(s)'
-                      : '$days day(s) · Balance: $balance',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: _c.exceedsBalance
-                        ? const Color(0xFFD85E5E)
-                        : const Color(0xFF756A66),
-                  ),
+                SizedBox(height: 10.h),
+                _RequestSummary(
+                  days: days,
+                  balance: balance,
+                  exceeds: _c.exceedsBalance,
                 ),
               ],
-              SizedBox(height: 12.h),
+              const _FieldLabel('Reason'),
               TextField(
                 controller: _reasonCtrl,
                 maxLines: 3,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: _fieldDecoration('Reason'),
+                style: LeaveText.body(14, color: LeaveColors.ink),
+                decoration: InputDecoration(
+                  hintText: 'Why do you need this leave?',
+                  hintStyle: LeaveText.body(13),
+                  filled: true,
+                  fillColor: LeaveColors.surface,
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
+                  focusedBorder: fieldBorder.copyWith(
+                    borderSide: const BorderSide(
+                      color: LeaveColors.accent,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
               ),
               if (_c.needsPrescription) ...[
-                SizedBox(height: 12.h),
-                _attachmentField(),
+                const _FieldLabel('Prescription (optional)'),
+                _AttachmentField(
+                  fileName: _c.prescriptionFileName.value,
+                  onTap: _showAttachmentOptions,
+                  onRemove: () => _c.setPrescription('', ''),
+                ),
               ],
-              SizedBox(height: 20.h),
+              SizedBox(height: 24.h),
               SizedBox(
                 width: double.infinity,
-                height: 48.h,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB54A3A),
-                    foregroundColor: Colors.white,
+                height: 52.h,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: LeaveColors.accent,
+                    disabledBackgroundColor: LeaveColors.accent.withValues(
+                      alpha: 0.6,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius: BorderRadius.circular(16.r),
                     ),
                   ),
                   onPressed: submitting ? null : _submit,
                   child: submitting
-                      ? SizedBox(
-                          width: 20.w,
-                          height: 20.w,
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
                           ),
                         )
-                      : const Text('Submit'),
+                      : Text(
+                          'Submit Request',
+                          style: LeaveText.heading(15, color: Colors.white),
+                        ),
                 ),
               ),
             ],
@@ -392,46 +676,97 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
       ),
     );
   }
+}
 
-  Widget _attachmentField() {
-    final fileName = _c.prescriptionFileName.value;
+class _FieldLabel extends StatelessWidget {
+  final String text;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(14.r),
-      onTap: _showAttachmentOptions,
-      child: InputDecorator(
-        decoration: _fieldDecoration('Prescription (optional)').copyWith(
-          suffixIcon: fileName.isEmpty
-              ? const Icon(Icons.upload_file_rounded)
-              : IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: () => _c.setPrescription('', ''),
-                ),
-        ),
-        child: Text(
-          fileName.isEmpty ? 'Tap to attach' : fileName,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+  const _FieldLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: 18.h, bottom: 8.h),
+      child: Text(
+        text,
+        style: LeaveText.body(
+          13,
+          weight: FontWeight.w700,
+          color: LeaveColors.ink,
         ),
       ),
     );
   }
 }
 
-InputDecoration _fieldDecoration(String label) {
-  return InputDecoration(
-    labelText: label,
-    filled: true,
-    fillColor: Colors.white,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14.r),
-      borderSide: const BorderSide(color: Color(0xFFEDE2DC)),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14.r),
-      borderSide: const BorderSide(color: Color(0xFFEDE2DC)),
-    ),
-  );
+class _LeaveTypeOption extends StatelessWidget {
+  final LeaveTypeModel type;
+  final int? balance;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _LeaveTypeOption({
+    required this.type,
+    required this.balance,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = leaveTypeColor(type.leaveType);
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14.r),
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: EdgeInsets.all(10.w),
+            decoration: BoxDecoration(
+              color: selected
+                  ? color.withValues(alpha: 0.10)
+                  : LeaveColors.surface,
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(
+                color: selected ? color : LeaveColors.border,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(leaveTypeIcon(type.leaveType), size: 20.sp, color: color),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        type.leaveType,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: LeaveText.body(
+                          12,
+                          weight: FontWeight.w700,
+                          color: LeaveColors.ink,
+                        ),
+                      ),
+                      if (balance != null)
+                        Text('$balance left', style: LeaveText.body(11)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _DateField extends StatelessWidget {
@@ -447,191 +782,174 @@ class _DateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14.r),
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: _fieldDecoration(label),
-        isEmpty: date == null,
-        child: Text(
-          date == null ? '' : DateFormat('dd-MM-yyyy').format(date!),
-          maxLines: 1,
-        ),
-      ),
-    );
-  }
-}
+    final picked = date != null;
 
-class _LeaveCard extends StatelessWidget {
-  final Data leave;
-
-  const _LeaveCard({required this.leave});
-
-  @override
-  Widget build(BuildContext context) {
-    final from = _fmtDate(leave.fromDate);
-    final to = _fmtDate(leave.toDate);
-    final reason = (leave.leaveReason ?? '').trim();
-
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  (leave.leaveType ?? '-').trim(),
-                  style: GoogleFonts.manrope(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+    return Semantics(
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14.r),
+          onTap: onTap,
+          child: Ink(
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: LeaveColors.surface,
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(
+                color: picked ? LeaveColors.accent : LeaveColors.border,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 18.sp,
+                  color: LeaveColors.accent,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: LeaveText.body(11)),
+                      Text(
+                        picked
+                            ? DateFormat('dd MMM yyyy').format(date!)
+                            : 'Select date',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: LeaveText.body(
+                          13,
+                          weight: FontWeight.w700,
+                          color: picked ? LeaveColors.ink : LeaveColors.muted,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Text(
-                leave.years ?? '',
-                style: GoogleFonts.inter(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF756A66),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              _Count(
-                label: 'Total',
-                value: leave.totalLeave ?? 0,
-                color: const Color(0xFF6A3027),
-              ),
-              _Count(
-                label: 'Taken',
-                value: leave.totalTakenLeave ?? 0,
-                color: const Color(0xFFF0A43C),
-              ),
-              _Count(
-                label: 'Balance',
-                value: leave.totalBalanceLeave ?? 0,
-                color: const Color(0xFF2AB673),
-              ),
-            ],
-          ),
-          if (from.isNotEmpty || to.isNotEmpty) ...[
-            SizedBox(height: 12.h),
-            _Detail(
-              icon: Icons.date_range_rounded,
-              text: '$from - $to (${leave.leaveNoofday ?? 0} days)',
-            ),
-          ],
-          if (reason.isNotEmpty) ...[
-            SizedBox(height: 6.h),
-            _Detail(icon: Icons.notes_rounded, text: reason),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _Count extends StatelessWidget {
-  final String label;
-  final int value;
-  final Color color;
-
-  const _Count({required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            '$value',
-            style: GoogleFonts.manrope(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF756A66),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Detail extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _Detail({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16.sp, color: const Color(0xFF756A66)),
-        SizedBox(width: 6.w),
-        Expanded(
-          child: Text(
-            text,
-            style: GoogleFonts.inter(
-              fontSize: 13.sp,
-              color: const Color(0xFF241917),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _Message extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback onRetry;
+class _RequestSummary extends StatelessWidget {
+  final int days;
+  final int? balance;
+  final bool exceeds;
 
-  const _Message({
-    required this.icon,
-    required this.text,
-    required this.onRetry,
+  const _RequestSummary({
+    required this.days,
+    required this.balance,
+    required this.exceeds,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final color = exceeds ? LeaveColors.rejected : LeaveColors.approved;
+    final String detail;
+    if (balance == null) {
+      detail = '';
+    } else if (exceeds) {
+      detail = ' · only $balance left';
+    } else {
+      detail = ' · ${balance! - days} left after this';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Row(
         children: [
-          Icon(icon, size: 48.sp, color: const Color(0xFF756A66)),
-          SizedBox(height: 12.h),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 14.sp,
-              color: const Color(0xFF756A66),
+          Icon(
+            exceeds
+                ? Icons.warning_amber_rounded
+                : Icons.check_circle_outline_rounded,
+            size: 18.sp,
+            color: color,
+          ),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              '${leaveDayLabel(days)} requested$detail',
+              style: LeaveText.body(13, weight: FontWeight.w600, color: color),
             ),
           ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
+      ),
+    );
+  }
+}
+
+class _AttachmentField extends StatelessWidget {
+  final String fileName;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  const _AttachmentField({
+    required this.fileName,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final attached = fileName.isNotEmpty;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14.r),
+        onTap: onTap,
+        child: Ink(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+          decoration: BoxDecoration(
+            color: LeaveColors.surface,
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: attached ? LeaveColors.accent : LeaveColors.border,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                attached
+                    ? Icons.description_rounded
+                    : Icons.upload_file_rounded,
+                size: 22.sp,
+                color: LeaveColors.accent,
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  attached ? fileName : 'Add a photo or PDF',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: LeaveText.body(
+                    13,
+                    weight: FontWeight.w600,
+                    color: attached ? LeaveColors.ink : LeaveColors.muted,
+                  ),
+                ),
+              ),
+              if (attached)
+                IconButton(
+                  tooltip: 'Remove file',
+                  icon: const Icon(Icons.close_rounded),
+                  color: LeaveColors.muted,
+                  onPressed: onRemove,
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

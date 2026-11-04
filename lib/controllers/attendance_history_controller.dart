@@ -169,7 +169,7 @@ class AttendanceHistoryController extends GetxController {
   Future<String> _getAddressFromCoordinates(
       double latitude, double longitude) async {
     try {
-      final placemarks = await placemarkFromCoordinates(latitude, longitude);
+      final placemarks = await Geocoding().placemarkFromCoordinates(latitude, longitude);
       final place = placemarks[0];
       return "${place.name}, ${place.locality}, ${place.country}";
     } catch (_) {

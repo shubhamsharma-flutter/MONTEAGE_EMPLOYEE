@@ -116,7 +116,7 @@ class AttendanceTodayController extends GetxController {
       double latitude, double longitude) async {
     try {
       List<geo.Placemark> placemarks =
-          await geo.placemarkFromCoordinates(latitude, longitude);
+          await geo.Geocoding().placemarkFromCoordinates(latitude, longitude);
       geo.Placemark place = placemarks[0];
       return "${place.name}, ${place.locality}, ${place.country}";
     } catch (e) {

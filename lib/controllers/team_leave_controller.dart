@@ -69,6 +69,8 @@ class TeamLeaveController extends GetxController {
         approvalsOf(leave)[index].status == 'Pending';
   }
 
+  int get awaitingDecisionCount => leaves.where(canDecide).length;
+
   /// [decision] is 'Approved' or 'Rejected'.
   Future<void> decideLeave(Data leave, String decision) async {
     if (decidingLeaveId.value != null) return;
