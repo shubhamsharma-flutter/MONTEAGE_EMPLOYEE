@@ -7,6 +7,7 @@ plugins {
 
 import java.util.Properties
 import java.io.FileInputStream
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Load local properties for versioning
 val localProperties = Properties()
@@ -62,11 +63,13 @@ android {
         isCoreLibraryDesugaringEnabled = true // Required for flutter_local_notifications
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
     sourceSets["main"].java.srcDirs("src/main/kotlin")
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
+    }
 }
 
 flutter {

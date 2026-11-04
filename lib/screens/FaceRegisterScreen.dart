@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,32 +18,23 @@ class FaceRegisterScreen extends StatelessWidget {
     final controller = Get.find<FaceRegisterController>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFFF6F1ED),
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         leading: Padding(
           padding: EdgeInsets.only(left: 12.w),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x1A000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
+              color: Color(0x29FFFFFF),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
                 onTap: () => Get.back(),
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(12.r),
                 child: Icon(
                   Icons.arrow_back,
-                  color: const Color(0xFF6A3027),
+                  color: Colors.white,
                   size: 22.sp,
                 ),
               ),
@@ -54,17 +46,17 @@ class FaceRegisterScreen extends StatelessWidget {
           children: [
             Text(
               "Face Registration",
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 18.sp,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF241917),
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
             Text(
               "Register your face for attendance",
               style: GoogleFonts.inter(
                 fontSize: 11.sp,
-                color: const Color(0xFF8B7D77),
+                color: Colors.white70,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -87,9 +79,9 @@ class FaceRegisterScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 240.h,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20.r),
+                      borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(
-                        color: const Color(0xFF1E8E5A),
+                        color: AppColor.success,
                         width: 2.5,
                       ),
                       color: Colors.white,
@@ -99,20 +91,14 @@ class FaceRegisterScreen extends StatelessWidget {
                               fit: BoxFit.cover,
                             )
                           : null,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x12000000),
-                          blurRadius: 16,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
+                      boxShadow: AppShadow.card,
                     ),
                     child: img == null
                         ? Center(
                             child: Icon(
                               Icons.camera_alt_rounded,
                               size: 72.sp,
-                              color: const Color(0xFF1E8E5A),
+                              color: AppColor.success,
                             ),
                           )
                         : null,
@@ -135,10 +121,10 @@ class FaceRegisterScreen extends StatelessWidget {
 
             Text(
               "Capture Your Face",
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 20.sp,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF241917),
+                fontWeight: FontWeight.w700,
+                color: AppColor.textPrimary,
               ),
             ),
             SizedBox(height: 8.h),
@@ -147,7 +133,7 @@ class FaceRegisterScreen extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13.sp,
-                color: const Color(0xFF8B7D77),
+                color: AppColor.textMuted,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -160,7 +146,7 @@ class FaceRegisterScreen extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: controller.takePhoto,
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E8E5A),
+                  backgroundColor: AppColor.success,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),
@@ -168,9 +154,9 @@ class FaceRegisterScreen extends StatelessWidget {
                 icon: Icon(Icons.camera_alt_rounded, size: 22.sp),
                 label: Text(
                   "Take Photo",
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -185,8 +171,8 @@ class FaceRegisterScreen extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: loading ? null : controller.submitRegistration,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF6A3027),
-                    disabledBackgroundColor: const Color(0xFFC9C9C9),
+                    backgroundColor: AppColor.primary,
+                    disabledBackgroundColor: AppColor.textDisabled,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -203,9 +189,9 @@ class FaceRegisterScreen extends StatelessWidget {
                       : Icon(Icons.check_circle_outline, size: 20.sp),
                   label: Text(
                     loading ? "Registering..." : "Submit Registration",
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -228,15 +214,9 @@ class FaceRegisterScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x20000000),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
+          boxShadow: AppShadow.card,
         ),
-        child: Icon(icon, size: 18.sp, color: const Color(0xFF1E8E5A)),
+        child: Icon(icon, size: 18.sp, color: AppColor.success),
       ),
     );
   }

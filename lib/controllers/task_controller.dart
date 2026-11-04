@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'dart:convert';
 import 'dart:math' show Random;
 
@@ -261,7 +262,7 @@ class TaskController extends GetxController {
           'Failed',
           'Server error: ${res.statusCode}',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
+          backgroundColor: AppColor.accent,
           colorText: Colors.white,
         );
         return false;
@@ -271,7 +272,7 @@ class TaskController extends GetxController {
         'Error',
         'Could not assign project: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFB54A3A),
+        backgroundColor: AppColor.accent,
         colorText: Colors.white,
       );
       debugPrint('assignProjectToTeamLead error: $e');
@@ -350,7 +351,7 @@ class TaskController extends GetxController {
           'Failed',
           'Server error: ${res.statusCode}',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
+          backgroundColor: AppColor.accent,
           colorText: Colors.white,
         );
         return false;
@@ -360,7 +361,7 @@ class TaskController extends GetxController {
         'Error',
         'Could not assign task: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFB54A3A),
+        backgroundColor: AppColor.accent,
         colorText: Colors.white,
       );
       debugPrint('assignTask error: $e');
@@ -431,7 +432,7 @@ class TaskController extends GetxController {
           'Failed',
           'Server error: ${res.statusCode}',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
+          backgroundColor: AppColor.accent,
           colorText: Colors.white,
         );
         return false;
@@ -441,7 +442,7 @@ class TaskController extends GetxController {
         'Error',
         'Could not update progress: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFB54A3A),
+        backgroundColor: AppColor.accent,
         colorText: Colors.white,
       );
       debugPrint('updateProgress error: $e');
@@ -489,7 +490,7 @@ class TaskController extends GetxController {
           'Failed',
           'Server error: ${res.statusCode}',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: const Color(0xFFB54A3A),
+          backgroundColor: AppColor.accent,
           colorText: Colors.white,
         );
         return false;
@@ -499,7 +500,7 @@ class TaskController extends GetxController {
         'Error',
         'Could not update status: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: const Color(0xFFB54A3A),
+        backgroundColor: AppColor.accent,
         colorText: Colors.white,
       );
       debugPrint('updateProjectStatus error: $e');

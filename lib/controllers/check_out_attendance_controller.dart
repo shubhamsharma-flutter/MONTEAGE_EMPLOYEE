@@ -253,6 +253,7 @@ class _ApiResult {
   });
 }
 */
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 
 import 'dart:convert';
 import 'dart:io';
@@ -315,7 +316,7 @@ class CheckOutAttendanceController extends GetxController {
       "Success",
       msg,
       snackPosition: SnackPosition.TOP,
-      backgroundColor: const Color(0xFF16A34A),
+      backgroundColor: AppColor.success,
       colorText: Colors.white,
     );
   }
@@ -538,7 +539,7 @@ class CheckOutAttendanceController extends GetxController {
         "Saved Offline",
         "No internet. Checkout saved and will sync automatically when connected.",
         snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFFF59E0B),
+        backgroundColor: AppColor.warning,
         colorText: Colors.white,
         duration: const Duration(seconds: 4),
       );
@@ -593,7 +594,7 @@ class CheckOutAttendanceController extends GetxController {
         "Saved Offline",
         "Network error. Checkout saved and will sync when connected.",
         snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFFF59E0B),
+        backgroundColor: AppColor.warning,
         colorText: Colors.white,
       );
     } catch (_) {

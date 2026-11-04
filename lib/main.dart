@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'infrastructure/routes/admin_routes.dart';
 import 'services/attendance_sync_service.dart';
+import 'utils/constants/app_theme.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
@@ -48,7 +49,7 @@ class AdminApp extends StatelessWidget {
       // ✅ Start from SPLASH (Splash -> BOOT -> HOME/LOGIN)
       initialRoute: AdminRoutes.ADMIN_SPLASH,
 
-      theme: ThemeData(useMaterial3: true),
+      theme: AppTheme.light,
 
       builder: (context, child) {
         return ScreenUtilInit(

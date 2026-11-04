@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -30,16 +31,14 @@ class CrmListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F1ED),
-        elevation: 0,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         title: Text(
           title,
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF241917),
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
       ),
@@ -48,25 +47,25 @@ class CrmListScreen extends StatelessWidget {
         child: Column(
           children: [
             TextField(
-              style: GoogleFonts.inter(fontSize: 13.5.sp, color: const Color(0xFF241917)),
+              style: GoogleFonts.inter(fontSize: 13.5.sp, color: AppColor.textPrimary),
               decoration: InputDecoration(
                 hintText: searchHint,
-                hintStyle: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFFBDB0AB)),
-                prefixIcon: Icon(Icons.search_rounded, size: 20.sp, color: const Color(0xFF8B7D77)),
+                hintStyle: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textDisabled),
+                prefixIcon: Icon(Icons.search_rounded, size: 20.sp, color: AppColor.textMuted),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: EdgeInsets.symmetric(vertical: 12.h),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
-                  borderSide: const BorderSide(color: Color(0xFFEDE2DC)),
+                  borderSide: const BorderSide(color: AppColor.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
-                  borderSide: const BorderSide(color: Color(0xFFEDE2DC)),
+                  borderSide: const BorderSide(color: AppColor.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
-                  borderSide: const BorderSide(color: Color(0xFF6A3027), width: 1.5),
+                  borderSide: const BorderSide(color: AppColor.primary, width: 1.5),
                 ),
               ),
             ),
@@ -78,12 +77,12 @@ class CrmListScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(icon, size: 52.sp, color: const Color(0xFF8B7D77)),
+                        Icon(icon, size: 52.sp, color: AppColor.textMuted),
                         SizedBox(height: 12.h),
                         Text(
                           emptyMessage,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF8B7D77)),
+                          style: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textMuted),
                         ),
                       ],
                     ),
@@ -99,7 +98,7 @@ class CrmListScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF6A3027),
+        backgroundColor: AppColor.primary,
         shape: const CircleBorder(),
         onPressed: onAdd ??
             () => Get.snackbar(
@@ -124,18 +123,18 @@ class _CrmCard extends StatelessWidget {
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             item.title,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14.5.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF241917),
+              fontWeight: FontWeight.w700,
+              color: AppColor.textPrimary,
             ),
           ),
           SizedBox(height: 8.h),
@@ -144,12 +143,12 @@ class _CrmCard extends StatelessWidget {
               padding: EdgeInsets.only(bottom: 4.h),
               child: Row(
                 children: [
-                  Icon(line.icon, size: 13.sp, color: const Color(0xFF6A3027)),
+                  Icon(line.icon, size: 13.sp, color: AppColor.primary),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Text(
                       line.text,
-                      style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF8B7D77)),
+                      style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textMuted),
                     ),
                   ),
                 ],

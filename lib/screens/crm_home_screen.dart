@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -23,16 +24,14 @@ class CrmHomeScreen extends StatelessWidget {
         : Get.put(CrmController());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F1ED),
-        elevation: 0,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         title: Text(
           "CRM",
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF241917),
+            fontWeight: FontWeight.w700,
+            color: AppColor.textPrimary,
           ),
         ),
       ),
@@ -43,17 +42,17 @@ class CrmHomeScreen extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(18.w),
             decoration: BoxDecoration(
-              color: const Color(0xFF6A3027),
-              borderRadius: BorderRadius.circular(20.r),
+              color: AppColor.primary,
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   "Manage & Schedule",
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -72,10 +71,10 @@ class CrmHomeScreen extends StatelessWidget {
 
           Text(
             "Today's Schedule",
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF241917),
+              fontWeight: FontWeight.w700,
+              color: AppColor.textPrimary,
             ),
           ),
           SizedBox(height: 10.h),
@@ -92,10 +91,10 @@ class CrmHomeScreen extends StatelessWidget {
 
           Text(
             "Quick Actions",
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF241917),
+              fontWeight: FontWeight.w700,
+              color: AppColor.textPrimary,
             ),
           ),
           SizedBox(height: 10.h),
@@ -170,7 +169,7 @@ class CrmHomeScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF6A3027),
+        backgroundColor: AppColor.primary,
         shape: const CircleBorder(),
         onPressed: () => _showAddMeetingSheet(context, controller),
         child: const Icon(Icons.add, color: Colors.white),
@@ -193,9 +192,9 @@ class CrmHomeScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFF6F1ED),
+      backgroundColor: AppColor.background,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -213,10 +212,10 @@ class CrmHomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     "Schedule a Meeting",
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 17.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF241917),
+                      fontWeight: FontWeight.w700,
+                      color: AppColor.textPrimary,
                     ),
                   ),
                   SizedBox(height: 16.h),
@@ -332,7 +331,7 @@ class CrmHomeScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6A3027),
+                        backgroundColor: AppColor.primary,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.r),
@@ -368,7 +367,7 @@ class CrmHomeScreen extends StatelessWidget {
                       },
                       child: Text(
                         "Save",
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
@@ -397,13 +396,13 @@ class _EmptyBox extends StatelessWidget {
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border),
       ),
       child: Center(
         child: Text(
           message,
-          style: GoogleFonts.inter(fontSize: 12.5.sp, color: const Color(0xFF8B7D77)),
+          style: GoogleFonts.inter(fontSize: 12.5.sp, color: AppColor.textMuted),
         ),
       ),
     );
@@ -421,12 +420,12 @@ class _MeetingTile extends StatelessWidget {
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border),
       ),
       child: Row(
         children: [
-          Icon(Icons.event_rounded, color: const Color(0xFF6A3027), size: 20.sp),
+          Icon(Icons.event_rounded, color: AppColor.primary, size: 20.sp),
           SizedBox(width: 10.w),
           Expanded(
             child: Column(
@@ -434,23 +433,23 @@ class _MeetingTile extends StatelessWidget {
               children: [
                 Text(
                   meeting.title,
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5.sp,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF241917),
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 Text(
                   meeting.clientName.isEmpty
                       ? DateFormat('hh:mm a').format(meeting.dateTime)
                       : "${meeting.clientName} · ${DateFormat('hh:mm a').format(meeting.dateTime)}",
-                  style: GoogleFonts.inter(fontSize: 11.5.sp, color: const Color(0xFF8B7D77)),
+                  style: GoogleFonts.inter(fontSize: 11.5.sp, color: AppColor.textMuted),
                 ),
                 if (meeting.attendees.isNotEmpty) ...[
                   SizedBox(height: 3.h),
                   Text(
                     "With: ${meeting.attendees.join(', ')}",
-                    style: GoogleFonts.inter(fontSize: 11.sp, color: const Color(0xFF6A3027)),
+                    style: GoogleFonts.inter(fontSize: 11.sp, color: AppColor.primary),
                   ),
                 ],
               ],
@@ -476,29 +475,29 @@ class _QuickActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16.r),
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: const Color(0xFFEDE2DC)),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColor.border),
         ),
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: const Color(0xFF6A3027), size: 17.sp),
+              Icon(icon, color: AppColor.primary, size: 17.sp),
               SizedBox(height: 4.h),
               Text(
                 label,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 9.5.sp,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF241917),
+                  color: AppColor.textPrimary,
                 ),
               ),
             ],

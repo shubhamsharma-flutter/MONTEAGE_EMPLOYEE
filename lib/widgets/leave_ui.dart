@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -9,26 +10,26 @@ import 'bottom_nav_wrapper.dart';
 
 /// Colours shared by every leave screen.
 class LeaveColors {
-  static const background = Color(0xFFF6F1ED);
+  static const background = AppColor.background;
   static const surface = Colors.white;
-  static const ink = Color(0xFF241917);
-  static const muted = Color(0xFF756A66);
-  static const border = Color(0xFFEDE2DC);
-  static const accent = Color(0xFFB54A3A);
-  static const accentDark = Color(0xFF6A3027);
+  static const ink = AppColor.textPrimary;
+  static const muted = AppColor.textSecondary;
+  static const border = AppColor.border;
+  static const accent = AppColor.primary;
+  static const accentDark = AppColor.primaryDark;
 
   // Dark enough to stay readable as text on white and on tinted backgrounds.
-  static const approved = Color(0xFF1E8A57);
-  static const pending = Color(0xFFB26A00);
-  static const rejected = Color(0xFFC8433F);
+  static const approved = AppColor.success;
+  static const pending = AppColor.warning;
+  static const rejected = AppColor.danger;
 }
 
 /// Text styles shared by every leave screen.
 class LeaveText {
   static TextStyle heading(double size, {Color color = LeaveColors.ink}) =>
-      GoogleFonts.manrope(
+      GoogleFonts.inter(
         fontSize: size.sp,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         color: color,
       );
 
@@ -41,11 +42,9 @@ class LeaveText {
 
 BoxDecoration leaveCardDecoration() => BoxDecoration(
   color: LeaveColors.surface,
-  borderRadius: BorderRadius.circular(20.r),
+  borderRadius: BorderRadius.circular(12.r),
   border: Border.all(color: LeaveColors.border),
-  boxShadow: const [
-    BoxShadow(color: Color(0x0F000000), blurRadius: 14, offset: Offset(0, 6)),
-  ],
+  boxShadow: AppShadow.card,
 );
 
 String formatLeaveDate(String? raw) {
@@ -95,12 +94,12 @@ IconData leaveTypeIcon(String? leaveType) {
 
 Color leaveTypeColor(String? leaveType) {
   final type = (leaveType ?? '').toUpperCase();
-  if (type.contains('SICK')) return const Color(0xFFC8433F);
-  if (type.contains('PAID')) return const Color(0xFF00796B);
-  if (type.contains('SHORT')) return const Color(0xFF6C4AB6);
-  if (type.contains('HALF')) return const Color(0xFFB26A00);
+  if (type.contains('SICK')) return AppColor.danger;
+  if (type.contains('PAID')) return AppColor.accent;
+  if (type.contains('SHORT')) return AppColor.primaryLight;
+  if (type.contains('HALF')) return AppColor.warning;
   if (type.contains('HOME') || type.contains('WFH')) {
-    return const Color(0xFF2B6CB0);
+    return AppColor.info;
   }
   return LeaveColors.accent;
 }
@@ -126,36 +125,14 @@ class LeaveScaffold extends StatelessWidget {
       child: Scaffold(
         backgroundColor: LeaveColors.background,
         appBar: AppBar(
-          elevation: 0,
-          toolbarHeight: 72.h,
-          backgroundColor: LeaveColors.background,
-          surfaceTintColor: Colors.transparent,
-          leadingWidth: 72.w,
-          leading: Padding(
-            padding: EdgeInsets.only(left: 16.w),
-            child: Container(
-              margin: EdgeInsets.symmetric(vertical: 12.h),
-              decoration: BoxDecoration(
-                color: LeaveColors.surface,
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x14000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: IconButton(
+          leading: IconButton(
                 tooltip: 'Back',
                 icon: const Icon(
                   Icons.arrow_back_rounded,
-                  color: LeaveColors.ink,
+                  color: Colors.white,
                 ),
                 onPressed: () => Get.back(),
               ),
-            ),
-          ),
           titleSpacing: 4.w,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

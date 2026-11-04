@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,16 +20,14 @@ class CrmScheduleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F1ED),
-        elevation: 0,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         title: Text(
           title,
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF241917),
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
       ),
@@ -37,11 +36,11 @@ class CrmScheduleScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.event_busy_rounded, size: 52.sp, color: const Color(0xFF8B7D77)),
+                  Icon(Icons.event_busy_rounded, size: 52.sp, color: AppColor.textMuted),
                   SizedBox(height: 12.h),
                   Text(
                     "No meetings scheduled",
-                    style: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF8B7D77)),
+                    style: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textMuted),
                   ),
                 ],
               ),
@@ -56,28 +55,28 @@ class CrmScheduleScreen extends StatelessWidget {
                   padding: EdgeInsets.all(14.w),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: const Color(0xFFEDE2DC)),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColor.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         m.title,
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 14.5.sp,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF241917),
+                          fontWeight: FontWeight.w700,
+                          color: AppColor.textPrimary,
                         ),
                       ),
                       SizedBox(height: 6.h),
                       Row(
                         children: [
-                          Icon(Icons.access_time_rounded, size: 14.sp, color: const Color(0xFF6A3027)),
+                          Icon(Icons.access_time_rounded, size: 14.sp, color: AppColor.primary),
                           SizedBox(width: 6.w),
                           Text(
                             DateFormat('dd MMM yyyy · hh:mm a').format(m.dateTime),
-                            style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF6A3027)),
+                            style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.primary),
                           ),
                         ],
                       ),
@@ -85,11 +84,11 @@ class CrmScheduleScreen extends StatelessWidget {
                         SizedBox(height: 6.h),
                         Row(
                           children: [
-                            Icon(Icons.person_outline_rounded, size: 14.sp, color: const Color(0xFF6A3027)),
+                            Icon(Icons.person_outline_rounded, size: 14.sp, color: AppColor.primary),
                             SizedBox(width: 6.w),
                             Text(
                               m.clientName,
-                              style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF241917)),
+                              style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textPrimary),
                             ),
                           ],
                         ),
@@ -98,7 +97,7 @@ class CrmScheduleScreen extends StatelessWidget {
                         SizedBox(height: 4.h),
                         Text(
                           m.clientDetails,
-                          style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF8B7D77)),
+                          style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textMuted),
                         ),
                       ],
                       if (m.attendees.isNotEmpty) ...[
@@ -106,13 +105,13 @@ class CrmScheduleScreen extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.groups_outlined, size: 14.sp, color: const Color(0xFF6A3027)),
+                            Icon(Icons.groups_outlined, size: 14.sp, color: AppColor.primary),
                             SizedBox(width: 6.w),
                             Expanded(
                               child: Text(
                                 m.attendees.join(', '),
                                 style: GoogleFonts.inter(
-                                    fontSize: 12.sp, color: const Color(0xFF241917)),
+                                    fontSize: 12.sp, color: AppColor.textPrimary),
                               ),
                             ),
                           ],
@@ -122,7 +121,7 @@ class CrmScheduleScreen extends StatelessWidget {
                         SizedBox(height: 6.h),
                         Text(
                           m.notes,
-                          style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF8B7D77)),
+                          style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textMuted),
                         ),
                       ],
                     ],

@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -116,7 +117,7 @@ class AttendanceSyncService {
         'Synced',
         '${successKeys.length} pending attendance record(s) synced successfully!',
         snackPosition: SnackPosition.TOP,
-        backgroundColor: const Color(0xFF16A34A),
+        backgroundColor: AppColor.success,
         colorText: Colors.white,
       );
     }

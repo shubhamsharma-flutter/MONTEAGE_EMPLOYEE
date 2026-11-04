@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,8 +24,8 @@ class NotificationScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFFC71585), // Red Violet
-                  Color(0xFF4A0000), // Oxblood
+                  AppColor.accent, // Red Violet
+                  AppColor.primaryDark, // Oxblood
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -77,17 +78,11 @@ class NotificationScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   gradient: LinearGradient(
                     colors: [
-                      Color(0xFFC71585), // Red Violet
-                      Color(0xFF4A0000), // Oxblood
+                      AppColor.accent, // Red Violet
+                      AppColor.primaryDark, // Oxblood
                     ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
-                    )
-                  ],
+                  boxShadow: AppShadow.card,
                 ),
                 child: Obx(() => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

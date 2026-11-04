@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -33,37 +34,15 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
   Widget build(BuildContext context) {
     return BottomNavWrapper(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF6F1ED),
-        appBar: AppBar(
-          elevation: 0,
-          toolbarHeight: 72.h,
-          backgroundColor: const Color(0xFFF6F1ED),
-          surfaceTintColor: Colors.transparent,
-          leadingWidth: 72.w,
-          leading: Padding(
-            padding: EdgeInsets.only(left: 16.w),
-            child: Container(
-              margin: EdgeInsets.symmetric(vertical: 12.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x14000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: IconButton(
+        backgroundColor: AppColor.background,
+        appBar: AppBar(
+          leading: IconButton(
                 icon: const Icon(
                   Icons.arrow_back_rounded,
-                  color: Color(0xFF241917),
+                  color: Colors.white,
                 ),
                 onPressed: () => Get.back(),
               ),
-            ),
-          ),
           titleSpacing: 0,
           title: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -72,10 +51,10 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
               children: [
                 Text(
                   'Mark Attendance',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 20.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
                 ),
                 Text(
@@ -83,7 +62,7 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF756A66),
+                    color: Colors.white70,
                   ),
                 ),
               ],
@@ -107,9 +86,9 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                         width: double.infinity,
                         height: 240.h,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28.r),
+                          borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(
-                            color: const Color(0xFF1E8E5A).withOpacity(0.3),
+                            color: AppColor.success.withOpacity(0.3),
                             width: 2,
                           ),
                           color: Colors.white,
@@ -119,20 +98,14 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                                   fit: BoxFit.cover,
                                 )
                               : null,
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x18000000),
-                              blurRadius: 22,
-                              offset: Offset(0, 10),
-                            ),
-                          ],
+                          boxShadow: AppShadow.card,
                         ),
                         child: img == null
                             ? Center(
                                 child: Icon(
                                   Icons.face_rounded,
                                   size: 80.sp,
-                                  color: const Color(0xFF1E8E5A).withOpacity(0.3),
+                                  color: AppColor.success.withOpacity(0.3),
                                 ),
                               )
                             : null,
@@ -147,14 +120,8 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.65),
-                            borderRadius: BorderRadius.circular(14.r),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x22000000),
-                                blurRadius: 8,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
+                            borderRadius: BorderRadius.circular(12.r),
+                            boxShadow: AppShadow.card,
                           ),
                           child: Obx(() {
                             final loading = c.isLocLoading.value;
@@ -178,7 +145,7 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                         child: _CircleActionButton(
                           icon: Icons.my_location_rounded,
                           onTap: c.fetchLocationAll,
-                          accentColor: const Color(0xFF1E8E5A),
+                          accentColor: AppColor.success,
                         ),
                       ),
                       if (img != null)
@@ -188,7 +155,7 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                           child: _CircleActionButton(
                             icon: Icons.close_rounded,
                             onTap: c.clearPhoto,
-                            accentColor: const Color(0xFFB54545),
+                            accentColor: AppColor.danger,
                           ),
                         ),
                     ],
@@ -197,10 +164,10 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                 SizedBox(height: 20.h),
                 Text(
                   'Capture Your Face',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 22.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 SizedBox(height: 6.h),
@@ -210,7 +177,7 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                     fontSize: 13.sp,
                     height: 1.5,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF756A66),
+                    color: AppColor.textSecondary,
                   ),
                 ),
                 SizedBox(height: 18.h),
@@ -220,17 +187,17 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                   child: FilledButton.icon(
                     onPressed: c.takePhoto,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E8E5A),
+                      backgroundColor: AppColor.success,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18.r),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                     ),
                     icon: const Icon(Icons.camera_alt_rounded),
                     label: Text(
                       'Take Photo',
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 16.sp,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -238,10 +205,10 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                 SizedBox(height: 20.h),
                 Text(
                   'Location Details',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 SizedBox(height: 12.h),
@@ -250,15 +217,9 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24.r),
-                    border: Border.all(color: const Color(0xFFEDE2DC), width: 1),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x12000000),
-                        blurRadius: 14,
-                        offset: Offset(0, 7),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColor.border, width: 1),
+                    boxShadow: AppShadow.card,
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,12 +228,12 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                         height: 48.h,
                         width: 48.h,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F9D9A).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(14.r),
+                          color: AppColor.accent.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: const Icon(
                           Icons.location_on_outlined,
-                          color: Color(0xFF0F9D9A),
+                          color: AppColor.accent,
                         ),
                       ),
                       SizedBox(width: 14.w),
@@ -286,7 +247,7 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                                 style: GoogleFonts.inter(
                                   fontSize: 11.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF8B7D77),
+                                  color: AppColor.textMuted,
                                   letterSpacing: 0.3,
                                 ),
                               ),
@@ -299,7 +260,7 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                                   fontSize: 13.sp,
                                   height: 1.45,
                                   fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF5F5450),
+                                  color: AppColor.textSecondary,
                                 ),
                               ),
                             ],
@@ -318,12 +279,12 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                     child: FilledButton(
                       onPressed: loading ? null : c.submitAttendance,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF6A3027),
+                        backgroundColor: AppColor.primary,
                         disabledBackgroundColor: const Color(
                           0xFF6A3027,
                         ).withOpacity(0.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18.r),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                       ),
                       child: loading
@@ -337,9 +298,9 @@ class _MarkFaceAttendanceScreenState extends State<MarkFaceAttendanceScreen> {
                             )
                           : Text(
                               'Submit Attendance',
-                              style: GoogleFonts.manrope(
+                              style: GoogleFonts.inter(
                                 fontSize: 16.sp,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
                             ),
@@ -376,13 +337,7 @@ class _CircleActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x28000000),
-              blurRadius: 12,
-              offset: Offset(0, 6),
-            ),
-          ],
+          boxShadow: AppShadow.card,
         ),
         child: Icon(icon, size: 20.sp, color: accentColor),
       ),

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/task_screen.dart';
@@ -17,6 +15,7 @@ import '../controllers/home_controller.dart';
 import '../controllers/employee_data_controller.dart';
 import '../controllers/totalattendanceview_controller.dart';
 import '../controllers/hr_today_attendance_controller.dart';
+import '../widgets/app_ui.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -88,111 +87,30 @@ void initState() {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x18000000),
-              blurRadius: 20,
-              offset: Offset(0, -6),
-            ),
-          ],
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 8.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  isActive: _currentIndex == 0,
-                  onTap: () => setState(() => _currentIndex = 0),
-                ),
-                if (isHr)
-                  _NavItem(
-                    icon: Icons.people_rounded,
-                    label: 'All Attendance',
-                    isActive: _currentIndex == 1,
-                    onTap: () => setState(() => _currentIndex = 1),
-                  )
-                else
-                  _NavItem(
-                    icon: Icons.task_rounded,
-                    label: 'Tasks',
-                    isActive: _currentIndex == 1,
-                    onTap: () => setState(() => _currentIndex = 1),
-                  ),
-                _NavItem(
-                  icon: Icons.calendar_month_rounded,
-                  label: 'Calendar',
-                  isActive: isHr ? _currentIndex == 2 : _currentIndex == 2,
-                  onTap: () => setState(() => _currentIndex = isHr ? 2 : 2),
-                ),
-                _NavItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isActive: isHr ? _currentIndex == 3 : _currentIndex == 3,
-                  onTap: () => setState(() => _currentIndex = isHr ? 3 : 3),
-                ),
-              ],
-            ),
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _currentIndex,
+        items: [
+          AppNavItem(
+            icon: Icons.home_outlined,
+            label: 'Home',
+            onTap: () => setState(() => _currentIndex = 0),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    const accent = Color(0xFF6A3027);
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: isActive ? accent.withOpacity(0.10) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 24.sp,
-              color: isActive ? accent : const Color(0xFFB0A09A),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11.sp,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive ? accent : const Color(0xFFB0A09A),
-              ),
-            ),
-          ],
-        ),
+          AppNavItem(
+            icon: isHr ? Icons.groups_outlined : Icons.task_alt_rounded,
+            label: isHr ? 'All Attendance' : 'Tasks',
+            onTap: () => setState(() => _currentIndex = 1),
+          ),
+          AppNavItem(
+            icon: Icons.calendar_month_outlined,
+            label: 'Calendar',
+            onTap: () => setState(() => _currentIndex = 2),
+          ),
+          AppNavItem(
+            icon: Icons.person_outline_rounded,
+            label: 'Profile',
+            onTap: () => setState(() => _currentIndex = 3),
+          ),
+        ],
       ),
     );
   }

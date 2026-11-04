@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -27,7 +28,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
 
     return Drawer(
       width: 328.w,
-      backgroundColor: const Color(0xFFF6F1ED),
+      backgroundColor: AppColor.background,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -44,7 +45,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
-                  color: const Color(0xFF8B7D77),
+                  color: AppColor.textMuted,
                 ),
               ),
             ),
@@ -57,7 +58,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
                     title: 'Dashboard',
                     subtitle: 'Back to your attendance overview',
                     icon: Icons.grid_view_rounded,
-                    accent: const Color(0xFF6A3027),
+                    accent: AppColor.primary,
                     isActive: currentRoute == AdminRoutes.mainScreen,
                     onTap: () => _openRoute(context, AdminRoutes.mainScreen),
                   ),
@@ -75,7 +76,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
   title: 'Mark Attendance',
   subtitle: 'Check in or check out with face & location',
   icon: Icons.face_retouching_natural_rounded,
-  accent: const Color(0xFF1E8E5A),
+  accent: AppColor.success,
   isActive: currentRoute == AdminRoutes.attendance,
   onTap: () => _openRoute(context, AdminRoutes.attendance),
 ),
@@ -94,7 +95,7 @@ SizedBox(height: 10.h),
                     title: 'Attendance History',
                     subtitle: 'Browse previous attendance records',
                     icon: Icons.history_rounded,
-                    accent: const Color(0xFF4F46E5),
+                    accent: AppColor.info,
                     isActive: currentRoute == AdminRoutes.attendanceHistory,
                     onTap: () =>
                         _openRoute(context, AdminRoutes.attendanceHistory),
@@ -125,7 +126,7 @@ SizedBox(height: 10.h),
                       title: 'Employee Registration',
                       subtitle: 'Register new employees',
                       icon: Icons.person_add_rounded,
-                      accent: const Color(0xFF6A3027),
+                      accent: AppColor.primary,
                       isActive: currentRoute == AdminRoutes.registerScreen,
                       onTap: () => _openRoute(context, AdminRoutes.registerScreen),
                     ),
@@ -170,14 +171,8 @@ SizedBox(height: 10.h),
               padding: EdgeInsets.all(14.w),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24.r),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x12000000),
-                    blurRadius: 16,
-                    offset: Offset(0, 8),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(12.r),
+                boxShadow: AppShadow.card,
               ),
               child: Row(
                 children: [
@@ -185,12 +180,12 @@ SizedBox(height: 10.h),
                     height: 44.h,
                     width: 44.h,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE6E1),
-                      borderRadius: BorderRadius.circular(14.r),
+                      color: AppColor.dangerTint,
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: const Icon(
                       Icons.power_settings_new_rounded,
-                      color: Color(0xFFB54545),
+                      color: AppColor.danger,
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -200,10 +195,10 @@ SizedBox(height: 10.h),
                       children: [
                         Text(
                           'Logout',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 15.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF241917),
+                            fontWeight: FontWeight.w700,
+                            color: AppColor.textPrimary,
                           ),
                         ),
                         SizedBox(height: 3.h),
@@ -212,7 +207,7 @@ SizedBox(height: 10.h),
                           style: GoogleFonts.inter(
                             fontSize: 11.5.sp,
                             fontWeight: FontWeight.w500,
-                            color: const Color(0xFF7B6F6A),
+                            color: AppColor.textSecondary,
                           ),
                         ),
                       ],
@@ -224,7 +219,7 @@ SizedBox(height: 10.h),
                       'Exit',
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFFB54545),
+                        color: AppColor.danger,
                       ),
                     ),
                   ),
@@ -247,19 +242,13 @@ SizedBox(height: 10.h),
       return Container(
         padding: EdgeInsets.all(18.w),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28.r),
+          borderRadius: BorderRadius.circular(12.r),
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF241917), Color(0xFF6A3027), Color(0xFFC75B43)],
+            colors: [AppColor.primaryDark, AppColor.primary],
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x246A3027),
-              blurRadius: 22,
-              offset: Offset(0, 10),
-            ),
-          ],
+          boxShadow: AppShadow.card,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,9 +283,9 @@ SizedBox(height: 10.h),
                 const Spacer(),
                 Material(
                   color: Colors.white.withOpacity(0.14),
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(12.r),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(12.r),
                     onTap: () => employeeC.loadEmployee(),
                     child: Padding(
                       padding: EdgeInsets.all(10.w),
@@ -314,14 +303,14 @@ SizedBox(height: 10.h),
                   padding: EdgeInsets.all(3.w),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.16),
-                    borderRadius: BorderRadius.circular(22.r),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: CircleAvatar(
                     radius: 28.r,
-                    backgroundColor: const Color(0xFFF5E6DF),
+                    backgroundColor: AppColor.primaryTint,
                     child: Icon(
                       Icons.person_rounded,
-                      color: const Color(0xFF6A3027),
+                      color: AppColor.primary,
                       size: 30.sp,
                     ),
                   ),
@@ -335,9 +324,9 @@ SizedBox(height: 10.h),
                         name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 20.sp,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                           height: 1.15,
                         ),
@@ -376,13 +365,13 @@ SizedBox(height: 10.h),
             SizedBox(height: 16.h),
             InkWell(
               onTap: () => _openRoute(context, AdminRoutes.profile),
-              borderRadius: BorderRadius.circular(18.r),
+              borderRadius: BorderRadius.circular(12.r),
               child: Container(
                 padding:
                     EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(18.r),
+                  borderRadius: BorderRadius.circular(12.r),
                   border:
                       Border.all(color: Colors.white.withOpacity(0.12)),
                 ),
@@ -479,26 +468,20 @@ class _DrawerNavItem extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: Container(
           width: double.infinity,
           padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 14.w),
           decoration: BoxDecoration(
             color: isActive ? accent.withOpacity(0.1) : Colors.white,
-            borderRadius: BorderRadius.circular(22.r),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: isActive
                   ? accent.withOpacity(0.35)
-                  : const Color(0xFFEDE2DC),
+                  : AppColor.border,
               width: isActive ? 1.3 : 1,
             ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 14,
-                offset: Offset(0, 7),
-              ),
-            ],
+            boxShadow: AppShadow.card,
           ),
           child: Row(
             children: [
@@ -507,7 +490,7 @@ class _DrawerNavItem extends StatelessWidget {
                 width: 44.h,
                 decoration: BoxDecoration(
                   color: accent.withOpacity(isActive ? 0.16 : 0.12),
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(icon, color: accent, size: 23.sp),
               ),
@@ -518,10 +501,10 @@ class _DrawerNavItem extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.manrope(
-                        color: const Color(0xFF241917),
+                      style: GoogleFonts.inter(
+                        color: AppColor.textPrimary,
                         fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -530,7 +513,7 @@ class _DrawerNavItem extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF7B6F6A),
+                        color: AppColor.textSecondary,
                         fontSize: 11.5.sp,
                         fontWeight: FontWeight.w500,
                         height: 1.35,

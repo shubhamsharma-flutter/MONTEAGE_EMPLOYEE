@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:monteage_employee/utils/constants/color_constants.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,7 +21,7 @@ class RegisterScreen extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Access Denied'),
-          backgroundColor: const Color(0xFF6A3027),
+          backgroundColor: AppColor.primary,
         ),
         body: Center(
           child: Padding(
@@ -31,24 +32,24 @@ class RegisterScreen extends StatelessWidget {
                 Text(
                   'Only HR Managers can access employee registration.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF241917),
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 SizedBox(height: 18.h),
                 FilledButton(
                   onPressed: () => Get.offAllNamed(AdminRoutes.mainScreen),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF6A3027),
+                    backgroundColor: AppColor.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
                   child: Text(
                     'Back to Dashboard',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                     ),
@@ -67,7 +68,7 @@ class RegisterScreen extends StatelessWidget {
 
     return Obx(
       () => Scaffold(
-        backgroundColor: const Color(0xFFF6F1ED),
+        backgroundColor: AppColor.background,
         body: SafeArea(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
@@ -85,25 +86,19 @@ class RegisterScreen extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 18.h),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24.r),
-                    border: Border.all(color: const Color(0xFFEDE2DC), width: 1),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x12000000),
-                        blurRadius: 14,
-                        offset: Offset(0, 7),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColor.border, width: 1),
+                    boxShadow: AppShadow.card,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Create Account',
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 28.sp,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF241917),
+                          fontWeight: FontWeight.w700,
+                          color: AppColor.textPrimary,
                         ),
                       ),
                       SizedBox(height: 6.h),
@@ -111,7 +106,7 @@ class RegisterScreen extends StatelessWidget {
                         'Sign up to get started',
                         style: GoogleFonts.inter(
                           fontSize: 13.sp,
-                          color: const Color(0xFF8B7D77),
+                          color: AppColor.textMuted,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -237,7 +232,7 @@ class RegisterScreen extends StatelessWidget {
                                   style: GoogleFonts.inter(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF6A3027),
+                                    color: AppColor.primary,
                                   ),
                                 ),
                               ),
@@ -269,10 +264,10 @@ class _Label extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 8.h),
       child: Text(
         text,
-        style: GoogleFonts.manrope(
+        style: GoogleFonts.inter(
           fontSize: 13.sp,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF241917),
+          color: AppColor.textPrimary,
         ),
       ),
     );
@@ -304,23 +299,23 @@ class _Input extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.inter(
-          color: const Color(0xFFB0B0B0),
+          color: AppColor.textDisabled,
           fontSize: 13.sp,
         ),
         filled: true,
-        fillColor: const Color(0xFFF6F1ED),
+        fillColor: AppColor.background,
         contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.r),
-          borderSide: const BorderSide(color: Color(0xFFEDE2DC), width: 1),
+          borderSide: const BorderSide(color: AppColor.border, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: Color(0xFFEDE2DC), width: 1),
+          borderSide: const BorderSide(color: AppColor.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: Color(0xFF6A3027), width: 1.5),
+          borderSide: const BorderSide(color: AppColor.primary, width: 1.5),
         ),
       ),
       validator: validator,
@@ -347,8 +342,8 @@ class _ModernButton extends StatelessWidget {
       child: FilledButton(
         onPressed: onTap,
         style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFF6A3027),
-          disabledBackgroundColor: const Color(0xFFC9C9C9),
+          backgroundColor: AppColor.primary,
+          disabledBackgroundColor: AppColor.textDisabled,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
           ),
@@ -364,9 +359,9 @@ class _ModernButton extends StatelessWidget {
               )
             : Text(
                 text,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 15.sp,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),

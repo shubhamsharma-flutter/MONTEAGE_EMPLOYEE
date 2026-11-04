@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -36,24 +37,22 @@ class _CrmEventDetailsScreenState extends State<CrmEventDetailsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F1ED),
-        elevation: 0,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         title: Text(
           "Event",
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF241917),
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: const Color(0xFF6A3027),
-          unselectedLabelColor: const Color(0xFF8B7D77),
-          indicatorColor: const Color(0xFF6A3027),
-          labelStyle: GoogleFonts.manrope(fontSize: 13.sp, fontWeight: FontWeight.w700),
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          labelStyle: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w700),
           tabs: const [
             Tab(text: "Event Details"),
             Tab(text: "Add Event"),
@@ -87,11 +86,11 @@ class _EventDetailsTab extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.event_outlined, size: 52.sp, color: const Color(0xFF8B7D77)),
+              Icon(Icons.event_outlined, size: 52.sp, color: AppColor.textMuted),
               SizedBox(height: 12.h),
               Text(
                 "No events yet.",
-                style: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF8B7D77)),
+                style: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textMuted),
               ),
             ],
           ),
@@ -117,18 +116,18 @@ class _EventCard extends StatelessWidget {
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             event.eventName.isEmpty ? event.contactName : event.eventName,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14.5.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF241917),
+              fontWeight: FontWeight.w700,
+              color: AppColor.textPrimary,
             ),
           ),
           SizedBox(height: 8.h),
@@ -152,12 +151,12 @@ class _EventCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 13.sp, color: const Color(0xFF6A3027)),
+          Icon(icon, size: 13.sp, color: AppColor.primary),
           SizedBox(width: 8.w),
           Expanded(
             child: Text(
               text,
-              style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF8B7D77)),
+              style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textMuted),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -60,11 +61,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Color _dayColor(String status) {
     switch (status) {
       case 'present':
-        return const Color(0xFF1E8E5A);
+        return AppColor.success;
       case 'absent':
-        return const Color(0xFFB54545);
+        return AppColor.danger;
       case 'leave':
-        return const Color(0xFF2563EB);
+        return AppColor.info;
       default:
         return Colors.transparent;
     }
@@ -92,12 +93,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         monthDays.where((e) => e.value == 'leave').length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        elevation: 0,
-        toolbarHeight: 72.h,
-        backgroundColor: const Color(0xFFF6F1ED),
-        surfaceTintColor: Colors.transparent,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         automaticallyImplyLeading: false,
         titleSpacing: 16.w,
         title: Column(
@@ -105,10 +102,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
           children: [
             Text(
               'Calendar',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 22.sp,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF241917),
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
             Text(
@@ -116,7 +113,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               style: GoogleFonts.inter(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF756A66),
+                color: Colors.white70,
               ),
             ),
           ],
@@ -134,14 +131,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     EdgeInsets.symmetric(vertical: 16.h, horizontal: 8.w),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24.r),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x12000000),
-                      blurRadius: 14,
-                      offset: Offset(0, 7),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: AppShadow.card,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -149,27 +140,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     _StatChip(
                       label: 'Present',
                       value: '$presentCount',
-                      color: const Color(0xFF1E8E5A),
+                      color: AppColor.success,
                       icon: Icons.check_circle_rounded,
                     ),
                     Container(
                         width: 1,
                         height: 36.h,
-                        color: const Color(0xFFE8DDD9)),
+                        color: AppColor.border),
                     _StatChip(
                       label: 'Absent',
                       value: '$absentCount',
-                      color: const Color(0xFFB54545),
+                      color: AppColor.danger,
                       icon: Icons.cancel_rounded,
                     ),
                     Container(
                         width: 1,
                         height: 36.h,
-                        color: const Color(0xFFE8DDD9)),
+                        color: AppColor.border),
                     _StatChip(
                       label: 'Leave',
                       value: '$leaveCount',
-                      color: const Color(0xFF2563EB),
+                      color: AppColor.info,
                       icon: Icons.beach_access_rounded,
                     ),
                   ],
@@ -181,14 +172,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(28.r),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x12000000),
-                      blurRadius: 18,
-                      offset: Offset(0, 10),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(12.r),
+                  boxShadow: AppShadow.card,
                 ),
                 child: Column(
                   children: [
@@ -199,21 +184,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         children: [
                           Text(
                             '$monthName ${_focusedMonth.year}',
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 18.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF241917),
+                              fontWeight: FontWeight.w700,
+                              color: AppColor.textPrimary,
                             ),
                           ),
                           const Spacer(),
                           IconButton(
                             icon: const Icon(Icons.chevron_left_rounded,
-                                color: Color(0xFF6A3027)),
+                                color: AppColor.primary),
                             onPressed: _previousMonth,
                           ),
                           IconButton(
                             icon: const Icon(Icons.chevron_right_rounded,
-                                color: Color(0xFF6A3027)),
+                                color: AppColor.primary),
                             onPressed: _nextMonth,
                           ),
                         ],
@@ -234,7 +219,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     style: GoogleFonts.inter(
                                       fontSize: 11.sp,
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF8B7D77),
+                                      color: AppColor.textMuted,
                                     ),
                                   ),
                                 ),
@@ -274,7 +259,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               margin: EdgeInsets.all(3.w),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? const Color(0xFF241917)
+                                    ? AppColor.textPrimary
                                     : status != null
                                         ? bgColor.withOpacity(0.15)
                                         : Colors.transparent,
@@ -282,7 +267,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     BorderRadius.circular(10.r),
                                 border: isToday
                                     ? Border.all(
-                                        color: const Color(0xFF6A3027),
+                                        color: AppColor.primary,
                                         width: 1.5)
                                     : null,
                               ),
@@ -292,16 +277,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                 children: [
                                   Text(
                                     '${day.day}',
-                                    style: GoogleFonts.manrope(
+                                    style: GoogleFonts.inter(
                                       fontSize: 12.sp,
                                       fontWeight: isToday || isSelected
-                                          ? FontWeight.w800
+                                          ? FontWeight.w700
                                           : FontWeight.w500,
                                       color: isSelected
                                           ? Colors.white
                                           : status != null
                                               ? _dayColor(status)
-                                              : const Color(0xFF241917),
+                                              : AppColor.textPrimary,
                                     ),
                                   ),
                                   if (status != null)
@@ -333,15 +318,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _LegendDot(
-                              color: const Color(0xFF1E8E5A),
+                              color: AppColor.success,
                               label: 'Present'),
                           SizedBox(width: 16.w),
                           _LegendDot(
-                              color: const Color(0xFFB54545),
+                              color: AppColor.danger,
                               label: 'Absent'),
                           SizedBox(width: 16.w),
                           _LegendDot(
-                              color: const Color(0xFF2563EB),
+                              color: AppColor.info,
                               label: 'Leave'),
                         ],
                       ),
@@ -358,7 +343,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   status: _attendanceData[_fmt(_selectedDay!)],
                   statusColor: _attendanceData[_fmt(_selectedDay!)] != null
                       ? _dayColor(_attendanceData[_fmt(_selectedDay!)]!)
-                      : const Color(0xFF8B7D77),
+                      : AppColor.textMuted,
                 ),
               ],
             ],
@@ -388,15 +373,15 @@ class _StatChip extends StatelessWidget {
         Icon(icon, size: 22.sp, color: color),
         SizedBox(height: 4.h),
         Text(value,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
                 fontSize: 16.sp,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF241917))),
+                fontWeight: FontWeight.w700,
+                color: AppColor.textPrimary)),
         Text(label,
             style: GoogleFonts.inter(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF8B7D77))),
+                color: AppColor.textMuted)),
       ],
     );
   }
@@ -422,7 +407,7 @@ class _LegendDot extends StatelessWidget {
             style: GoogleFonts.inter(
                 fontSize: 11.sp,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF756A66))),
+                color: AppColor.textSecondary)),
       ],
     );
   }
@@ -455,14 +440,8 @@ class _DayDetailCard extends StatelessWidget {
       padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 14,
-            offset: Offset(0, 7),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: AppShadow.card,
       ),
       child: Row(
         children: [
@@ -470,13 +449,13 @@ class _DayDetailCard extends StatelessWidget {
             padding: EdgeInsets.all(14.w),
             decoration: BoxDecoration(
               color: statusColor.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Text(
               '${day.day}',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 24.sp,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: statusColor,
               ),
             ),
@@ -488,10 +467,10 @@ class _DayDetailCard extends StatelessWidget {
               children: [
                 Text(
                   '${dayNames[day.weekday]}, ${monthNames[day.month]} ${day.year}',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 14.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 SizedBox(height: 6.h),

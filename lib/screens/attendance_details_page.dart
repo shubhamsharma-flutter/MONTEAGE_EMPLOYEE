@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/attendance_controller.dart';
@@ -42,10 +43,8 @@ class AttendanceDetailsPage extends GetView<AttendanceController> {
     final double chipFont = isSmall ? 13 : 14;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F4F4),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F4F4),
-        elevation: 0,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, size: isSmall ? 18 : 20),
           onPressed: () => Get.back(),
@@ -128,14 +127,8 @@ class AttendanceDetailsPage extends GetView<AttendanceController> {
       padding: EdgeInsets.all(isSmall ? 10 : 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-            color: Colors.black.withOpacity(0.05),
-          )
-        ],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: AppShadow.card,
       ),
       child: Column(
         children: [
@@ -207,7 +200,7 @@ class AttendanceDetailsPage extends GetView<AttendanceController> {
                       ? null
                       : () => controller.loadAttendance(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE94D4D),
+                    backgroundColor: AppColor.danger,
                     padding:
                     EdgeInsets.symmetric(horizontal: isSmall ? 14 : 18),
                     shape: RoundedRectangleBorder(
@@ -247,7 +240,7 @@ class AttendanceDetailsPage extends GetView<AttendanceController> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -258,7 +251,7 @@ class AttendanceDetailsPage extends GetView<AttendanceController> {
               vertical: isSmall ? 8 : 10,
             ),
             decoration: const BoxDecoration(
-              color: Color(0xFFE16A66),
+              color: AppColor.danger,
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
@@ -492,14 +485,8 @@ class AttendanceDetailsPage extends GetView<AttendanceController> {
               padding: EdgeInsets.all(isSmall ? 10 : 12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ],
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: AppShadow.card,
               ),
               child: Column(
                 children: [
@@ -603,9 +590,9 @@ class _DateField extends StatelessWidget {
               vertical: isSmall ? 8 : 10,
             ),
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFE5D2D2)),
+              border: Border.all(color: AppColor.border),
               borderRadius: BorderRadius.circular(12),
-              color: const Color(0xFFFDF5F5),
+              color: AppColor.dangerTint,
             ),
             child: Row(
               children: [
@@ -656,7 +643,7 @@ class _TabChip extends StatelessWidget {
                 fontSize: fontSize,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                 color:
-                isActive ? const Color(0xFFE94D4D) : Colors.grey.shade700,
+                isActive ? AppColor.danger : Colors.grey.shade700,
               ),
             ),
             SizedBox(height: isSmall ? 3 : 4),
@@ -664,7 +651,7 @@ class _TabChip extends StatelessWidget {
               height: 2,
               width: 60,
               decoration: BoxDecoration(
-                color: isActive ? const Color(0xFFE94D4D) : Colors.transparent,
+                color: isActive ? AppColor.danger : Colors.transparent,
                 borderRadius: BorderRadius.circular(100),
               ),
             ),
@@ -698,14 +685,8 @@ class _StatCard extends StatelessWidget {
       padding: EdgeInsets.all(isSmall ? 10 : 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          )
-        ],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: AppShadow.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

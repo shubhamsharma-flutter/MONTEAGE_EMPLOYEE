@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,16 +41,14 @@ class _CrmKnowledgeBaseScreenState extends State<CrmKnowledgeBaseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F1ED),
-        elevation: 0,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         title: Text(
           "Knowledge Base",
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 18.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF241917),
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
       ),
@@ -60,8 +59,8 @@ class _CrmKnowledgeBaseScreenState extends State<CrmKnowledgeBaseScreen> {
             padding: EdgeInsets.all(14.w),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: const Color(0xFFEDE2DC)),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColor.border),
             ),
             child: Column(
               children: [
@@ -86,10 +85,10 @@ class _CrmKnowledgeBaseScreenState extends State<CrmKnowledgeBaseScreen> {
                     icon: Icon(Icons.search_rounded, size: 18.sp, color: Colors.white),
                     label: Text(
                       "Search",
-                      style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: Colors.white),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6A3027),
+                      backgroundColor: AppColor.primary,
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                     ),
@@ -102,10 +101,10 @@ class _CrmKnowledgeBaseScreenState extends State<CrmKnowledgeBaseScreen> {
             SizedBox(height: 20.h),
             Text(
               "Results",
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 14.sp,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF241917),
+                fontWeight: FontWeight.w700,
+                color: AppColor.textPrimary,
               ),
             ),
             SizedBox(height: 10.h),
@@ -141,28 +140,28 @@ class _FilterDropdown extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 12.5.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF241917),
+              color: AppColor.textPrimary,
             ),
           ),
           SizedBox(height: 6.h),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w),
             decoration: BoxDecoration(
-              color: const Color(0xFFF6F1ED),
+              color: AppColor.background,
               borderRadius: BorderRadius.circular(10.r),
-              border: Border.all(color: const Color(0xFFEDE2DC)),
+              border: Border.all(color: AppColor.border),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: value,
                 isExpanded: true,
                 hint: Text("--Select--",
-                    style: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFFBDB0AB))),
-                icon: Icon(Icons.keyboard_arrow_down_rounded, color: const Color(0xFF6A3027)),
-                style: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF241917)),
+                    style: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textDisabled)),
+                icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColor.primary),
+                style: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textPrimary),
                 items: options
                     .map((o) => DropdownMenuItem(value: o, child: Text(o)))
                     .toList(),
@@ -187,18 +186,18 @@ class _KnowledgeBaseCard extends StatelessWidget {
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             item.title,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14.5.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF241917),
+              fontWeight: FontWeight.w700,
+              color: AppColor.textPrimary,
             ),
           ),
           SizedBox(height: 8.h),
@@ -207,12 +206,12 @@ class _KnowledgeBaseCard extends StatelessWidget {
               padding: EdgeInsets.only(bottom: 4.h),
               child: Row(
                 children: [
-                  Icon(line.icon, size: 13.sp, color: const Color(0xFF6A3027)),
+                  Icon(line.icon, size: 13.sp, color: AppColor.primary),
                   SizedBox(width: 8.w),
                   Expanded(
                     child: Text(
                       line.text,
-                      style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF8B7D77)),
+                      style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textMuted),
                     ),
                   ),
                 ],

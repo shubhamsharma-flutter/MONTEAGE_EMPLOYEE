@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -13,31 +14,22 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: const Color(0xFFF6F1ED),
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         centerTitle: false,
         leading: Padding(
           padding: EdgeInsets.only(left: 12.w),
           child: Container(
             margin: EdgeInsets.symmetric(vertical: 8.h),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14.r),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x14000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
+              color: Color(0x29FFFFFF),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: IconButton(
               onPressed: () => Get.back(),
               icon: Icon(
                 Icons.arrow_back_ios_new_rounded,
-                color: const Color(0xFF6A3027),
+                color: Colors.white,
                 size: 18.sp,
               ),
             ),
@@ -48,10 +40,10 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
           children: [
             Text(
               "Face ID Login",
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 20.sp,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF241917),
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
             ),
             SizedBox(height: 2.h),
@@ -59,7 +51,7 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
               "Login using face verification",
               style: GoogleFonts.inter(
                 fontSize: 11.sp,
-                color: const Color(0xFF8B7D77),
+                color: Colors.white70,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -82,22 +74,16 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                   padding: EdgeInsets.all(14.w),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24.r),
+                    borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
                       color: controller.isFaceMatched.value
                           ? Colors.green
                           : controller.isFaceDetected.value
-                          ? const Color(0xFF1E8E5A)
-                          : const Color(0xFFE7D9D2),
+                          ? AppColor.success
+                          : AppColor.border,
                       width: 1.4,
                     ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x12000000),
-                        blurRadius: 14,
-                        offset: Offset(0, 7),
-                      ),
-                    ],
+                    boxShadow: AppShadow.card,
                   ),
                   child: Column(
                     children: [
@@ -105,14 +91,14 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                         width: double.infinity,
                         height: 300.h,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8F3F0),
-                          borderRadius: BorderRadius.circular(20.r),
+                          color: AppColor.background,
+                          borderRadius: BorderRadius.circular(12.r),
                           border: Border.all(
                             color: controller.isFaceMatched.value
                                 ? Colors.green
                                 : controller.isFaceDetected.value
-                                ? const Color(0xFF1E8E5A)
-                                : const Color(0xFFE7D9D2),
+                                ? AppColor.success
+                                : AppColor.border,
                             width: 1.6,
                           ),
                           image: file != null
@@ -133,27 +119,21 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   shape: BoxShape.circle,
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color(0x10000000),
-                                      blurRadius: 10,
-                                      offset: Offset(0, 4),
-                                    ),
-                                  ],
+                                  boxShadow: AppShadow.card,
                                 ),
                                 child: Icon(
                                   Icons.face_retouching_natural,
                                   size: 42.sp,
-                                  color: const Color(0xFF6A3027),
+                                  color: AppColor.primary,
                                 ),
                               ),
                               SizedBox(height: 14.h),
                               Text(
                                 "No image selected",
-                                style: GoogleFonts.manrope(
+                                style: GoogleFonts.inter(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF241917),
+                                  color: AppColor.textPrimary,
                                 ),
                               ),
                               SizedBox(height: 6.h),
@@ -162,7 +142,7 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(
                                   fontSize: 12.sp,
-                                  color: const Color(0xFF8B7D77),
+                                  color: AppColor.textMuted,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -195,7 +175,7 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                                 child: Container(
                                   padding: EdgeInsets.all(8.w),
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFF1E8E5A),
+                                    color: AppColor.success,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -219,7 +199,7 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                             fontSize: 13.sp,
                             color: controller.isFaceMatched.value
                                 ? Colors.green
-                                : const Color(0xFF8B7D77),
+                                : AppColor.textMuted,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -242,13 +222,13 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                           ),
                           decoration: BoxDecoration(
                             color: isMatched
-                                ? const Color(0xFFEAF8EE)
-                                : const Color(0xFFFFEFEF),
+                                ? AppColor.successTint
+                                : AppColor.dangerTint,
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(
                               color: isMatched
                                   ? Colors.green
-                                  : const Color(0xFFD64545),
+                                  : AppColor.danger,
                             ),
                           ),
                           child: Row(
@@ -259,19 +239,19 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                                     : Icons.error_outline_rounded,
                                 color: isMatched
                                     ? Colors.green
-                                    : const Color(0xFFD64545),
+                                    : AppColor.danger,
                                 size: 20.sp,
                               ),
                               SizedBox(width: 10.w),
                               Expanded(
                                 child: Text(
                                   controller.matchStatus.value,
-                                  style: GoogleFonts.manrope(
+                                  style: GoogleFonts.inter(
                                     fontSize: 13.sp,
                                     fontWeight: FontWeight.w700,
                                     color: isMatched
                                         ? Colors.green
-                                        : const Color(0xFFD64545),
+                                        : AppColor.danger,
                                   ),
                                 ),
                               ),
@@ -292,8 +272,8 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                           width: double.infinity,
                           padding: EdgeInsets.all(14.w),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF8FDF9),
-                            borderRadius: BorderRadius.circular(14.r),
+                            color: AppColor.successTint,
+                            borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(color: Colors.green),
                           ),
                           child: Column(
@@ -301,9 +281,9 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                             children: [
                               Text(
                                 "Matched User Details",
-                                style: GoogleFonts.manrope(
+                                style: GoogleFonts.inter(
                                   fontSize: 14.sp,
-                                  fontWeight: FontWeight.w800,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.green,
                                 ),
                               ),
@@ -346,11 +326,11 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                   onPressed:
                   controller.isChecking.value ? null : controller.takePhoto,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6A3027),
-                    disabledBackgroundColor: const Color(0xFFC9C9C9),
+                    backgroundColor: AppColor.primary,
+                    disabledBackgroundColor: AppColor.textDisabled,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
                   icon: Icon(
@@ -360,9 +340,9 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                   ),
                   label: Text(
                     "Open Camera",
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
@@ -383,11 +363,11 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: controller.isFaceMatched.value
                           ? Colors.green
-                          : const Color(0xFF1E8E5A),
-                      disabledBackgroundColor: const Color(0xFFC9C9C9),
+                          : AppColor.success,
+                      disabledBackgroundColor: AppColor.textDisabled,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                     ),
                     child: controller.isChecking.value
@@ -401,9 +381,9 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                     )
                         : Text(
                       "Verify Face ID",
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 15.sp,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
                     ),
@@ -426,24 +406,24 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
                     controller.isChecking.value ? null : controller.clearPhoto,
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(
-                        color: Color(0xFF6A3027),
+                        color: AppColor.primary,
                         width: 1.2,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                     ),
                     icon: Icon(
                       Icons.refresh_rounded,
-                      color: const Color(0xFF6A3027),
+                      color: AppColor.primary,
                       size: 20.sp,
                     ),
                     label: Text(
                       "Retake Image",
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF6A3027),
+                        color: AppColor.primary,
                       ),
                     ),
                   ),
@@ -470,7 +450,7 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
               style: GoogleFonts.inter(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF241917),
+                color: AppColor.textPrimary,
               ),
             ),
           ),
@@ -480,7 +460,7 @@ class FaceIdLoginScreen extends GetView<FaceIdLoginController> {
               style: GoogleFonts.inter(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF5C514D),
+                color: AppColor.textSecondary,
               ),
             ),
           ),

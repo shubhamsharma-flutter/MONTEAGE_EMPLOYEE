@@ -1,6 +1,8 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -17,17 +19,17 @@ import 'employee_tasks_screen.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
 
-const _kBrand = Color(0xFF6A3027);
-const _kBrandDark = Color(0xFF4A2019);
-const _kBg = Color(0xFFF6F1ED);
+const _kBrand = AppColor.primary;
+const _kBrandDark = AppColor.primaryDark;
+const _kBg = AppColor.background;
 const _kSurface = Colors.white;
-const _kTextPrimary = Color(0xFF241917);
-const _kTextSecondary = Color(0xFF6B5C58);
-const _kTextMuted = Color(0xFF8B7D77);
-const _kBorder = Color(0xFFE0D5D0);
-const _kSuccess = Color(0xFF4CAF50);
-const _kWarning = Color(0xFFE0A03D);
-const _kDanger = Color(0xFFC24B3F);
+const _kTextPrimary = AppColor.textPrimary;
+const _kTextSecondary = AppColor.textSecondary;
+const _kTextMuted = AppColor.textMuted;
+const _kBorder = AppColor.border;
+const _kSuccess = AppColor.success;
+const _kWarning = AppColor.warning;
+const _kDanger = AppColor.danger;
 
 Color _statusColor(String? status) {
   switch ((status ?? '').trim().toLowerCase()) {
@@ -149,7 +151,7 @@ void _showDescriptionDialog(
     context: context,
     builder: (ctx) => Dialog(
       backgroundColor: _kSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: Padding(
         padding: EdgeInsets.all(20.w),
         child: Column(
@@ -158,9 +160,9 @@ void _showDescriptionDialog(
           children: [
             Text(
               title,
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 15.sp,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: _kTextPrimary,
               ),
             ),
@@ -185,7 +187,7 @@ void _showDescriptionDialog(
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(
                   'Close',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
                     color: _kBrand,
                   ),
@@ -247,7 +249,7 @@ void _showProgressUpdateDialog(
     context: context,
     builder: (ctx) => Dialog(
       backgroundColor: _kSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: Padding(
         padding: EdgeInsets.all(20.w),
         child: Column(
@@ -256,9 +258,9 @@ void _showProgressUpdateDialog(
           children: [
             Text(
               title,
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 15.sp,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: _kTextPrimary,
               ),
             ),
@@ -290,7 +292,7 @@ void _showProgressUpdateDialog(
                 onPressed: () => Navigator.of(ctx).pop(),
                 child: Text(
                   'Close',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
                     color: _kBrand,
                   ),
@@ -330,7 +332,7 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
     context: context,
     builder: (ctx) => Dialog(
       backgroundColor: _kSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 32.h),
       child: Padding(
         padding: EdgeInsets.all(20.w),
@@ -346,9 +348,9 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
                   Expanded(
                     child: Text(
                       project.projectName,
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 16.sp,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: _kTextPrimary,
                       ),
                     ),
@@ -364,7 +366,7 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
                         color: _statusColor(
                           project.projectStatus,
                         ).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20.r),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Text(
                         project.projectStatus,
@@ -549,7 +551,7 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: Text(
                     'Close',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       color: _kBrand,
                     ),
@@ -579,7 +581,7 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
     context: context,
     builder: (ctx) => Dialog(
       backgroundColor: _kSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 32.h),
       child: Padding(
         padding: EdgeInsets.all(20.w),
@@ -594,9 +596,9 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                 children: [
                   Expanded(
                     child: Text(title,
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                             fontSize: 16.sp,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                             color: _kTextPrimary)),
                   ),
                   if (status.isNotEmpty) ...[
@@ -606,7 +608,7 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                           EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
                         color: _statusColor(status).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20.r),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                       child: Text(status,
                           style: GoogleFonts.inter(
@@ -718,7 +720,7 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                 child: TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: Text('Close',
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                           fontWeight: FontWeight.w700, color: _kBrand)),
                 ),
               ),
@@ -744,9 +746,9 @@ class _DetailSection extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 10.5.sp,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               letterSpacing: 0.4,
               color: _kTextMuted,
             ),
@@ -1005,7 +1007,9 @@ class TaskScreen extends GetView<TaskController> {
       length: tabs.length,
       child: Scaffold(
         backgroundColor: _kBg,
-        body: NestedScrollView(
+        body: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.light,
+          child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverToBoxAdapter(
               child: Container(
@@ -1016,7 +1020,7 @@ class TaskScreen extends GetView<TaskController> {
                     colors: [_kBrand, _kBrandDark],
                   ),
                   borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(28),
+                    bottom: Radius.circular(16),
                   ),
                 ),
                 padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
@@ -1047,10 +1051,10 @@ class TaskScreen extends GetView<TaskController> {
                               children: [
                                 Text(
                                   'Task Management',
-                                  style: GoogleFonts.manrope(
+                                  style: GoogleFonts.inter(
                                     color: Colors.white,
                                     fontSize: 18.sp,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 SizedBox(height: 2.h),
@@ -1072,7 +1076,7 @@ class TaskScreen extends GetView<TaskController> {
                         padding: EdgeInsets.all(4.w),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(14.r),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: TabBar(
                           indicator: BoxDecoration(
@@ -1084,11 +1088,11 @@ class TaskScreen extends GetView<TaskController> {
                           splashBorderRadius: BorderRadius.circular(11.r),
                           labelColor: _kBrand,
                           unselectedLabelColor: Colors.white,
-                          labelStyle: GoogleFonts.manrope(
+                          labelStyle: GoogleFonts.inter(
                             fontSize: 12.5.sp,
                             fontWeight: FontWeight.w700,
                           ),
-                          unselectedLabelStyle: GoogleFonts.manrope(
+                          unselectedLabelStyle: GoogleFonts.inter(
                             fontSize: 12.5.sp,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1102,6 +1106,7 @@ class TaskScreen extends GetView<TaskController> {
             ),
           ],
           body: TabBarView(children: tabViews),
+        ),
         ),
       ),
     );
@@ -1260,7 +1265,7 @@ class _StatusFilterChip extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.12) : _kSurface,
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: selected ? color : _kBorder,
             width: selected ? 1.5 : 1,
@@ -1318,7 +1323,7 @@ class SearchField extends StatelessWidget {
           hintText: hint,
           hintStyle: GoogleFonts.inter(
             fontSize: 13.sp,
-            color: const Color(0xFFCBC0BA),
+            color: AppColor.borderStrong,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
@@ -1511,9 +1516,9 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
               SizedBox(height: 20.h),
               Text(
                 'By Employee',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 13.5.sp,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: _kTextPrimary,
                 ),
               ),
@@ -1538,9 +1543,9 @@ class _GivenProjectsTabState extends State<_GivenProjectsTab> {
               children: [
                 Text(
                   'Tasks',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: _kTextPrimary,
                   ),
                 ),
@@ -1621,12 +1626,12 @@ class _StatSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(12.r),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 8.w),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.12) : _kSurface,
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: selected ? color : _kBorder,
             width: selected ? 1.5 : 1,
@@ -1648,9 +1653,9 @@ class _StatSummaryCard extends StatelessWidget {
             SizedBox(height: 6.h),
             Text(
               '$count',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 18.sp,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: color,
               ),
             ),
@@ -1705,9 +1710,9 @@ class _EmployeeStatRow extends StatelessWidget {
               child: Center(
                 child: Text(
                   _initials(name),
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 10.5.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: _kBrand,
                   ),
                 ),
@@ -1718,7 +1723,7 @@ class _EmployeeStatRow extends StatelessWidget {
               child: Text(
                 name,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 12.5.sp,
                   fontWeight: FontWeight.w700,
                   color: _kTextPrimary,
@@ -1862,14 +1867,8 @@ class _CardShell extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 14.h),
       decoration: BoxDecoration(
         color: _kSurface,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: _kBrand.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: AppShadow.card,
       ),
       clipBehavior: Clip.antiAlias,
       child: IntrinsicHeight(
@@ -1908,7 +1907,7 @@ class _CardTitleRow extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 15.sp,
               fontWeight: FontWeight.w700,
               color: _kTextPrimary,
@@ -1934,7 +1933,7 @@ class _StatusPill extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2065,9 +2064,9 @@ class _PersonRow extends StatelessWidget {
           child: Center(
             child: Text(
               _initials(name),
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 9.5.sp,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: _kBrand,
               ),
             ),
@@ -2112,7 +2111,7 @@ class _CardActionButton extends StatelessWidget {
           icon: Icon(icon, size: 16.sp),
           label: Text(
             label,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,
             ),
@@ -2136,7 +2135,7 @@ class _CardActionButton extends StatelessWidget {
         icon: Icon(icon, size: 16.sp, color: _kBrand),
         label: Text(
           label,
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 13.sp,
             fontWeight: FontWeight.w700,
             color: _kBrand,
@@ -2659,7 +2658,7 @@ class _EmptyView extends StatelessWidget {
           SizedBox(height: 16.h),
           Text(
             message,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 14.5.sp,
               fontWeight: FontWeight.w600,
               color: _kTextMuted,
@@ -2774,9 +2773,9 @@ class _SheetHeader extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 17.sp,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       color: _kTextPrimary,
                     ),
                   ),
@@ -2816,7 +2815,7 @@ InputDecoration _sheetFieldDecoration(String hint, {IconData? prefixIcon}) =>
       hintText: hint,
       hintStyle: GoogleFonts.inter(
         fontSize: 13.sp,
-        color: const Color(0xFFCBC0BA),
+        color: AppColor.borderStrong,
       ),
       prefixIcon: prefixIcon == null
           ? null
@@ -2956,7 +2955,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
     return Container(
       decoration: BoxDecoration(
         color: _kBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       padding: EdgeInsets.only(
         left: 20.w,
@@ -3032,7 +3031,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
                         'No employees bound to this project',
                         style: GoogleFonts.inter(
                           fontSize: 13.sp,
-                          color: const Color(0xFFCBC0BA),
+                          color: AppColor.borderStrong,
                         ),
                       ),
                     ),
@@ -3062,7 +3061,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
                         'Select employee',
                         style: GoogleFonts.inter(
                           fontSize: 13.sp,
-                          color: const Color(0xFFCBC0BA),
+                          color: AppColor.borderStrong,
                         ),
                       ),
                       style: GoogleFonts.inter(
@@ -3169,7 +3168,7 @@ class _AssignTaskSheetState extends State<_AssignTaskSheet> {
                         )
                       : Text(
                           'Assign Task',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -3238,7 +3237,7 @@ class _AssignprojecttotlState extends State<_Assignprojecttotl> {
     return Container(
       decoration: BoxDecoration(
         color: _kBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       padding: EdgeInsets.only(
         left: 20.w,
@@ -3293,7 +3292,7 @@ class _AssignprojecttotlState extends State<_Assignprojecttotl> {
                       'No team leaders found',
                       style: GoogleFonts.inter(
                         fontSize: 13.sp,
-                        color: const Color(0xFFCBC0BA),
+                        color: AppColor.borderStrong,
                       ),
                     ),
                   ),
@@ -3318,7 +3317,7 @@ class _AssignprojecttotlState extends State<_Assignprojecttotl> {
                       'Select team leader',
                       style: GoogleFonts.inter(
                         fontSize: 13.sp,
-                        color: const Color(0xFFCBC0BA),
+                        color: AppColor.borderStrong,
                       ),
                     ),
                     style: GoogleFonts.inter(
@@ -3365,7 +3364,7 @@ class _AssignprojecttotlState extends State<_Assignprojecttotl> {
                         )
                       : Text(
                           'Assign Project',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -3530,7 +3529,7 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
     return Container(
       decoration: BoxDecoration(
         color: _kBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       padding: EdgeInsets.only(
         left: 20.w,
@@ -3613,7 +3612,7 @@ class _UpdateProgressSheetState extends State<_UpdateProgressSheet> {
                         )
                       : Text(
                           'Update',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -3691,7 +3690,7 @@ class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
     return Container(
       decoration: BoxDecoration(
         color: _kBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       padding: EdgeInsets.only(
         left: 20.w,
@@ -3755,7 +3754,7 @@ class _UpdateStatusSheetState extends State<_UpdateStatusSheet> {
                         )
                       : Text(
                           'Update',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.w700,
                           ),

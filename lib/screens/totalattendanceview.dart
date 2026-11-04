@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -76,24 +77,24 @@ class _AttendanceLogic {
 class _Badge {
   final String label; final Color bg, fg; final IconData icon;
   const _Badge({required this.label, required this.bg, required this.fg, required this.icon});
-  factory _Badge.onTime()     => const _Badge(label: 'On Time',     bg: Color(0xFFE9F9EE), fg: Color(0xFF1E8E3E), icon: Icons.check_circle_outline);
-  factory _Badge.lateComing() => const _Badge(label: 'Late Coming', bg: Color(0xFFFFF4E5), fg: Color(0xFFE67E22), icon: Icons.watch_later_outlined);
-  factory _Badge.halfDay()    => const _Badge(label: 'Half Day',    bg: Color(0xFFFFEEEE), fg: Color(0xFFD93025), icon: Icons.timelapse);
-  factory _Badge.shortLeave() => const _Badge(label: 'Short Leave', bg: Color(0xFFEEF2FF), fg: Color(0xFF3D5AFE), icon: Icons.logout);
-  factory _Badge.overtime(String d) => _Badge(label: 'OT: $d', bg: const Color(0xFFE8F5E9), fg: const Color(0xFF2E7D32), icon: Icons.trending_up);
+  factory _Badge.onTime()     => const _Badge(label: 'On Time',     bg: AppColor.successTint, fg: AppColor.success, icon: Icons.check_circle_outline);
+  factory _Badge.lateComing() => const _Badge(label: 'Late Coming', bg: AppColor.warningTint, fg: AppColor.warning, icon: Icons.watch_later_outlined);
+  factory _Badge.halfDay()    => const _Badge(label: 'Half Day',    bg: AppColor.dangerTint, fg: AppColor.danger, icon: Icons.timelapse);
+  factory _Badge.shortLeave() => const _Badge(label: 'Short Leave', bg: AppColor.infoTint, fg: AppColor.info, icon: Icons.logout);
+  factory _Badge.overtime(String d) => _Badge(label: 'OT: $d', bg: AppColor.successTint, fg: AppColor.success, icon: Icons.trending_up);
 }
 
 Widget _buildBadgeChip(_Badge badge) => Container(
   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
   decoration: BoxDecoration(
     color: badge.bg,
-    borderRadius: BorderRadius.circular(30),
+    borderRadius: BorderRadius.circular(12),
     border: Border.all(color: badge.fg.withValues(alpha: 0.25)),
   ),
   child: Row(mainAxisSize: MainAxisSize.min, children: [
     Icon(badge.icon, size: 12, color: badge.fg),
     const SizedBox(width: 4),
-    Text(badge.label, style: GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w700, color: badge.fg)),
+    Text(badge.label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: badge.fg)),
   ]),
 );
 
@@ -116,7 +117,7 @@ Widget _buildStatusChip(String? status) {
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
     ),
     child: Text(n, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
   );
@@ -138,26 +139,26 @@ Widget _imageBlock(String title, String? url, TotalAttendanceViewController cont
   return Padding(
     padding: EdgeInsets.only(top: 10.h),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: GoogleFonts.manrope(
+      Text(title, style: GoogleFonts.inter(
         fontSize: 13.sp, fontWeight: FontWeight.w700,
-        color: const Color(0xFF241917),
+        color: AppColor.textPrimary,
       )),
       SizedBox(height: 8.h),
       ClipRRect(
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: Image.network(full, fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
-              color: const Color(0xFFF1F1F1), alignment: Alignment.center,
+              color: AppColor.surfaceVariant, alignment: Alignment.center,
               child: Text('Image unavailable',
                   style: GoogleFonts.inter(
-                    fontSize: 11.sp, color: const Color(0xFF8B7D77),
+                    fontSize: 11.sp, color: AppColor.textMuted,
                   )),
             ),
             loadingBuilder: (_, child, p) {
               if (p == null) return child;
-              return Container(color: const Color(0xFFF1F1F1),
+              return Container(color: AppColor.surfaceVariant,
                   alignment: Alignment.center,
                   child: const CircularProgressIndicator());
             },
@@ -174,14 +175,9 @@ Widget _buildHistoryTile(AttendanceHistory item, TotalAttendanceViewController c
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(color: Colors.grey.shade200),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.03),
-          blurRadius: 8, offset: const Offset(0, 2),
-        ),
-      ],
+      boxShadow: AppShadow.card,
     ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
@@ -189,9 +185,9 @@ Widget _buildHistoryTile(AttendanceHistory item, TotalAttendanceViewController c
         const SizedBox(width: 6),
         Expanded(
           child: Text(_formatDate(item.date),
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 13, fontWeight: FontWeight.w700,
-                color: const Color(0xFF1E1E1E),
+                color: AppColor.textPrimary,
               )),
         ),
         _buildStatusChip(item.status),
@@ -296,14 +292,14 @@ class _ViewToggle extends StatelessWidget {
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: BoxDecoration(
-              color: active ? const Color(0xFF4361EE) : Colors.transparent,
+              color: active ? AppColor.info : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               Icon(icon, size: 15, color: active ? Colors.white : Colors.black54),
               const SizedBox(width: 6),
               Text(label,
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: active ? Colors.white : Colors.black54,
@@ -318,7 +314,7 @@ class _ViewToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F2F8),
+        color: AppColor.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(children: [
@@ -345,9 +341,9 @@ class _AttendanceCalendarView extends StatefulWidget {
 }
 
 class _AttendanceCalendarViewState extends State<_AttendanceCalendarView> {
-  static const _blue = Color(0xFF4361EE);
-  static const _present = Color(0xFF1E8E3E);
-  static const _absent = Color(0xFFD93025);
+  static const _blue = AppColor.info;
+  static const _present = AppColor.success;
+  static const _absent = AppColor.danger;
 
   late final Map<DateTime, AttendanceHistory> _byDate;
   late DateTime _firstRecordDay;
@@ -397,7 +393,7 @@ class _AttendanceCalendarViewState extends State<_AttendanceCalendarView> {
   Widget _dayCell(DateTime day, {bool isToday = false, bool isSelected = false}) {
     final marker = _markerFor(day);
     Color bg = Colors.transparent;
-    Color fg = const Color(0xFF1E1E1E);
+    Color fg = AppColor.textPrimary;
     if (isSelected) {
       bg = _blue;
       fg = Colors.white;
@@ -428,9 +424,9 @@ class _AttendanceCalendarViewState extends State<_AttendanceCalendarView> {
                   fontSize: 12.sp, fontWeight: FontWeight.w600, color: fg)),
           if (marker != null)
             Text(marker,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                     fontSize: 8.5.sp,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: isSelected ? Colors.white : fg)),
         ],
       ),
@@ -462,9 +458,9 @@ class _AttendanceCalendarViewState extends State<_AttendanceCalendarView> {
           headerStyle: HeaderStyle(
             formatButtonVisible: false,
             titleCentered: true,
-            titleTextStyle: GoogleFonts.manrope(
+            titleTextStyle: GoogleFonts.inter(
                 fontSize: 15, fontWeight: FontWeight.w700,
-                color: const Color(0xFF1E1E1E)),
+                color: AppColor.textPrimary),
             leftChevronIcon: const Icon(Icons.chevron_left_rounded, color: _blue),
             rightChevronIcon:
                 const Icon(Icons.chevron_right_rounded, color: _blue),
@@ -748,8 +744,8 @@ class _PdfSheetState extends State<_PdfSheet> {
   bool _generating = false;
   final _fmt = DateFormat('dd MMM yyyy');
 
-  static const _blue   = Color(0xFF4361EE);
-  static const _purple = Color(0xFF7B2FBE);
+  static const _blue   = AppColor.info;
+  static const _purple = AppColor.primaryLight;
 
   Future<void> _pick({required bool isFrom}) async {
     final picked = await showDatePicker(
@@ -789,7 +785,7 @@ class _PdfSheetState extends State<_PdfSheet> {
     if (records.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('No records in selected range',
-            style: GoogleFonts.manrope(fontSize: 13.sp)),
+            style: GoogleFonts.inter(fontSize: 13.sp)),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
@@ -811,7 +807,7 @@ class _PdfSheetState extends State<_PdfSheet> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Error: $e', style: GoogleFonts.manrope(fontSize: 12.sp)),
+        content: Text('Error: $e', style: GoogleFonts.inter(fontSize: 12.sp)),
         backgroundColor: Colors.redAccent,
       ));
     } finally {
@@ -828,7 +824,7 @@ class _PdfSheetState extends State<_PdfSheet> {
       padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -859,20 +855,20 @@ class _PdfSheetState extends State<_PdfSheet> {
             SizedBox(width: 12.w),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Export Attendance PDF',
-                  style: GoogleFonts.manrope(
-                    fontSize: 15.sp, fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1E1E1E),
+                  style: GoogleFonts.inter(
+                    fontSize: 15.sp, fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   )),
               Text(widget.employee.fullName ?? '',
-                  style: GoogleFonts.manrope(fontSize: 12.sp, color: Colors.black38)),
+                  style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.black38)),
             ]),
           ]),
           SizedBox(height: 22.h),
 
           // Date pickers
           Text('Select Date Range',
-              style: GoogleFonts.manrope(
-                fontSize: 13.sp, fontWeight: FontWeight.w700, color: const Color(0xFF333333),
+              style: GoogleFonts.inter(
+                fontSize: 13.sp, fontWeight: FontWeight.w700, color: AppColor.textPrimary,
               )),
           SizedBox(height: 12.h),
           Row(children: [
@@ -889,11 +885,11 @@ class _PdfSheetState extends State<_PdfSheet> {
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: filtered.isEmpty ? const Color(0xFFFFEEF1) : const Color(0xFFEEF0FF),
+                color: filtered.isEmpty ? AppColor.dangerTint : AppColor.infoTint,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
                   color: filtered.isEmpty
-                      ? const Color(0xFFE8607A).withValues(alpha: 0.3)
+                      ? AppColor.accent.withValues(alpha: 0.3)
                       : _blue.withValues(alpha: 0.3),
                 ),
               ),
@@ -901,16 +897,16 @@ class _PdfSheetState extends State<_PdfSheet> {
                 Icon(
                   filtered.isEmpty ? Icons.info_outline_rounded : Icons.check_circle_outline_rounded,
                   size: 16.sp,
-                  color: filtered.isEmpty ? const Color(0xFFE8607A) : _blue,
+                  color: filtered.isEmpty ? AppColor.accent : _blue,
                 ),
                 SizedBox(width: 8.w),
                 Text(
                   filtered.isEmpty
                       ? 'No records found in this range'
                       : '${filtered.length} record${filtered.length == 1 ? '' : 's'} found',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 12.sp, fontWeight: FontWeight.w600,
-                    color: filtered.isEmpty ? const Color(0xFFE8607A) : _blue,
+                    color: filtered.isEmpty ? AppColor.accent : _blue,
                   ),
                 ),
               ]),
@@ -929,7 +925,7 @@ class _PdfSheetState extends State<_PdfSheet> {
                 disabledBackgroundColor: Colors.grey.shade200,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
               ),
               child: _generating
                   ? SizedBox(
@@ -939,7 +935,7 @@ class _PdfSheetState extends State<_PdfSheet> {
                       const Icon(Icons.picture_as_pdf_rounded, size: 20),
                       SizedBox(width: 8.w),
                       Text('Generate & Preview PDF',
-                          style: GoogleFonts.manrope(fontSize: 14.sp, fontWeight: FontWeight.w700)),
+                          style: GoogleFonts.inter(fontSize: 14.sp, fontWeight: FontWeight.w700)),
                     ]),
             ),
           ),
@@ -954,8 +950,8 @@ class _PdfSheetState extends State<_PdfSheet> {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
           decoration: BoxDecoration(
-            color: const Color(0xFFF4F6FF),
-            borderRadius: BorderRadius.circular(14.r),
+            color: AppColor.infoTint,
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: date != null ? _blue.withValues(alpha: 0.4) : Colors.grey.shade200,
               width: date != null ? 1.5 : 1,
@@ -967,14 +963,14 @@ class _PdfSheetState extends State<_PdfSheet> {
             SizedBox(width: 8.w),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(label,
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 10.sp, color: Colors.black38, fontWeight: FontWeight.w600,
                   )),
               Text(
                 date != null ? _fmt.format(date) : 'Select',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 13.sp, fontWeight: FontWeight.w700,
-                  color: date != null ? const Color(0xFF1E1E1E) : Colors.grey,
+                  color: date != null ? AppColor.textPrimary : Colors.grey,
                 ),
               ),
             ]),
@@ -993,17 +989,14 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         centerTitle: true,
         title: Text(
           'Attendance History',
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 20, fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E1E1E),
+            color: Colors.white,
           ),
         ),
         actions: [
@@ -1039,14 +1032,8 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: AppShadow.card,
           ),
           child: ListTile(
             contentPadding:
@@ -1057,13 +1044,13 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
                   radius: 22,
                   backgroundImage: NetworkImage(
                       controller.fullImageUrl(data.profileImage ?? '')),
-                  backgroundColor: const Color(0xFFEDEFF3),
+                  backgroundColor: AppColor.border,
                   onBackgroundImageError: (_, __) {},
                   child: Text(
                     _initials(data.fullName),
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 14, fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2A2A2A),
+                      color: AppColor.textPrimary,
                     ),
                   ),
                 ),
@@ -1071,27 +1058,27 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
             ),
             title: Text(
               data.fullName ?? 'No Name',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 14, fontWeight: FontWeight.w700,
-                color: const Color(0xFF1F1F1F),
+                color: AppColor.textPrimary,
               ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(data.username ?? 'No Username',
-                    style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF7A7A7A))),
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColor.textSecondary)),
                 const SizedBox(height: 4),
                 // History count badge
                 if ((data.attendanceHistory?.length ?? 0) > 0)
                   Row(children: [
                     Icon(Icons.event_note_rounded,
-                        size: 12, color: const Color(0xFF4361EE).withValues(alpha: 0.7)),
+                        size: 12, color: AppColor.info.withValues(alpha: 0.7)),
                     const SizedBox(width: 4),
                     Text(
                       '${data.attendanceHistory!.length} records',
-                      style: GoogleFonts.manrope(
-                        fontSize: 11, color: const Color(0xFF4361EE),
+                      style: GoogleFonts.inter(
+                        fontSize: 11, color: AppColor.info,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1107,11 +1094,11 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF0FF),
+                      color: AppColor.infoTint,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.picture_as_pdf_rounded,
-                        size: 18, color: Color(0xFF4361EE)),
+                        size: 18, color: AppColor.info),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -1135,7 +1122,7 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
         padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 32.h),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1152,19 +1139,19 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
             Row(children: [
               CircleAvatar(
                 radius: 24.r,
-                backgroundColor: const Color(0xFFEDEFF3),
+                backgroundColor: AppColor.border,
                 child: Text(_initials(data.fullName),
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 16, fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2A2A2A),
+                      color: AppColor.textPrimary,
                     )),
               ),
               SizedBox(width: 12.w),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(data.fullName ?? 'No Name',
-                    style: GoogleFonts.manrope(
-                      fontSize: 15, fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E1E1E),
+                    style: GoogleFonts.inter(
+                      fontSize: 15, fontWeight: FontWeight.w700,
+                      color: AppColor.textPrimary,
                     )),
                 Text(data.username ?? '',
                     style: GoogleFonts.inter(fontSize: 12, color: Colors.black38)),
@@ -1174,8 +1161,8 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
             // Option buttons
             _optionTile(
               icon: Icons.history_rounded,
-              color: const Color(0xFF7B2FBE),
-              bg: const Color(0xFFF3EEFF),
+              color: AppColor.primaryLight,
+              bg: AppColor.primaryTint,
               label: 'View Attendance History',
               subtitle: '${data.attendanceHistory?.length ?? 0} records available',
               onTap: () {
@@ -1186,8 +1173,8 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
             SizedBox(height: 10.h),
             _optionTile(
               icon: Icons.picture_as_pdf_rounded,
-              color: const Color(0xFF4361EE),
-              bg: const Color(0xFFEEF0FF),
+              color: AppColor.info,
+              bg: AppColor.infoTint,
               label: 'Export PDF Report',
               subtitle: 'Choose date range and generate PDF',
               onTap: () {
@@ -1215,14 +1202,9 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16.r),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(color: color.withValues(alpha: 0.2)),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.06),
-                blurRadius: 12, offset: const Offset(0, 3),
-              ),
-            ],
+            boxShadow: AppShadow.card,
           ),
           child: Row(children: [
             Container(
@@ -1234,8 +1216,8 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.manrope(
-                  fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1E1E1E),
+                Text(label, style: GoogleFonts.inter(
+                  fontSize: 14, fontWeight: FontWeight.w700, color: AppColor.textPrimary,
                 )),
                 SizedBox(height: 2.h),
                 Text(subtitle, style: GoogleFonts.inter(
@@ -1312,9 +1294,9 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(employee.fullName ?? 'Attendance History',
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 18, fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E1E1E),
+                            color: AppColor.textPrimary,
                           )),
                       const SizedBox(height: 2),
                       Text(employee.username ?? '',
@@ -1330,17 +1312,17 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEF0FF),
+                        color: AppColor.infoTint,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(children: [
                         const Icon(Icons.picture_as_pdf_rounded,
-                            size: 16, color: Color(0xFF4361EE)),
+                            size: 16, color: AppColor.info),
                         const SizedBox(width: 5),
                         Text('Export PDF',
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 11, fontWeight: FontWeight.w700,
-                              color: const Color(0xFF4361EE),
+                              color: AppColor.info,
                             )),
                       ]),
                     ),
@@ -1368,7 +1350,7 @@ class Totalattendanceview extends GetView<TotalAttendanceViewController> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Search & Filter',
-            style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
+            style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(
             controller: searchController,

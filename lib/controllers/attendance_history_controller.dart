@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,6 +10,12 @@ import 'package:geocoding/geocoding.dart';
 import '../models/attendance_history_model.dart';
 
 class AttendanceHistoryController extends GetxController {
+  AttendanceHistoryController({this.silent = false});
+
+  /// Skips alerts and address lookups, for the dashboard summary that loads
+  /// on every launch.
+  final bool silent;
+
   final box = GetStorage();
 
   final String baseUrl = "http://att.monteage.co.in/";
@@ -107,7 +114,7 @@ class AttendanceHistoryController extends GetxController {
         statistics.value = data.statistics;
 
         for (var record in data.results) {
-          if (record.latitude != null && record.longitude != null) {
+          if (!silent && record.latitude != null && record.longitude != null) {
             record.address = await _getAddressFromCoordinates(
                 record.latitude!, record.longitude!);
           }
@@ -120,7 +127,7 @@ class AttendanceHistoryController extends GetxController {
 
       // ✅ 401 no longer forces logout — just shows error
       if (res.statusCode == 401) {
-        Get.snackbar(
+        if (!silent) Get.snackbar(
           "Error",
           "Unable to load attendance history. Please try again.",
           snackPosition: SnackPosition.TOP,
@@ -130,7 +137,7 @@ class AttendanceHistoryController extends GetxController {
         return;
       }
 
-      Get.snackbar(
+      if (!silent) Get.snackbar(
         "Error",
         "Failed to load attendance history (HTTP ${res.statusCode})",
         snackPosition: SnackPosition.TOP,
@@ -138,7 +145,7 @@ class AttendanceHistoryController extends GetxController {
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar(
+      if (!silent) Get.snackbar(
         "Error",
         e.toString(),
         snackPosition: SnackPosition.TOP,
@@ -310,14 +317,14 @@ class AttendanceHistoryController extends GetxController {
         return const Color(0xFF9B6CF9);
       case "Short Leave (AM)":
       case "Short Leave (PM)":
-        return const Color(0xFFF0A43C);
+        return AppColor.warning;
       case "Late":
-        return const Color(0xFFD85E5E);
+        return AppColor.danger;
       case "Over Time":
         return const Color(0xFF1E88E5);
       case "On Time":
       default:
-        return const Color(0xFF2AB673);
+        return AppColor.success;
     }
   }
 

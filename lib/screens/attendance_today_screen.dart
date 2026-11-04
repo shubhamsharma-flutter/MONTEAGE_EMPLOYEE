@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -15,32 +16,23 @@ class AttendanceTodayScreen extends StatelessWidget {
 
     return BottomNavWrapper(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF6F1ED),
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: const Color(0xFFF6F1ED),
+        backgroundColor: AppColor.background,
+        appBar: AppBar(
           leading: Padding(
             padding: EdgeInsets.only(left: 12.w),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1A000000),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
-                ],
+                color: Color(0x29FFFFFF),
+                borderRadius: BorderRadius.circular(12.r),
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () => Get.back(),
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(12.r),
                   child: Icon(
                     Icons.arrow_back,
-                    color: const Color(0xFF6A3027),
+                    color: Colors.white,
                     size: 22.sp,
                   ),
                 ),
@@ -52,17 +44,17 @@ class AttendanceTodayScreen extends StatelessWidget {
             children: [
               Text(
                 "Today's Attendance",
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 18.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF241917),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
               Text(
                 "View your check-in details",
                 style: GoogleFonts.inter(
                   fontSize: 11.sp,
-                  color: const Color(0xFF8B7D77),
+                  color: Colors.white70,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -74,24 +66,17 @@ class AttendanceTodayScreen extends StatelessWidget {
               padding: EdgeInsets.only(right: 12.w),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x1A000000),
-                      blurRadius: 10,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
+                  color: Color(0x29FFFFFF),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: c.fetchToday,
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(12.r),
                     child: Icon(
                       Icons.refresh_rounded,
-                      color: const Color(0xFF6A3027),
+                      color: Colors.white,
                       size: 22.sp,
                     ),
                   ),
@@ -107,14 +92,14 @@ class AttendanceTodayScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6A3027)),
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
                   ),
                   SizedBox(height: 16.h),
                   Text(
                     'Loading attendance...',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 14.sp,
-                      color: const Color(0xFF8B7D77),
+                      color: AppColor.textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -132,15 +117,15 @@ class AttendanceTodayScreen extends StatelessWidget {
                   Icon(
                     Icons.event_busy_rounded,
                     size: 80.sp,
-                    color: const Color(0xFFD4CCC6).withOpacity(0.6),
+                    color: AppColor.borderStrong.withOpacity(0.6),
                   ),
                   SizedBox(height: 16.h),
                   Text(
                     "No attendance marked today",
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF241917),
+                      color: AppColor.textPrimary,
                     ),
                   ),
                   SizedBox(height: 8.h),
@@ -148,7 +133,7 @@ class AttendanceTodayScreen extends StatelessWidget {
                     "Mark your attendance to see details",
                     style: GoogleFonts.inter(
                       fontSize: 13.sp,
-                      color: const Color(0xFF8B7D77),
+                      color: AppColor.textMuted,
                     ),
                   ),
                 ],
@@ -182,11 +167,11 @@ class _TodayAttendanceCard extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status.toUpperCase()) {
       case "VERIFIED":
-        return const Color(0xFF2AB673);
+        return AppColor.success;
       case "REJECTED":
-        return const Color(0xFFD85E5E);
+        return AppColor.danger;
       default:
-        return const Color(0xFFF0A43C);
+        return AppColor.warning;
     }
   }
 
@@ -217,15 +202,9 @@ class _TodayAttendanceCard extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFFEDE2DC), width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 14,
-            offset: Offset(0, 7),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border, width: 1),
+        boxShadow: AppShadow.card,
       ),
       child: Column(
         children: [
@@ -234,7 +213,7 @@ class _TodayAttendanceCard extends StatelessWidget {
             padding: EdgeInsets.all(20.w),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF6A3027), Color(0xFFC75B43)],
+                colors: [AppColor.primaryDark, AppColor.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -264,9 +243,9 @@ class _TodayAttendanceCard extends StatelessWidget {
                     children: [
                       Text(
                         _ddMMyyyy(data.timestamp),
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 18.sp,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                       ),
@@ -297,7 +276,7 @@ class _TodayAttendanceCard extends StatelessWidget {
                       SizedBox(width: 6.w),
                       Text(
                         data.status,
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 11.sp,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -320,8 +299,8 @@ class _TodayAttendanceCard extends StatelessWidget {
                   label: 'Marked',
                   value: data.marked ? 'Yes' : 'No',
                   valueColor: data.marked
-                      ? const Color(0xFF2AB673)
-                      : const Color(0xFF8B7D77),
+                      ? AppColor.success
+                      : AppColor.textMuted,
                 ),
                 SizedBox(height: 12.h),
                 _InfoRow(
@@ -329,8 +308,8 @@ class _TodayAttendanceCard extends StatelessWidget {
                   label: 'Verified',
                   value: data.isVerified ? 'Yes' : 'No',
                   valueColor: data.isVerified
-                      ? const Color(0xFF2AB673)
-                      : const Color(0xFFD85E5E),
+                      ? AppColor.success
+                      : AppColor.danger,
                 ),
                 SizedBox(height: 12.h),
 
@@ -338,9 +317,9 @@ class _TodayAttendanceCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF6F1ED),
+                    color: AppColor.background,
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFFEDE2DC)),
+                    border: Border.all(color: AppColor.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,15 +329,15 @@ class _TodayAttendanceCard extends StatelessWidget {
                           Icon(
                             Icons.psychology_rounded,
                             size: 20.sp,
-                            color: const Color(0xFF6A3027),
+                            color: AppColor.primary,
                           ),
                           SizedBox(width: 8.w),
                           Text(
                             'Confidence Score',
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF241917),
+                              color: AppColor.textPrimary,
                             ),
                           ),
                         ],
@@ -372,13 +351,13 @@ class _TodayAttendanceCard extends StatelessWidget {
                               child: LinearProgressIndicator(
                                 value: data.confidenceScore,
                                 minHeight: 8.h,
-                                backgroundColor: const Color(0xFFD4CCC6),
+                                backgroundColor: AppColor.borderStrong,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   data.confidenceScore > 0.7
-                                      ? const Color(0xFF2AB673)
+                                      ? AppColor.success
                                       : data.confidenceScore > 0.4
-                                      ? const Color(0xFFF0A43C)
-                                      : const Color(0xFFD85E5E),
+                                      ? AppColor.warning
+                                      : AppColor.danger,
                                 ),
                               ),
                             ),
@@ -386,14 +365,14 @@ class _TodayAttendanceCard extends StatelessWidget {
                           SizedBox(width: 12.w),
                           Text(
                             '${(data.confidenceScore * 100).toStringAsFixed(1)}%',
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 14.sp,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: data.confidenceScore > 0.7
-                                  ? const Color(0xFF2AB673)
+                                  ? AppColor.success
                                   : data.confidenceScore > 0.4
-                                  ? const Color(0xFFF0A43C)
-                                  : const Color(0xFFD85E5E),
+                                  ? AppColor.warning
+                                  : AppColor.danger,
                             ),
                           ),
                         ],
@@ -408,21 +387,21 @@ class _TodayAttendanceCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF6F1ED),
+                    color: AppColor.background,
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFFEDE2DC)),
+                    border: Border.all(color: AppColor.border),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: EdgeInsets.all(8.w),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFC75B43).withOpacity(0.12),
+                          color: AppColor.accent.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Icon(
                           Icons.location_on_rounded,
-                          color: const Color(0xFFC75B43),
+                          color: AppColor.accent,
                           size: 20.sp,
                         ),
                       ),
@@ -433,10 +412,10 @@ class _TodayAttendanceCard extends StatelessWidget {
                           children: [
                             Text(
                               'Location',
-                              style: GoogleFonts.manrope(
+                              style: GoogleFonts.inter(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF241917),
+                                color: AppColor.textPrimary,
                               ),
                             ),
                             SizedBox(height: 6.h),
@@ -444,7 +423,7 @@ class _TodayAttendanceCard extends StatelessWidget {
                               address,
                               style: GoogleFonts.inter(
                                 fontSize: 12.sp,
-                                color: const Color(0xFF8B7D77),
+                                color: AppColor.textMuted,
                               ),
                             ),
                             SizedBox(height: 6.h),
@@ -452,21 +431,21 @@ class _TodayAttendanceCard extends StatelessWidget {
                               'Lat: ${lat == null ? "--" : lat.toStringAsFixed(6)}',
                               style: GoogleFonts.inter(
                                 fontSize: 11.sp,
-                                color: const Color(0xFF8B7D77),
+                                color: AppColor.textMuted,
                               ),
                             ),
                             Text(
                               'Lng: ${lng == null ? "--" : lng.toStringAsFixed(6)}',
                               style: GoogleFonts.inter(
                                 fontSize: 11.sp,
-                                color: const Color(0xFF8B7D77),
+                                color: AppColor.textMuted,
                               ),
                             ),
                             Text(
                               'Accuracy: ${acc == null ? "--" : acc.toStringAsFixed(0)} m',
                               style: GoogleFonts.inter(
                                 fontSize: 11.sp,
-                                color: const Color(0xFF8B7D77),
+                                color: AppColor.textMuted,
                               ),
                             ),
                           ],
@@ -482,9 +461,9 @@ class _TodayAttendanceCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(16.w),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF6F1ED),
+                    color: AppColor.background,
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: const Color(0xFFEDE2DC)),
+                    border: Border.all(color: AppColor.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,15 +473,15 @@ class _TodayAttendanceCard extends StatelessWidget {
                           Icon(
                             Icons.face_retouching_natural,
                             size: 20.sp,
-                            color: const Color(0xFF6A3027),
+                            color: AppColor.primary,
                           ),
                           SizedBox(width: 8.w),
                           Text(
                             "Face Analysis",
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF241917),
+                              color: AppColor.textPrimary,
                             ),
                           ),
                         ],
@@ -512,14 +491,14 @@ class _TodayAttendanceCard extends StatelessWidget {
                         "Quality Score: ${data.faceAnalysis.qualityScore.toStringAsFixed(2)}",
                         style: GoogleFonts.inter(
                           fontSize: 12.sp,
-                          color: const Color(0xFF8B7D77),
+                          color: AppColor.textMuted,
                         ),
                       ),
                       Text(
                         "Landmarks Detected: ${data.faceAnalysis.landmarksDetected}",
                         style: GoogleFonts.inter(
                           fontSize: 12.sp,
-                          color: const Color(0xFF8B7D77),
+                          color: AppColor.textMuted,
                         ),
                       ),
                     ],
@@ -572,14 +551,14 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20.sp, color: const Color(0xFF8B7D77)),
+        Icon(icon, size: 20.sp, color: AppColor.textMuted),
         SizedBox(width: 12.w),
         Expanded(
           child: Text(
             label,
             style: GoogleFonts.inter(
               fontSize: 13.sp,
-              color: const Color(0xFF8B7D77),
+              color: AppColor.textMuted,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -593,7 +572,7 @@ class _InfoRow extends StatelessWidget {
           ),
           child: Text(
             value,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 12.sp,
               fontWeight: FontWeight.w700,
               color: valueColor,

@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -159,10 +160,10 @@ Future<void> showAddVisitFlow(BuildContext context, CrmController controller) as
             SizedBox(height: 20.h),
             Text(
               "Continue as",
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 12.5.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF241917),
+                color: AppColor.textPrimary,
               ),
             ),
             SizedBox(height: 10.h),
@@ -245,18 +246,18 @@ class _VisitTypeButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Color(0xFFEDE2DC)),
+        side: const BorderSide(color: AppColor.border),
         backgroundColor: Colors.white,
         padding: EdgeInsets.symmetric(vertical: 12.h),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       ),
-      icon: Icon(icon, size: 16.sp, color: const Color(0xFF6A3027)),
+      icon: Icon(icon, size: 16.sp, color: AppColor.primary),
       label: Text(
         label,
-        style: GoogleFonts.manrope(
+        style: GoogleFonts.inter(
           fontSize: 11.5.sp,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF241917),
+          color: AppColor.textPrimary,
         ),
         overflow: TextOverflow.ellipsis,
       ),
@@ -285,7 +286,7 @@ void _showExistingOpportunitySheet(
             if (controller.opportunities.isEmpty)
               Text(
                 "No opportunities yet — add one first from the Opportunities screen.",
-                style: GoogleFonts.inter(fontSize: 12.5.sp, color: const Color(0xFF8B7D77)),
+                style: GoogleFonts.inter(fontSize: 12.5.sp, color: AppColor.textMuted),
               )
             else ...[
               crmFieldLabel("Opportunity *"),
@@ -365,11 +366,11 @@ void _showNoOpportunitySheet(
                     height: 48.h,
                     width: 48.h,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6A3027).withValues(alpha: 0.1),
+                      color: AppColor.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Icon(Icons.person_add_alt_1_rounded,
-                        color: const Color(0xFF6A3027), size: 20.sp),
+                        color: AppColor.primary, size: 20.sp),
                   ),
                 ),
               ],

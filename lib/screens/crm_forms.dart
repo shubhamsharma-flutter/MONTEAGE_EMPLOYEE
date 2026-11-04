@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -36,9 +37,9 @@ Future<List<empdrop.Data>?> showMultiSelectEmployees(
   return showModalBottomSheet<List<empdrop.Data>>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: const Color(0xFFF6F1ED),
+    backgroundColor: AppColor.background,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
     ),
     builder: (ctx) {
       return StatefulBuilder(
@@ -61,7 +62,7 @@ Future<List<empdrop.Data>?> showMultiSelectEmployees(
                     padding: EdgeInsets.symmetric(vertical: 16.h),
                     child: Text(
                       "No employees found.",
-                      style: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFF8B7D77)),
+                      style: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textMuted),
                     ),
                   )
                 else
@@ -74,7 +75,7 @@ Future<List<empdrop.Data>?> showMultiSelectEmployees(
                         return CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
                           dense: true,
-                          activeColor: const Color(0xFF6A3027),
+                          activeColor: AppColor.primary,
                           title: Text(e.employeeName ?? '',
                               style: GoogleFonts.inter(fontSize: 13.5.sp)),
                           value: checked,
@@ -123,7 +124,7 @@ Widget crmMultiSelectField({
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: const Color(0xFFEDE2DC)),
+        border: Border.all(color: AppColor.border),
       ),
       child: Row(
         children: [
@@ -132,13 +133,13 @@ Widget crmMultiSelectField({
               selected.isEmpty ? hint : selected.map((e) => e.employeeName ?? '').join(', '),
               style: GoogleFonts.inter(
                 fontSize: 13.sp,
-                color: selected.isEmpty ? const Color(0xFFBDB0AB) : const Color(0xFF241917),
+                color: selected.isEmpty ? AppColor.textDisabled : AppColor.textPrimary,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Icon(Icons.keyboard_arrow_down_rounded, color: const Color(0xFF6A3027)),
+          Icon(Icons.keyboard_arrow_down_rounded, color: AppColor.primary),
         ],
       ),
     ),
@@ -175,14 +176,14 @@ Widget crmDropdown(
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12.r),
-      border: Border.all(color: const Color(0xFFEDE2DC)),
+      border: Border.all(color: AppColor.border),
     ),
     child: DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: value,
         isExpanded: true,
-        style: GoogleFonts.inter(fontSize: 14.sp, color: const Color(0xFF241917)),
-        icon: Icon(Icons.keyboard_arrow_down_rounded, color: const Color(0xFF6A3027)),
+        style: GoogleFonts.inter(fontSize: 14.sp, color: AppColor.textPrimary),
+        icon: Icon(Icons.keyboard_arrow_down_rounded, color: AppColor.primary),
         items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
         onChanged: onChanged,
       ),
@@ -192,19 +193,19 @@ Widget crmDropdown(
 
 Widget crmSheetTitle(String text) => Text(
       text,
-      style: GoogleFonts.manrope(
+      style: GoogleFonts.inter(
         fontSize: 17.sp,
-        fontWeight: FontWeight.w800,
-        color: const Color(0xFF241917),
+        fontWeight: FontWeight.w700,
+        color: AppColor.textPrimary,
       ),
     );
 
 Widget crmFieldLabel(String text) => Text(
       text,
-      style: GoogleFonts.manrope(
+      style: GoogleFonts.inter(
         fontSize: 12.5.sp,
         fontWeight: FontWeight.w700,
-        color: const Color(0xFF241917),
+        color: AppColor.textPrimary,
       ),
     );
 
@@ -212,14 +213,14 @@ Widget crmSaveButton(String label, VoidCallback onPressed) => SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6A3027),
+          backgroundColor: AppColor.primary,
           padding: EdgeInsets.symmetric(vertical: 14.h),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         ),
         onPressed: onPressed,
         child: Text(
           label,
-          style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: Colors.white),
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white),
         ),
       ),
     );
@@ -228,9 +229,9 @@ void crmShowSheet(BuildContext context, WidgetBuilder builder) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: const Color(0xFFF6F1ED),
+    backgroundColor: AppColor.background,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
     ),
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(
@@ -303,11 +304,11 @@ void showAddOpportunitySheet(
                     height: 48.h,
                     width: 48.h,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6A3027).withValues(alpha: 0.1),
+                      color: AppColor.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Icon(Icons.person_add_alt_1_rounded,
-                        color: const Color(0xFF6A3027), size: 20.sp),
+                        color: AppColor.primary, size: 20.sp),
                   ),
                 ),
               ],
@@ -393,7 +394,7 @@ void showAddCustomerSheet(BuildContext context, ValueChanged<String> onSaved) {
                     title: Text("Organisation", style: GoogleFonts.inter(fontSize: 13.sp)),
                     value: "Organisation",
                     groupValue: entityType,
-                    activeColor: const Color(0xFF6A3027),
+                    activeColor: AppColor.primary,
                     onChanged: (v) => setState(() => entityType = v!),
                   ),
                 ),
@@ -404,7 +405,7 @@ void showAddCustomerSheet(BuildContext context, ValueChanged<String> onSaved) {
                     title: Text("Individual", style: GoogleFonts.inter(fontSize: 13.sp)),
                     value: "Individual",
                     groupValue: entityType,
-                    activeColor: const Color(0xFF6A3027),
+                    activeColor: AppColor.primary,
                     onChanged: (v) => setState(() => entityType = v!),
                   ),
                 ),

@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -7,10 +8,10 @@ import '../controllers/task_controller.dart';
 import 'task_screen.dart';
 
 // Small palette copy, matching the colors used across the Task screens.
-const _kBg = Color(0xFFF6F1ED);
-const _kBrand = Color(0xFF6A3027);
-const _kTextPrimary = Color(0xFF241917);
-const _kTextMuted = Color(0xFF8B7D77);
+const _kBg = AppColor.background;
+const _kBrand = AppColor.primary;
+const _kTextPrimary = AppColor.textPrimary;
+const _kTextMuted = AppColor.textMuted;
 
 /// Opened when you tap an employee in the Given tab's "By Employee" list.
 /// A fresh screen showing just that employee's tasks, with its own
@@ -44,16 +45,14 @@ class _EmployeeTasksScreenState extends State<EmployeeTasksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _kBg,
-      appBar: AppBar(
-        backgroundColor: _kBg,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: _kTextPrimary),
+      appBar: AppBar(
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           widget.employeeName,
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 16.sp,
-            fontWeight: FontWeight.w800,
-            color: _kTextPrimary,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
           ),
         ),
       ),

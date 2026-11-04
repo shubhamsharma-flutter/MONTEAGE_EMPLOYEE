@@ -272,11 +272,13 @@ class _ModernButton extends StatelessWidget {
   }
 }
 */
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controllers/login_controller.dart';
+import '../widgets/app_ui.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -289,242 +291,86 @@ class LoginScreen extends StatelessWidget {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFFF6F1ED),
+      backgroundColor: AppColor.surface,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 18.h),
-                      Image.asset(
-                        "assets/images/monteage_logo.png",
-                        height: 60.h,
-                        fit: BoxFit.contain,
-                      ),
-                      SizedBox(height: 18.h),
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 18.w,
-                          vertical: 18.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24.r),
-                          border: Border.all(
-                            color: const Color(0xFFEDE2DC),
-                            width: 1,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x12000000),
-                              blurRadius: 14,
-                              offset: Offset(0, 7),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Monteage Corporate World",
-                              style: GoogleFonts.manrope(
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF241917),
-                              ),
-                            ),
-                            SizedBox(height: 6.h),
-                            Text(
-                              "Login to your account",
-                              style: GoogleFonts.inter(
-                                fontSize: 13.sp,
-                                color: const Color(0xFF8B7D77),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 24.h),
-
-                            // User ID Field
-                            Text(
-                              "User ID",
-                              style: GoogleFonts.manrope(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF241917),
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            TextField(
-                              controller: controller.userIdController,
-                              keyboardType: TextInputType.text,
-                              textInputAction: TextInputAction.next,
-                              style: GoogleFonts.inter(
-                                fontSize: 14.sp,
-                                color: const Color(0xFF241917),
-                              ),
-                              decoration: InputDecoration(
-                                hintText: "Enter your employee code",
-                                hintStyle: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  color: const Color(0xFFBDB0AB),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.person_outline_rounded,
-                                  color: const Color(0xFF8B7D77),
-                                  size: 20.sp,
-                                ),
-                                filled: true,
-                                fillColor: const Color(0xFFF6F1ED),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 14.w,
-                                  vertical: 14.h,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEDE2DC),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEDE2DC),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF6A3027),
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-
-                            // Password Field
-                            Text(
-                              "Password",
-                              style: GoogleFonts.manrope(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF241917),
-                              ),
-                            ),
-                            SizedBox(height: 8.h),
-                            Obx(() => TextField(
-                              controller: controller.passwordController,
-                              obscureText: controller.isPasswordHidden.value,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => controller.login(),
-                              style: GoogleFonts.inter(
-                                fontSize: 14.sp,
-                                color: const Color(0xFF241917),
-                              ),
-                              decoration: InputDecoration(
-                                hintText: "Enter your password",
-                                hintStyle: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  color: const Color(0xFFBDB0AB),
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.lock_outline_rounded,
-                                  color: const Color(0xFF8B7D77),
-                                  size: 20.sp,
-                                ),
-                                suffixIcon: GestureDetector(
-                                  onTap: controller.togglePasswordVisibility,
-                                  child: Icon(
-                                    controller.isPasswordHidden.value
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    color: const Color(0xFF8B7D77),
-                                    size: 20.sp,
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor: const Color(0xFFF6F1ED),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 14.w,
-                                  vertical: 14.h,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEDE2DC),
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFFEDE2DC),
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF6A3027),
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            )),
-                            SizedBox(height: 24.h),
-
-                            // Login Button
-                            Obx(() => SizedBox(
-                              width: double.infinity,
-                              height: 52.h,
-                              child: FilledButton(
-                                onPressed: controller.isLoading.value
-                                    ? null
-                                    : controller.login,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6A3027),
-                                  disabledBackgroundColor:
-                                      const Color(0xFFC9C9C9),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
-                                  ),
-                                ),
-                                child: controller.isLoading.value
-                                    ? SizedBox(
-                                        height: 22.h,
-                                        width: 22.w,
-                                        child: const CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(
-                                        "Login",
-                                        style: GoogleFonts.manrope(
-                                          fontSize: 15.sp,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                              ),
-                            )),
-                            SizedBox(height: 16.h),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      SizedBox(height: 20.h),
-                    ],
-                  ),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(24.w, 48.h, 24.w, 24.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.asset(
+                "assets/images/monteage_logo.png",
+                height: 52.h,
+                fit: BoxFit.contain,
+              ),
+              SizedBox(height: 40.h),
+              Text(
+                "Sign in",
+                style: GoogleFonts.inter(
+                  fontSize: 26.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColor.textPrimary,
                 ),
               ),
-            );
-          },
+              SizedBox(height: 4.h),
+              Text(
+                "Monteage Corporate World",
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: AppColor.textMuted,
+                ),
+              ),
+              SizedBox(height: 28.h),
+              const AppFieldLabel("User ID"),
+              TextField(
+                controller: controller.userIdController,
+                keyboardType: TextInputType.text,
+                textInputAction: TextInputAction.next,
+                style: GoogleFonts.inter(
+                  fontSize: 15.sp,
+                  color: AppColor.textPrimary,
+                ),
+                decoration: const InputDecoration(
+                  hintText: "Enter your employee code",
+                  prefixIcon: Icon(Icons.person_outline_rounded),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              const AppFieldLabel("Password"),
+              Obx(() => TextField(
+                controller: controller.passwordController,
+                obscureText: controller.isPasswordHidden.value,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => controller.login(),
+                style: GoogleFonts.inter(
+                  fontSize: 15.sp,
+                  color: AppColor.textPrimary,
+                ),
+                decoration: InputDecoration(
+                  hintText: "Enter your password",
+                  prefixIcon: const Icon(Icons.lock_outline_rounded),
+                  suffixIcon: IconButton(
+                    tooltip: controller.isPasswordHidden.value
+                        ? "Show password"
+                        : "Hide password",
+                    onPressed: controller.togglePasswordVisibility,
+                    icon: Icon(
+                      controller.isPasswordHidden.value
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
+                ),
+              )),
+              SizedBox(height: 24.h),
+              Obx(() => AppPrimaryButton(
+                label: "Sign In",
+                isLoading: controller.isLoading.value,
+                onPressed: controller.isLoading.value ? null : controller.login,
+              )),
+            ],
+          ),
         ),
       ),
     );

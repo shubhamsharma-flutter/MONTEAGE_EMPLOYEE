@@ -1,4 +1,5 @@
 
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -88,36 +89,36 @@ class _Badge {
 
   factory _Badge.onTime() => const _Badge(
         label: 'On Time',
-        bg:    Color(0xFFE9F9EE),
-        fg:    Color(0xFF1E8E3E),
+        bg:    AppColor.successTint,
+        fg:    AppColor.success,
         icon:  Icons.check_circle_outline,
       );
 
   factory _Badge.lateComing() => const _Badge(
         label: 'Late Coming',
-        bg:    Color(0xFFFFF4E5),
-        fg:    Color(0xFFE67E22),
+        bg:    AppColor.warningTint,
+        fg:    AppColor.warning,
         icon:  Icons.watch_later_outlined,
       );
 
   factory _Badge.halfDay() => const _Badge(
         label: 'Half Day',
-        bg:    Color(0xFFFFEEEE),
-        fg:    Color(0xFFD93025),
+        bg:    AppColor.dangerTint,
+        fg:    AppColor.danger,
         icon:  Icons.timelapse,
       );
 
   factory _Badge.shortLeave() => const _Badge(
         label: 'Short Leave',
-        bg:    Color(0xFFEEF2FF),
-        fg:    Color(0xFF3D5AFE),
+        bg:    AppColor.infoTint,
+        fg:    AppColor.info,
         icon:  Icons.logout,
       );
 
   factory _Badge.overtime(String duration) => _Badge(
         label: 'OT: $duration',
-        bg:    const Color(0xFFE8F5E9),
-        fg:    const Color(0xFF2E7D32),
+        bg:    AppColor.successTint,
+        fg:    AppColor.success,
         icon:  Icons.trending_up,
       );
 }
@@ -131,18 +132,15 @@ class HrTodayAttendanceView extends GetView<HrTodayAttendanceController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
         centerTitle: true,
         title: Text(
           "Today's Attendance",
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 20.sp,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E1E1E),
+            color: Colors.white,
           ),
         ),
         actions: [
@@ -214,10 +212,10 @@ class HrTodayAttendanceSearchDelegate extends SearchDelegate {
   String? get searchFieldLabel => 'Search by name, ID, department...';
 
   @override
-  TextStyle? get searchFieldStyle => GoogleFonts.manrope(
+  TextStyle? get searchFieldStyle => GoogleFonts.inter(
         fontSize: 14.sp,
         fontWeight: FontWeight.w500,
-        color: const Color(0xFF1E1E1E),
+        color: AppColor.textPrimary,
       );
 
   @override
@@ -227,19 +225,19 @@ class HrTodayAttendanceSearchDelegate extends SearchDelegate {
           elevation: 0,
           surfaceTintColor: Colors.white,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF7F8FA),
+        scaffoldBackgroundColor: AppColor.background,
         inputDecorationTheme: InputDecorationTheme(
           border: InputBorder.none,
-          hintStyle: GoogleFonts.manrope(
+          hintStyle: GoogleFonts.inter(
             fontSize: 14.sp,
-            color: const Color(0xFF8A8A8A),
+            color: AppColor.textMuted,
           ),
         ),
         textTheme: TextTheme(
-          titleLarge: GoogleFonts.manrope(
+          titleLarge: GoogleFonts.inter(
             fontSize: 16.sp,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF1E1E1E),
+            color: AppColor.textPrimary,
           ),
         ),
       );
@@ -270,10 +268,10 @@ class HrTodayAttendanceSearchDelegate extends SearchDelegate {
       return Center(
         child: Text(
           'No matching attendance found',
-          style: GoogleFonts.manrope(
+          style: GoogleFonts.inter(
             fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF444444),
+            color: AppColor.textSecondary,
           ),
         ),
       );
@@ -307,14 +305,8 @@ class _AttendanceCard extends StatelessWidget {
       padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: AppShadow.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,13 +349,13 @@ class _AttendanceCard extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 24.r,
-          backgroundColor: const Color(0xFFEDEFF3),
+          backgroundColor: AppColor.border,
           child: Text(
             _initials(item.fullName),
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 16.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF2A2A2A),
+              color: AppColor.textPrimary,
             ),
           ),
         ),
@@ -374,10 +366,10 @@ class _AttendanceCard extends StatelessWidget {
             children: [
               Text(
                 item.fullName ?? 'No Name',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1F1F1F),
+                  color: AppColor.textPrimary,
                 ),
               ),
               SizedBox(height: 4.h),
@@ -385,7 +377,7 @@ class _AttendanceCard extends StatelessWidget {
                 item.email ?? '-',
                 style: GoogleFonts.inter(
                   fontSize: 12.sp,
-                  color: const Color(0xFF7A7A7A),
+                  color: AppColor.textSecondary,
                 ),
               ),
             ],
@@ -402,7 +394,7 @@ class _AttendanceCard extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 5.h),
       decoration: BoxDecoration(
         color: badge.bg,
-        borderRadius: BorderRadius.circular(30.r),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: badge.fg.withOpacity(0.25)),
       ),
       child: Row(
@@ -412,7 +404,7 @@ class _AttendanceCard extends StatelessWidget {
           SizedBox(width: 4.w),
           Text(
             badge.label,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,
               color: badge.fg,
@@ -434,10 +426,10 @@ class _AttendanceCard extends StatelessWidget {
             width: 110.w,
             child: Text(
               '$title:',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF6E6E6E),
+                color: AppColor.textSecondary,
               ),
             ),
           ),
@@ -447,7 +439,7 @@ class _AttendanceCard extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF222222),
+                color: AppColor.textPrimary,
               ),
             ),
           ),
@@ -463,26 +455,26 @@ class _AttendanceCard extends StatelessWidget {
     switch (value.toLowerCase()) {
       case 'present':
       case 'verified':
-        bg = const Color(0xFFE9F9EE); fg = const Color(0xFF1E8E3E);
+        bg = AppColor.successTint; fg = AppColor.success;
         break;
       case 'absent':
-        bg = const Color(0xFFFFEEEE); fg = const Color(0xFFD93025);
+        bg = AppColor.dangerTint; fg = AppColor.danger;
         break;
       case 'late':
-        bg = const Color(0xFFFFF4E5); fg = const Color(0xFFE67E22);
+        bg = AppColor.warningTint; fg = AppColor.warning;
         break;
       default:
-        bg = const Color(0xFFF2F4F7); fg = const Color(0xFF667085);
+        bg = AppColor.background; fg = AppColor.textSecondary;
     }
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(30.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Text(
         value,
-        style: GoogleFonts.manrope(
+        style: GoogleFonts.inter(
           fontSize: 11.sp,
           fontWeight: FontWeight.w700,
           color: fg,
@@ -502,35 +494,35 @@ class _AttendanceCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFF241917),
+              color: AppColor.textPrimary,
             ),
           ),
           SizedBox(height: 8.h),
           ClipRRect(
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(12.r),
             child: AspectRatio(
               aspectRatio: 16 / 9,
               child: Image.network(
                 full,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  color: const Color(0xFFF1F1F1),
+                  color: AppColor.surfaceVariant,
                   alignment: Alignment.center,
                   child: Text(
                     'Image unavailable',
                     style: GoogleFonts.inter(
                       fontSize: 11.sp,
-                      color: const Color(0xFF8B7D77),
+                      color: AppColor.textMuted,
                     ),
                   ),
                 ),
                 loadingBuilder: (_, child, progress) {
                   if (progress == null) return child;
                   return Container(
-                    color: const Color(0xFFF1F1F1),
+                    color: AppColor.surfaceVariant,
                     alignment: Alignment.center,
                     child: const CircularProgressIndicator(),
                   );
@@ -569,10 +561,10 @@ class _EmptyState extends StatelessWidget {
             SizedBox(height: 14.h),
             Text(
               'No attendance data found',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF222222),
+                color: AppColor.textPrimary,
               ),
             ),
             SizedBox(height: 6.h),
@@ -581,7 +573,7 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13.sp,
-                color: const Color(0xFF777777),
+                color: AppColor.textSecondary,
               ),
             ),
           ],
@@ -610,10 +602,10 @@ class _ErrorState extends StatelessWidget {
             SizedBox(height: 14.h),
             Text(
               'Something went wrong',
-              style: GoogleFonts.manrope(
+              style: GoogleFonts.inter(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF222222),
+                color: AppColor.textPrimary,
               ),
             ),
             SizedBox(height: 8.h),
@@ -622,7 +614,7 @@ class _ErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13.sp,
-                color: const Color(0xFF777777),
+                color: AppColor.textSecondary,
               ),
             ),
           ],

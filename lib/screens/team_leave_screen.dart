@@ -25,7 +25,7 @@ class TeamLeaveScreen extends GetView<TeamLeaveController> {
         backgroundColor: LeaveColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(12.r),
         ),
         icon: Icon(leaveStatusIcon(decision), color: color),
         title: Text('$action Leave', style: LeaveText.heading(17)),
@@ -114,7 +114,7 @@ class _WaitingBanner extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
         color: LeaveColors.pending.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         children: [
@@ -172,7 +172,7 @@ class _DecisionButtons extends StatelessWidget {
     }
 
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(12.r),
     );
 
     return Row(

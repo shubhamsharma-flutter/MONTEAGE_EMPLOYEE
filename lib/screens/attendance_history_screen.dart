@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -16,34 +17,12 @@ class AttendanceHistoryScreen extends StatelessWidget {
 
     return BottomNavWrapper(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF6F1ED),
-        appBar: AppBar(
-          elevation: 0,
-          toolbarHeight: 72.h,
-          backgroundColor: const Color(0xFFF6F1ED),
-          surfaceTintColor: Colors.transparent,
-          leadingWidth: 72.w,
-          leading: Padding(
-            padding: EdgeInsets.only(left: 16.w),
-            child: Container(
-              margin: EdgeInsets.symmetric(vertical: 12.h),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x14000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF241917)),
+        backgroundColor: AppColor.background,
+        appBar: AppBar(
+          leading: IconButton(
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
                 onPressed: () => Get.back(),
               ),
-            ),
-          ),
           titleSpacing: 0,
           title: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -52,10 +31,10 @@ class AttendanceHistoryScreen extends StatelessWidget {
               children: [
                 Text(
                   'Attendance History',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 20.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
                 ),
                 Text(
@@ -63,7 +42,7 @@ class AttendanceHistoryScreen extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF756A66),
+                    color: Colors.white70,
                   ),
                 ),
               ],
@@ -74,14 +53,11 @@ class AttendanceHistoryScreen extends StatelessWidget {
               padding: EdgeInsets.only(right: 16.w),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x14000000), blurRadius: 12, offset: Offset(0, 6)),
-                  ],
+                  color: Color(0x29FFFFFF),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.search_rounded, color: Color(0xFF241917)),
+                  icon: const Icon(Icons.search_rounded, color: Colors.white),
                   onPressed: () => _showSearchDialog(context, c),
                 ),
               ),
@@ -115,11 +91,9 @@ class AttendanceHistoryScreen extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(24.r),
-                      border: Border.all(color: const Color(0xFFEDE2DC), width: 1),
-                      boxShadow: const [
-                        BoxShadow(color: Color(0x12000000), blurRadius: 14, offset: Offset(0, 7)),
-                      ],
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: AppColor.border, width: 1),
+                      boxShadow: AppShadow.card,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -128,7 +102,7 @@ class AttendanceHistoryScreen extends StatelessWidget {
                           label: 'Total',
                           value: total.toString(),
                           icon: Icons.view_agenda_rounded,
-                          accentColor: const Color(0xFF6A3027),
+                          accentColor: AppColor.primary,
                           filter: 'All',
                           currentFilter: current,
                           onTap: () => c.setStatusFilter('All'),
@@ -138,7 +112,7 @@ class AttendanceHistoryScreen extends StatelessWidget {
                           label: 'Verified',
                           value: verified.toString(),
                           icon: Icons.check_circle_outline,
-                          accentColor: const Color(0xFF2AB673),
+                          accentColor: AppColor.success,
                           filter: 'Verified',
                           currentFilter: current,
                           onTap: () => c.setStatusFilter('Verified'),
@@ -148,7 +122,7 @@ class AttendanceHistoryScreen extends StatelessWidget {
                           label: 'Pending',
                           value: pending.toString(),
                           icon: Icons.schedule_rounded,
-                          accentColor: const Color(0xFFF0A43C),
+                          accentColor: AppColor.warning,
                           filter: 'Pending',
                           currentFilter: current,
                           onTap: () => c.setStatusFilter('Pending'),
@@ -158,7 +132,7 @@ class AttendanceHistoryScreen extends StatelessWidget {
                           label: 'Rejected',
                           value: rejected.toString(),
                           icon: Icons.cancel_outlined,
-                          accentColor: const Color(0xFFD85E5E),
+                          accentColor: AppColor.danger,
                           filter: 'Rejected',
                           currentFilter: current,
                           onTap: () => c.setStatusFilter('Rejected'),
@@ -184,10 +158,10 @@ class AttendanceHistoryScreen extends StatelessWidget {
                           SizedBox(height: 16.h),
                           Text(
                             'Loading your records',
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF241917),
+                              color: AppColor.textPrimary,
                             ),
                           ),
                         ],
@@ -205,15 +179,15 @@ class AttendanceHistoryScreen extends StatelessWidget {
                           Icon(
                             Icons.history_rounded,
                             size: 64.sp,
-                            color: const Color(0xFF756A66).withOpacity(0.3),
+                            color: AppColor.textSecondary.withOpacity(0.3),
                           ),
                           SizedBox(height: 16.h),
                           Text(
                             'No attendance records found',
-                            style: GoogleFonts.manrope(
+                            style: GoogleFonts.inter(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF241917),
+                              color: AppColor.textPrimary,
                             ),
                           ),
                         ],
@@ -223,7 +197,7 @@ class AttendanceHistoryScreen extends StatelessWidget {
       
                   return RefreshIndicator(
                     onRefresh: c.fetchHistory,
-                    color: const Color(0xFF6A3027),
+                    color: AppColor.primary,
                     child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
@@ -241,27 +215,27 @@ class AttendanceHistoryScreen extends StatelessWidget {
   }
 
   static Widget _vDivider() =>
-      Container(width: 1, height: 48.h, color: const Color(0xFFEDE2DC));
+      Container(width: 1, height: 48.h, color: AppColor.border);
 
   static void _showSearchDialog(BuildContext context, AttendanceHistoryController c) {
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         child: Container(
           padding: EdgeInsets.all(24.w),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(12.r),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'Search by Date',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 20.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF241917),
+                  fontWeight: FontWeight.w700,
+                  color: AppColor.textPrimary,
                 ),
               ),
               SizedBox(height: 16.h),
@@ -270,9 +244,9 @@ class AttendanceHistoryScreen extends StatelessWidget {
                 keyboardType: TextInputType.datetime,
                 decoration: InputDecoration(
                   hintText: 'dd-MM-yyyy',
-                  hintStyle: GoogleFonts.inter(fontSize: 13.sp, color: const Color(0xFFB0B0B0)),
+                  hintStyle: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textDisabled),
                   filled: true,
-                  fillColor: const Color(0xFFF1F1F1),
+                  fillColor: AppColor.surfaceVariant,
                   contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.r),
@@ -293,7 +267,7 @@ class AttendanceHistoryScreen extends StatelessWidget {
                         'Clear',
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF756A66),
+                          color: AppColor.textSecondary,
                         ),
                       ),
                     ),
@@ -305,8 +279,8 @@ class AttendanceHistoryScreen extends StatelessWidget {
                         c.applyDateFilter(c.searchDateController.text.trim());
                         Get.back();
                       },
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF6A3027)),
-                      child: Text('Search', style: GoogleFonts.manrope(fontWeight: FontWeight.w800)),
+                      style: FilledButton.styleFrom(backgroundColor: AppColor.primary),
+                      child: Text('Search', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -412,15 +386,15 @@ class _MonthSelectorState extends State<_MonthSelector> {
                 duration: const Duration(milliseconds: 220),
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 9.h),
                 decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFFB54A3A) : Colors.white,
-                  borderRadius: BorderRadius.circular(20.r),
+                  color: isActive ? AppColor.accent : Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
-                    color: isActive ? const Color(0xFFB54A3A) : const Color(0xFFE0D5D0),
+                    color: isActive ? AppColor.accent : AppColor.border,
                   ),
                   boxShadow: isActive
                       ? [
                           BoxShadow(
-                            color: const Color(0xFFB54A3A).withOpacity(0.25),
+                            color: AppColor.accent.withOpacity(0.25),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           )
@@ -429,10 +403,10 @@ class _MonthSelectorState extends State<_MonthSelector> {
                 ),
                 child: Text(
                   label,
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
-                    color: isActive ? Colors.white : const Color(0xFF241917),
+                    color: isActive ? Colors.white : AppColor.textPrimary,
                   ),
                 ),
               ),
@@ -479,7 +453,7 @@ class _StatTile extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 8.h),
           decoration: BoxDecoration(
             color: isActive ? accentColor.withOpacity(0.10) : Colors.transparent,
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(12.r),
             border: isActive
                 ? Border.all(color: accentColor.withOpacity(0.40), width: 1.2)
                 : Border.all(color: Colors.transparent, width: 1.2),
@@ -502,10 +476,10 @@ class _StatTile extends StatelessWidget {
               SizedBox(height: 6.h),
               Text(
                 value,
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 16.sp,
-                  fontWeight: FontWeight.w800,
-                  color: isActive ? accentColor : const Color(0xFF241917),
+                  fontWeight: FontWeight.w700,
+                  color: isActive ? accentColor : AppColor.textPrimary,
                 ),
               ),
               SizedBox(height: 2.h),
@@ -514,7 +488,7 @@ class _StatTile extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
-                  color: isActive ? accentColor : const Color(0xFF8B7D77),
+                  color: isActive ? accentColor : AppColor.textMuted,
                 ),
               ),
             ],
@@ -537,10 +511,10 @@ class _HistoryCard extends StatelessWidget {
 
   Color _statusColor(String? s) {
     switch ((s ?? '').toUpperCase()) {
-      case 'VERIFIED': return const Color(0xFF2AB673);
-      case 'REJECTED': return const Color(0xFFD85E5E);
+      case 'VERIFIED': return AppColor.success;
+      case 'REJECTED': return AppColor.danger;
       case 'PENDING':
-      default:         return const Color(0xFFF0A43C);
+      default:         return AppColor.warning;
     }
   }
 
@@ -553,13 +527,13 @@ class _HistoryCard extends StatelessWidget {
           SizedBox(
             width: 120.w,
             child: Text(k,
-                style: GoogleFonts.inter(fontSize: 12.sp, color: const Color(0xFF8B7D77))),
+                style: GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textMuted)),
           ),
           Expanded(
             child: Text(v,
                 style: GoogleFonts.inter(
                   fontSize: 12.sp,
-                  color: vColor ?? const Color(0xFF241917),
+                  color: vColor ?? AppColor.textPrimary,
                   fontWeight: vWeight ?? FontWeight.w500,
                 )),
           ),
@@ -577,10 +551,10 @@ class _HistoryCard extends StatelessWidget {
       children: [
         SizedBox(height: 12.h),
         Text(title,
-            style: GoogleFonts.manrope(
+            style: GoogleFonts.inter(
                 fontSize: 13.sp,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF241917))),
+                color: AppColor.textPrimary)),
         SizedBox(height: 8.h),
         ClipRRect(
           borderRadius: BorderRadius.circular(12.r),
@@ -590,15 +564,15 @@ class _HistoryCard extends StatelessWidget {
               full,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFFF1F1F1),
+                color: AppColor.surfaceVariant,
                 alignment: Alignment.center,
                 child: Text('Image unavailable',
-                    style: GoogleFonts.inter(fontSize: 11.sp, color: const Color(0xFF8B7D77))),
+                    style: GoogleFonts.inter(fontSize: 11.sp, color: AppColor.textMuted)),
               ),
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
                 return Container(
-                  color: const Color(0xFFF1F1F1),
+                  color: AppColor.surfaceVariant,
                   alignment: Alignment.center,
                   child: const CircularProgressIndicator(),
                 );
@@ -626,16 +600,14 @@ class _HistoryCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(vertical: 8.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFEDE2DC), width: 1),
-        boxShadow: const [
-          BoxShadow(color: Color(0x12000000), blurRadius: 12, offset: Offset(0, 6)),
-        ],
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border, width: 1),
+        boxShadow: AppShadow.card,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12.r),
         child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: const Color(0xFFF1F1F1)),
+          data: Theme.of(context).copyWith(dividerColor: AppColor.surfaceVariant),
           child: ExpansionTile(
             tilePadding: EdgeInsets.zero,
             childrenPadding: EdgeInsets.all(16.w),
@@ -651,16 +623,16 @@ class _HistoryCard extends StatelessWidget {
                       children: [
                         Text(
                           c.titleCase(record.employeeName),
-                          style: GoogleFonts.manrope(
+                          style: GoogleFonts.inter(
                             fontSize: 14.sp,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF241917),
+                            fontWeight: FontWeight.w700,
+                            color: AppColor.textPrimary,
                           ),
                         ),
                         SizedBox(height: 4.h),
                         Text(
                           'ID: ${record.employeeId} • $headerDate',
-                          style: GoogleFonts.inter(fontSize: 11.sp, color: const Color(0xFF8B7D77)),
+                          style: GoogleFonts.inter(fontSize: 11.sp, color: AppColor.textMuted),
                         ),
                         SizedBox(height: 6.h),
                         Row(
@@ -674,7 +646,7 @@ class _HistoryCard extends StatelessWidget {
                               ),
                               child: Text(
                                 remark,
-                                style: GoogleFonts.manrope(
+                                style: GoogleFonts.inter(
                                   fontSize: 10.sp,
                                   fontWeight: FontWeight.w700,
                                   color: remarkColor,
@@ -686,21 +658,21 @@ class _HistoryCard extends StatelessWidget {
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6A3027).withOpacity(0.08),
+                                  color: AppColor.primary.withOpacity(0.08),
                                   borderRadius: BorderRadius.circular(6.r),
-                                  border: Border.all(color: const Color(0xFF6A3027).withOpacity(0.3)),
+                                  border: Border.all(color: AppColor.primary.withOpacity(0.3)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.timer_outlined, size: 10.sp, color: const Color(0xFF6A3027)),
+                                    Icon(Icons.timer_outlined, size: 10.sp, color: AppColor.primary),
                                     SizedBox(width: 3.w),
                                     Text(
                                       record.duration!.formatted,
-                                      style: GoogleFonts.manrope(
+                                      style: GoogleFonts.inter(
                                         fontSize: 10.sp,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF6A3027),
+                                        color: AppColor.primary,
                                       ),
                                     ),
                                   ],
@@ -721,7 +693,7 @@ class _HistoryCard extends StatelessWidget {
                     ),
                     child: Text(
                       record.status ?? '--',
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
                         color: checkInColor,
@@ -739,27 +711,27 @@ class _HistoryCard extends StatelessWidget {
               _kv('Face Detected', record.faceDetected ? 'Yes' : 'No'),
               _kv('Verified', record.isVerified ? 'Yes' : 'No'),
               _kv('Remark', remark, vColor: remarkColor, vWeight: FontWeight.w700),
-              Divider(height: 16.h, color: const Color(0xFFF1F1F1)),
+              Divider(height: 16.h, color: AppColor.surfaceVariant),
               Text('Check-in Location',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF241917),
+                    color: AppColor.textPrimary,
                   )),
               SizedBox(height: 8.h),
               _kv('Latitude', (record.latitude ?? 0).toString()),
               _kv('Longitude', (record.longitude ?? 0).toString()),
               _kv('Accuracy (m)', (record.locationAccuracy ?? 0).toStringAsFixed(1)),
               _imageBlock('Check-in Photo', record.imageUrl),
-              Divider(height: 20.h, color: const Color(0xFFF1F1F1)),
+              Divider(height: 20.h, color: AppColor.surfaceVariant),
               Row(
                 children: [
                   Expanded(
                     child: Text('Check-out Details',
-                        style: GoogleFonts.manrope(
+                        style: GoogleFonts.inter(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF241917),
+                          color: AppColor.textPrimary,
                         )),
                   ),
                   Container(
@@ -771,7 +743,7 @@ class _HistoryCard extends StatelessWidget {
                     ),
                     child: Text(
                       record.checkoutStatus ?? '--',
-                      style: GoogleFonts.manrope(
+                      style: GoogleFonts.inter(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.w700,
                         color: checkOutColor,
@@ -791,10 +763,10 @@ class _HistoryCard extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               Text('Check-out Location',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF241917),
+                    color: AppColor.textPrimary,
                   )),
               SizedBox(height: 8.h),
               _kv('Latitude', (record.checkoutLatitude ?? 0).toString()),
@@ -806,21 +778,21 @@ class _HistoryCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(12.w),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD85E5E).withOpacity(0.08),
+                    color: AppColor.danger.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: const Color(0xFFD85E5E)),
+                    border: Border.all(color: AppColor.danger),
                   ),
                   child: Text(
                     '⚠ Suspicious: ${record.suspiciousReason ?? "Yes"}',
-                    style: GoogleFonts.manrope(
+                    style: GoogleFonts.inter(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFFD85E5E),
+                      color: AppColor.danger,
                     ),
                   ),
                 ),
               ],
-              Divider(height: 20.h, color: const Color(0xFFF1F1F1)),
+              Divider(height: 20.h, color: AppColor.surfaceVariant),
               _kv('Created', c.formatIsoDateTime(record.createdAt)),
               _kv('Updated', c.formatIsoDateTime(record.updatedAt)),
             ],

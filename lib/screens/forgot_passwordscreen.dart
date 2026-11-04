@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -10,12 +11,9 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F2F2),
+      backgroundColor: AppColor.background,
       appBar: AppBar(
         title: const Text("Forgot Password"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
       ),
       body: SafeArea(
         child: Padding(
@@ -30,7 +28,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
                 style: TextStyle(
                   fontSize: 24.sp,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF333333),
+                  color: AppColor.textPrimary,
                 ),
               ),
 
@@ -40,7 +38,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
                 "Enter your registered email address and we’ll send you reset instructions.",
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: const Color(0xFF8A8A8A),
+                  color: AppColor.textMuted,
                 ),
               ),
 
@@ -51,7 +49,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF4A4A4A),
+                  color: AppColor.textSecondary,
                 ),
               ),
 
@@ -64,11 +62,11 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
                 decoration: InputDecoration(
                   hintText: "Enter your email",
                   hintStyle: TextStyle(
-                    color: const Color(0xFFB0B0B0),
+                    color: AppColor.textDisabled,
                     fontSize: 13.sp,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF1F1F1),
+                  fillColor: AppColor.surfaceVariant,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 14.w,
                     vertical: 14.h,
@@ -82,7 +80,6 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
 
               SizedBox(height: 24.h),
 
-              /// ✅ GREEN BUTTON
               Obx(() => SizedBox(
                 width: double.infinity,
                 height: 52.h,
@@ -91,15 +88,8 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
                       ? null
                       : controller.sendResetLink,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                    Colors.green.shade300,
+                    disabledBackgroundColor: AppColor.primaryLight,
                     disabledForegroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    elevation: 6,
                   ),
                   child: controller.isLoading.value
                       ? const SizedBox(

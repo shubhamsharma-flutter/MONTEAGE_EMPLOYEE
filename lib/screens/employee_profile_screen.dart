@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -14,21 +15,15 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
     required String value,
     Color? accentColor,
   }) {
-    final accent = accentColor ?? const Color(0xFF6A3027);
+    final accent = accentColor ?? AppColor.primary;
 
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24.r),
-        border: Border.all(color: const Color(0xFFEDE2DC), width: 1),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 14,
-            offset: Offset(0, 7),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColor.border, width: 1),
+        boxShadow: AppShadow.card,
       ),
       child: Row(
         children: [
@@ -37,7 +32,7 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
             width: 48.h,
             decoration: BoxDecoration(
               color: accent.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(icon, color: accent, size: 24.sp),
           ),
@@ -51,7 +46,7 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   style: GoogleFonts.inter(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF8B7D77),
+                    color: AppColor.textMuted,
                     letterSpacing: 0.3,
                   ),
                 ),
@@ -60,10 +55,10 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   value,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 16.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   ),
                 ),
               ],
@@ -89,14 +84,14 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14.sp, color: color),
+          Icon(icon, size: 14.sp, color: Colors.white),
           SizedBox(width: 6.w),
           Text(
             text,
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w700,
               fontSize: 11.sp,
-              color: color,
+              color: Colors.white,
             ),
           ),
         ],
@@ -107,13 +102,9 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F1ED),
-      appBar: AppBar(
-        elevation: 0,
-        toolbarHeight: 72.h,
-        backgroundColor: const Color(0xFFF6F1ED),
-        surfaceTintColor: Colors.transparent,
-        leadingWidth: 72.w,
+      backgroundColor: AppColor.background,
+      appBar: AppBar(
+        
         automaticallyImplyLeading: false,
         titleSpacing: 0,
         title: Padding(
@@ -123,10 +114,10 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
             children: [
               Text(
                 'Profile Details',
-                style: GoogleFonts.manrope(
+                style: GoogleFonts.inter(
                   fontSize: 20.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF241917),
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
               Text(
@@ -134,7 +125,7 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                 style: GoogleFonts.inter(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF756A66),
+                  color: Colors.white70,
                 ),
               ),
             ],
@@ -151,10 +142,10 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                 SizedBox(height: 16.h),
                 Text(
                   'Loading your profile',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF241917),
+                    color: AppColor.textPrimary,
                   ),
                 ),
               ],
@@ -172,22 +163,22 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   height: 62.h,
                   width: 62.h,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB54545).withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20.r),
+                    color: AppColor.danger.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: const Icon(
                     Icons.cloud_off_rounded,
-                    color: Color(0xFFB54545),
+                    color: AppColor.danger,
                     size: 28,
                   ),
                 ),
                 SizedBox(height: 16.h),
                 Text(
                   'Profile not available',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 SizedBox(height: 8.h),
@@ -196,20 +187,20 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   style: GoogleFonts.inter(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF756A66),
+                    color: AppColor.textSecondary,
                   ),
                 ),
                 SizedBox(height: 20.h),
                 FilledButton(
                   onPressed: controller.fetchProfile,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFB54545),
+                    backgroundColor: AppColor.danger,
                     padding: EdgeInsets.symmetric(
                       horizontal: 24.w,
                       vertical: 14.h,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.r),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
                   child: Text(
@@ -239,23 +230,13 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   width: double.infinity,
                   padding: EdgeInsets.all(18.w),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28.r),
+                    borderRadius: BorderRadius.circular(12.r),
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF241917),
-                        Color(0xFF6A3027),
-                        Color(0xFFC75B43),
-                      ],
+                      colors: [AppColor.primaryDark, AppColor.primary],
                     ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x2A6A3027),
-                        blurRadius: 22,
-                        offset: Offset(0, 12),
-                      ),
-                    ],
+                    boxShadow: AppShadow.card,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,16 +247,16 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                             padding: EdgeInsets.all(3.w),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.16),
-                              borderRadius: BorderRadius.circular(24.r),
+                              borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: CircleAvatar(
                               radius: 32.r,
-                              backgroundColor: const Color(0xFFF5E6DF),
+                              backgroundColor: AppColor.primaryTint,
                               child: ClipOval(
                                 child: imgUrl.isEmpty
                                     ? Icon(
                                         Icons.person_rounded,
-                                        color: const Color(0xFF6A3027),
+                                        color: AppColor.primary,
                                         size: 36.sp,
                                       )
                                     : Image.network(
@@ -285,7 +266,7 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Icon(
                                           Icons.person_rounded,
-                                          color: const Color(0xFF6A3027),
+                                          color: AppColor.primary,
                                           size: 36.sp,
                                         ),
                                       ),
@@ -301,10 +282,10 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                                   displayName,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.manrope(
+                                  style: GoogleFonts.inter(
                                     fontSize: 22.sp,
                                     height: 1.15,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),
                                 ),
@@ -322,9 +303,9 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                           ),
                           // Material(
                           //   color: Colors.white.withOpacity(0.14),
-                          //   borderRadius: BorderRadius.circular(16.r),
+                          //   borderRadius: BorderRadius.circular(12.r),
                           //   child: InkWell(
-                          //     borderRadius: BorderRadius.circular(16.r),
+                          //     borderRadius: BorderRadius.circular(12.r),
                           //     onTap: controller.goToFaceRegister,
                           //     child: Padding(
                           //       padding: EdgeInsets.all(10.w),
@@ -348,8 +329,8 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                                 ? Icons.check_circle
                                 : Icons.cancel,
                             color: u.isActive
-                                ? const Color(0xFF2AB673)
-                                : const Color(0xFFD85E5E),
+                                ? AppColor.success
+                                : AppColor.danger,
                           ),
                           _statusBadge(
                             text: u.isFaceRegistered
@@ -359,8 +340,8 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                                 ? Icons.verified_user
                                 : Icons.face_retouching_off,
                             color: u.isFaceRegistered
-                                ? const Color(0xFF5F8BFF)
-                                : const Color(0xFFF0A43C),
+                                ? AppColor.info
+                                : AppColor.warning,
                           ),
                         ],
                       ),
@@ -370,10 +351,10 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                 SizedBox(height: 24.h),
                 Text(
                   'Account Information',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 SizedBox(height: 12.h),
@@ -381,28 +362,28 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   icon: Icons.badge_rounded,
                   title: 'Employee Code',
                   value: u.employeeId,
-                  accentColor: const Color(0xFF2563EB),
+                  accentColor: AppColor.info,
                 ),
                 SizedBox(height: 12.h),
                 _infoTile(
                   icon: Icons.person_rounded,
                   title: 'Full Name',
                   value: displayName,
-                  accentColor: const Color(0xFF6A3027),
+                  accentColor: AppColor.primary,
                 ),
                 SizedBox(height: 12.h),
                 _infoTile(
                   icon: Icons.person_outline_rounded,
                   title: 'Username',
                   value: controller.titleCase(u.username),
-                  accentColor: const Color(0xFF1E8E5A),
+                  accentColor: AppColor.success,
                 ),
                 SizedBox(height: 12.h),
                 _infoTile(
                   icon: Icons.email_rounded,
                   title: 'Email Address',
                   value: u.email,
-                  accentColor: const Color(0xFF4F46E5),
+                  accentColor: AppColor.info,
                 ),
                 // SizedBox(height: 12.h),
                 // _infoTile(
@@ -414,10 +395,10 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                 SizedBox(height: 24.h),
                 Text(
                   'Verification Details',
-                  style: GoogleFonts.manrope(
+                  style: GoogleFonts.inter(
                     fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF241917),
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.textPrimary,
                   ),
                 ),
                 SizedBox(height: 12.h),
@@ -425,14 +406,14 @@ class EmployeeProfileScreen extends GetView<EmployeeProfileController> {
                   icon: Icons.face_retouching_natural_rounded,
                   title: 'Face Registered At',
                   value: controller.formatDateTimeIndian(u.faceRegisteredAt),
-                  accentColor: const Color(0xFF0F9D9A),
+                  accentColor: AppColor.accent,
                 ),
                 SizedBox(height: 12.h),
                 _infoTile(
                   icon: Icons.calendar_today_rounded,
                   title: 'Date Joined',
                   value: controller.formatDateOnlyIndian(u.dateJoined),
-                  accentColor: const Color(0xFFC75B2A),
+                  accentColor: AppColor.accent,
                 ),
                 SizedBox(height: 24.h),
               ],

@@ -23,7 +23,7 @@ class LeaveManagementScreen extends GetView<LeaveManagementController> {
       showDragHandle: true,
       backgroundColor: LeaveColors.background,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (_) => const _ApplyLeaveSheet(),
     );
@@ -119,7 +119,7 @@ class _BalanceSummary extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(12.r),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -222,7 +222,7 @@ class _ActionTile extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(12.r),
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.all(12.w),
@@ -282,7 +282,7 @@ class _BalanceCard extends StatelessWidget {
                 height: 44.w,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
                   leaveTypeIcon(leave.leaveType),
@@ -451,7 +451,7 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
       showDragHandle: true,
       backgroundColor: LeaveColors.background,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
       ),
       builder: (_) => SafeArea(
         child: Column(
@@ -515,7 +515,7 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
   @override
   Widget build(BuildContext context) {
     final fieldBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(12.r),
       borderSide: const BorderSide(color: LeaveColors.border),
     );
 
@@ -651,7 +651,7 @@ class _ApplyLeaveSheetState extends State<_ApplyLeaveSheet> {
                       alpha: 0.6,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.r),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                   ),
                   onPressed: submitting ? null : _submit,
@@ -722,7 +722,7 @@ class _LeaveTypeOption extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(12.r),
           onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
@@ -731,7 +731,7 @@ class _LeaveTypeOption extends StatelessWidget {
               color: selected
                   ? color.withValues(alpha: 0.10)
                   : LeaveColors.surface,
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
                 color: selected ? color : LeaveColors.border,
                 width: selected ? 1.5 : 1,
@@ -789,13 +789,13 @@ class _DateField extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14.r),
+          borderRadius: BorderRadius.circular(12.r),
           onTap: onTap,
           child: Ink(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: LeaveColors.surface,
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
                 color: picked ? LeaveColors.accent : LeaveColors.border,
               ),
@@ -907,13 +907,13 @@ class _AttachmentField extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(12.r),
         onTap: onTap,
         child: Ink(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
           decoration: BoxDecoration(
             color: LeaveColors.surface,
-            borderRadius: BorderRadius.circular(14.r),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
               color: attached ? LeaveColors.accent : LeaveColors.border,
             ),

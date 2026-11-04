@@ -1,3 +1,4 @@
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,10 +22,10 @@ class AllAttendanceScreen extends StatelessWidget {
             child: Container(
               color: Colors.white,
               child: TabBar(
-                labelColor: const Color(0xFFB54A3A),
-                unselectedLabelColor: const Color(0xFF8B7D77),
-                indicatorColor: const Color(0xFFB54A3A),
-                labelStyle: GoogleFonts.manrope(
+                labelColor: AppColor.accent,
+                unselectedLabelColor: AppColor.textMuted,
+                indicatorColor: AppColor.accent,
+                labelStyle: GoogleFonts.inter(
                     fontSize: 13.sp, fontWeight: FontWeight.w700),
                 tabs: const [
                   Tab(text: 'All Attendance'),

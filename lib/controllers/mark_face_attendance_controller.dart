@@ -254,6 +254,7 @@ class _ApiResult {
   });
 }
 */
+import 'package:monteage_employee/utils/constants/color_constants.dart';
 
 import 'dart:convert';
 import 'dart:io';
@@ -315,7 +316,7 @@ class MarkFaceAttendanceController extends GetxController {
       "Success",
       msg,
       snackPosition: SnackPosition.TOP,
-      backgroundColor: const Color(0xFF16A34A),
+      backgroundColor: AppColor.success,
       colorText: Colors.white,
     );
   }
