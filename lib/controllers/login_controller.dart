@@ -140,7 +140,7 @@ class LoginController extends GetxController {
         Get.offAllNamed(AdminRoutes.faceRegister);
       }
 
-      
+
     } catch (e) {
       Get.snackbar(
         "Error",
@@ -187,8 +187,10 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:monteage_employee/infrastructure/utils/pref_manager.dart';
+import 'package:monteage_employee/models/login_employee_model.dart';
 import 'package:monteage_employee/models/login_response_model.dart';
 import 'package:monteage_employee/services/push_notification_service.dart';
+import 'package:monteage_employee/services/sales_api.dart';
 
 class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
@@ -200,8 +202,12 @@ class LoginController extends GetxController {
 
   final GetStorage box = GetStorage();
 
-  final TextEditingController userIdController = TextEditingController(text: "");
-  final TextEditingController passwordController = TextEditingController(text: "");
+  final TextEditingController userIdController = TextEditingController(
+    text: "",
+  );
+  final TextEditingController passwordController = TextEditingController(
+    text: "",
+  );
 
   Future<void> login() async {
     final userId = userIdController.text.trim();
@@ -219,16 +225,12 @@ class LoginController extends GetxController {
       final response = await http
           .post(
             Uri.parse(
-                "https://montempep.eduagentapp.com/api/MonteageEmpErp/AppEmpLogins/"),
+              "https://montempep.eduagentapp.com/api/MonteageEmpErp/AppEmpLogins/",
+            ),
             headers: {"Content-Type": "application/json"},
-            body: jsonEncode({
-              "EmployeeCode": userId,
-              "Password": password,
-            }),
-
+            body: jsonEncode({"EmployeeCode": userId, "Password": password}),
           )
           .timeout(const Duration(seconds: 15));
-
 
       debugPrint("STATUS: ${response.statusCode}");
       debugPrint("BODY: ${response.body}");
@@ -244,32 +246,43 @@ class LoginController extends GetxController {
       debugPrint("PARSED DATA: ${result.data}");
 
       if (response.statusCode == 200 && result.statuscode == 200) {
-        final emp = result.data;
+        // LoginEmployeeModel wraps the full response ({message, data, ...}),
+        // so parse it from the raw JSON rather than from result.data.
+        final emp = LoginEmployeeModel.fromJson(jsonData);
 
-        if (emp == null) {
+        if (emp.data == null) {
           debugPrint("FULL RESPONSE: $jsonData");
           Get.snackbar("Error", "User data missing from API");
           return;
         }
-      
 
         // Save data
-        box.write("EmployeeName", emp.employeeName);
-        box.write("employeeName", emp.employeeName);
+        box.write("EmployeeName", emp.data!.employeeName);
+        box.write("employeeName", emp.data!.employeeName);
         box.write("employee_data", jsonEncode(emp.toJson()));
-        box.write("EmployeeId", emp.employeeId);
-        box.write("employeeId", emp.employeeId);
-        box.write("employee_id", emp.employeeId);
-        box.write("employee_code", emp.employeeCode);
-        box.write("employee_email", emp.email);
-        box.write("Designation", emp.designation);
-        box.write("designation", emp.designation);
-        box.write("contact_no", emp.contactNo);
-        box.write("photo", emp.photo);
+        box.write("EmployeeId", emp.data!.employeeId);
+        box.write("employeeId", emp.data!.employeeId);
+        box.write("employee_id", emp.data!.employeeId);
+        box.write("employee_code", emp.data!.employeeCode);
+        box.write("employee_email", emp.data!.email);
+        box.write("Designation", emp.data!.designation);
+        box.write("designation", emp.data!.designation);
+        box.write("contact_no", emp.data!.contactNo);
+        box.write("empidcrm", emp.data!.cId);
+        box.write("photo", emp.data!.photo);
         box.write("is_logged_in", true);
 
         FirebaseMessaging.instance.subscribeToTopic(
-          PushNotificationService.topicForEmployee(emp.employeeId.toString()),
+          PushNotificationService.topicForEmployee(
+            emp.data!.employeeId.toString(),
+          ),
+        );
+
+        // Sales module lives on a separate CRM backend; link its account in
+        // the background with the same credentials. Never blocks login.
+        SalesApi.linkAccount(
+          mobile: emp.data!.contactNo.toString(),
+          password: password,
         );
 
         Get.offAllNamed("/main");
@@ -291,6 +304,7 @@ class LoginController extends GetxController {
       isLoading.value = false; // ✅ Always resets no matter what
     }
   }
+
   void logout() {
     final employeeId = box.read("EmployeeId")?.toString();
     if (employeeId != null && employeeId.isNotEmpty) {

@@ -24,14 +24,14 @@ class HomeScreen extends StatelessWidget {
 
   final HomeController controller = Get.put(HomeController());
   final EmployeeDataController employeeC =
-    Get.isRegistered<EmployeeDataController>()
-    ? Get.find<EmployeeDataController>()
-    : Get.put(EmployeeDataController());
+      Get.isRegistered<EmployeeDataController>()
+      ? Get.find<EmployeeDataController>()
+      : Get.put(EmployeeDataController());
   // Tagged so the Attendance History screen keeps its own controller and alerts.
   final AttendanceHistoryController historyC =
-    Get.isRegistered<AttendanceHistoryController>(tag: _dashboardTag)
-    ? Get.find<AttendanceHistoryController>(tag: _dashboardTag)
-    : Get.put(AttendanceHistoryController(silent: true), tag: _dashboardTag);
+      Get.isRegistered<AttendanceHistoryController>(tag: _dashboardTag)
+      ? Get.find<AttendanceHistoryController>(tag: _dashboardTag)
+      : Get.put(AttendanceHistoryController(silent: true), tag: _dashboardTag);
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   TaskController? get _taskC =>
@@ -135,9 +135,10 @@ class HomeScreen extends StatelessWidget {
   Widget _buildHeader() {
     return Obx(() {
       final employee = employeeC.employee.value;
-      final details = employee == null
+      final data = employee?.data;
+      final details = data == null
           ? 'Could not load your profile'
-          : '${employee.designation}  ·  ${employee.employeeCode}';
+          : '${data.designation}  ·  ${data.employeeCode}';
 
       return Padding(
         padding: EdgeInsets.fromLTRB(4.w, 2.h, 16.w, 0),
@@ -154,7 +155,7 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${_greeting()}, ${_firstName(employee?.employeeName)}',
+                    '${_greeting()}, ${_firstName(data?.employeeName)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
@@ -249,13 +250,14 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 16.h),
             Row(
               children: [
-                Expanded(child: _TimeItem(label: 'Check in', value: inTime)),
-                Expanded(child: _TimeItem(label: 'Check out', value: outTime)),
                 Expanded(
-                  child: _TimeItem(
-                    label: 'Hours',
-                    value: _workedHours(record),
-                  ),
+                  child: _TimeItem(label: 'Check in', value: inTime),
+                ),
+                Expanded(
+                  child: _TimeItem(label: 'Check out', value: outTime),
+                ),
+                Expanded(
+                  child: _TimeItem(label: 'Hours', value: _workedHours(record)),
                 ),
               ],
             ),
@@ -422,6 +424,14 @@ class HomeScreen extends StatelessWidget {
               onTap: () => Get.toNamed(AdminRoutes.crmHome),
             ),
           ],
+          if (employeeC.isSales || employeeC.hasSalesAccount) ...[
+            const Divider(height: 1),
+            _LinkRow(
+              icon: Icons.storefront_outlined,
+              title: 'Sales',
+              onTap: () => Get.toNamed(AdminRoutes.salesHome),
+            ),
+          ],
         ],
       ),
     );
@@ -441,7 +451,9 @@ class HomeScreen extends StatelessWidget {
 
   String? _formatTime(String? timestamp) {
     final parsed = DateTime.tryParse(timestamp ?? '');
-    return parsed == null ? null : DateFormat('h:mm a').format(parsed.toLocal());
+    return parsed == null
+        ? null
+        : DateFormat('h:mm a').format(parsed.toLocal());
   }
 
   String? _workedHours(Result? record) {
@@ -496,10 +508,7 @@ class _LiveClockState extends State<_LiveClock> {
         SizedBox(height: 2.h),
         Text(
           DateFormat('EEEE, d MMMM yyyy').format(_now),
-          style: GoogleFonts.inter(
-            fontSize: 13.sp,
-            color: AppColor.textMuted,
-          ),
+          style: GoogleFonts.inter(fontSize: 13.sp, color: AppColor.textMuted),
         ),
       ],
     );
@@ -535,7 +544,10 @@ class _PunchButton extends StatelessWidget {
         icon: Icon(icon, size: 22.sp),
         label: Text(
           label,
-          style: GoogleFonts.inter(fontSize: 17.sp, fontWeight: FontWeight.w700),
+          style: GoogleFonts.inter(
+            fontSize: 17.sp,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
     );

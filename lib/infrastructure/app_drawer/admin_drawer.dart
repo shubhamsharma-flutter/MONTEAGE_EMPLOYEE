@@ -19,8 +19,8 @@ class AdminDrawer extends StatefulWidget {
 class _AdminDrawerState extends State<AdminDrawer> {
   late final EmployeeDataController employeeC =
       Get.isRegistered<EmployeeDataController>()
-          ? Get.find<EmployeeDataController>()
-          : Get.put(EmployeeDataController());
+      ? Get.find<EmployeeDataController>()
+      : Get.put(EmployeeDataController());
 
   @override
   Widget build(BuildContext context) {
@@ -73,14 +73,14 @@ class _AdminDrawerState extends State<AdminDrawer> {
                   // ),
                   SizedBox(height: 10.h),
                   _DrawerNavItem(
-  title: 'Mark Attendance',
-  subtitle: 'Check in or check out with face & location',
-  icon: Icons.face_retouching_natural_rounded,
-  accent: AppColor.success,
-  isActive: currentRoute == AdminRoutes.attendance,
-  onTap: () => _openRoute(context, AdminRoutes.attendance),
-),
-SizedBox(height: 10.h),
+                    title: 'Mark Attendance',
+                    subtitle: 'Check in or check out with face & location',
+                    icon: Icons.face_retouching_natural_rounded,
+                    accent: AppColor.success,
+                    isActive: currentRoute == AdminRoutes.attendance,
+                    onTap: () => _openRoute(context, AdminRoutes.attendance),
+                  ),
+                  SizedBox(height: 10.h),
                   // _DrawerNavItem(
                   //   title: 'Mark Attendance',
                   //   subtitle: 'Face and location based check-in',
@@ -128,7 +128,8 @@ SizedBox(height: 10.h),
                       icon: Icons.person_add_rounded,
                       accent: AppColor.primary,
                       isActive: currentRoute == AdminRoutes.registerScreen,
-                      onTap: () => _openRoute(context, AdminRoutes.registerScreen),
+                      onTap: () =>
+                          _openRoute(context, AdminRoutes.registerScreen),
                     ),
                   ],
                   if (employeeC.isHrManager) ...[
@@ -138,8 +139,12 @@ SizedBox(height: 10.h),
                       subtitle: 'View attendance for all employees',
                       icon: Icons.people_rounded,
                       accent: const Color.fromARGB(255, 111, 233, 231),
-                      isActive: currentRoute == AdminRoutes.allEmployeeAttendance,
-                      onTap: () => _openRoute(context, AdminRoutes.allEmployeeAttendance),
+                      isActive:
+                          currentRoute == AdminRoutes.allEmployeeAttendance,
+                      onTap: () => _openRoute(
+                        context,
+                        AdminRoutes.allEmployeeAttendance,
+                      ),
                     ),
                   ],
                   // CRM is only for sales employees.
@@ -154,7 +159,18 @@ SizedBox(height: 10.h),
                       onTap: () => _openRoute(context, AdminRoutes.crmHome),
                     ),
                   ],
-                 SizedBox(height: 10.h),
+                  if (employeeC.isSales || employeeC.hasSalesAccount) ...[
+                    SizedBox(height: 10.h),
+                    _DrawerNavItem(
+                      title: 'Sales',
+                      subtitle: 'Visits & follow-ups',
+                      icon: Icons.storefront_rounded,
+                      accent: AppColor.accent,
+                      isActive: currentRoute.startsWith(AdminRoutes.salesHome),
+                      onTap: () => _openRoute(context, AdminRoutes.salesHome),
+                    ),
+                  ],
+                  SizedBox(height: 10.h),
                   // _DrawerNavItem(
                   //   title: 'Check Out',
                   //   subtitle: 'Finish the day with a verified exit',
@@ -235,9 +251,10 @@ SizedBox(height: 10.h),
   Widget _buildHeader(BuildContext context) {
     return Obx(() {
       final employee = employeeC.employee.value;
-      final name = employee?.employeeName ?? 'Monteage Employee';
-      final designation = employee?.designation ?? 'Attendance management workspace';
-      final employeeId = employee?.employeeId.toString() ?? 'Employee';
+      final name = employee?.data?.employeeName ?? 'Monteage Employee';
+      final designation =
+          employee?.data?.designation ?? 'Attendance management workspace';
+      final employeeId = employee?.data?.employeeId?.toString() ?? 'Employee';
 
       return Container(
         padding: EdgeInsets.all(18.w),
@@ -256,8 +273,10 @@ SizedBox(height: 10.h),
             Row(
               children: [
                 Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 8.h,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.14),
                     borderRadius: BorderRadius.circular(999.r),
@@ -265,8 +284,11 @@ SizedBox(height: 10.h),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.dashboard_customize_rounded,
-                          size: 14.sp, color: Colors.white),
+                      Icon(
+                        Icons.dashboard_customize_rounded,
+                        size: 14.sp,
+                        color: Colors.white,
+                      ),
                       SizedBox(width: 6.w),
                       Text(
                         'MONTEAGE',
@@ -289,8 +311,10 @@ SizedBox(height: 10.h),
                     onTap: () => employeeC.loadEmployee(),
                     child: Padding(
                       padding: EdgeInsets.all(10.w),
-                      child: const Icon(Icons.refresh_rounded,
-                          color: Colors.white),
+                      child: const Icon(
+                        Icons.refresh_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -367,13 +391,11 @@ SizedBox(height: 10.h),
               onTap: () => _openRoute(context, AdminRoutes.profile),
               borderRadius: BorderRadius.circular(12.r),
               child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12.r),
-                  border:
-                      Border.all(color: Colors.white.withOpacity(0.12)),
+                  border: Border.all(color: Colors.white.withOpacity(0.12)),
                 ),
                 child: Row(
                   children: [
@@ -387,8 +409,11 @@ SizedBox(height: 10.h),
                         ),
                       ),
                     ),
-                    Icon(Icons.arrow_forward_rounded,
-                        color: Colors.white, size: 18.sp),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 18.sp,
+                    ),
                   ],
                 ),
               ),
@@ -400,32 +425,32 @@ SizedBox(height: 10.h),
   }
 
   Future<void> _openRoute(BuildContext context, String route) async {
-  Navigator.of(context).pop();
-  await Future<void>.delayed(const Duration(milliseconds: 120));
+    Navigator.of(context).pop();
+    await Future<void>.delayed(const Duration(milliseconds: 120));
 
-  // For main tab routes — go to MainScreen with correct tab
-  if (route == AdminRoutes.mainScreen) {
-    Get.offAllNamed(AdminRoutes.mainScreen);
-    return;
-  }
-  if (route == AdminRoutes.task) {
-    Get.offAllNamed(AdminRoutes.mainScreen, arguments: {'tab': 1});
-    return;
-  }
-  if (route == AdminRoutes.profile) {
-    Get.offAllNamed(AdminRoutes.mainScreen, arguments: {'tab': 3});
-    return;
-  }
+    // For main tab routes — go to MainScreen with correct tab
+    if (route == AdminRoutes.mainScreen) {
+      Get.offAllNamed(AdminRoutes.mainScreen);
+      return;
+    }
+    if (route == AdminRoutes.task) {
+      Get.offAllNamed(AdminRoutes.mainScreen, arguments: {'tab': 1});
+      return;
+    }
+    if (route == AdminRoutes.profile) {
+      Get.offAllNamed(AdminRoutes.mainScreen, arguments: {'tab': 3});
+      return;
+    }
 
-  // For all other screens — just push normally
-  if (Get.currentRoute == route) return;
-  Get.toNamed(route);
-}
+    // For all other screens — just push normally
+    if (Get.currentRoute == route) return;
+    Get.toNamed(route);
+  }
 
   Future<void> _logout(BuildContext context) async {
     Navigator.of(context).pop();
     await PrefManager().clearPref();
-    
+
     // Clear all storage
     GetStorage().erase();
 
@@ -476,9 +501,7 @@ class _DrawerNavItem extends StatelessWidget {
             color: isActive ? accent.withOpacity(0.1) : Colors.white,
             borderRadius: BorderRadius.circular(12.r),
             border: Border.all(
-              color: isActive
-                  ? accent.withOpacity(0.35)
-                  : AppColor.border,
+              color: isActive ? accent.withOpacity(0.35) : AppColor.border,
               width: isActive ? 1.3 : 1,
             ),
             boxShadow: AppShadow.card,

@@ -43,6 +43,11 @@ import '../../screens/attendance_screen.dart';
 import '../../screens/calendar_screen.dart';
 import '../../bindings/crm_binding.dart';
 import '../../screens/crm_home_screen.dart';
+import '../../bindings/sales_binding.dart';
+import '../../screens/sales_home_screen.dart';
+import '../../screens/sales_lead_list_screen.dart';
+import '../../screens/sales_lead_detail_screen.dart';
+import '../../screens/sales_add_visit_screen.dart';
 
 class AdminRoutes {
   // ==================
@@ -71,6 +76,10 @@ class AdminRoutes {
   static const projects = '/projects';
   static const allEmployeeAttendance = '/all-employee-attendance';
   static const crmHome = '/crm-home';
+  static const salesHome = '/sales';
+  static const salesLeads = '/sales/leads';
+  static const salesLeadDetail = '/sales/lead';
+  static const salesAddVisit = '/sales/add-visit';
 
 
   // New Task Routes
@@ -257,6 +266,34 @@ GetPage(
   binding: CrmBinding(),
 ),
 
+// ---------- SALES ----------
+GetPage(
+  name: salesHome,
+  page: () => const SalesHomeScreen(),
+  transition: Transition.rightToLeft,
+  binding: SalesBinding(),
+),
+
+GetPage(
+  name: salesLeads,
+  page: () => const SalesLeadListScreen(),
+  transition: Transition.rightToLeft,
+  binding: SalesBinding(),
+),
+
+GetPage(
+  name: salesLeadDetail,
+  page: () => const SalesLeadDetailScreen(),
+  transition: Transition.rightToLeft,
+  binding: SalesLeadDetailBinding(),
+),
+
+GetPage(
+  name: salesAddVisit,
+  page: () => const SalesAddVisitScreen(),
+  transition: Transition.rightToLeft,
+  binding: SalesAddVisitBinding(),
+),
 
 
 
