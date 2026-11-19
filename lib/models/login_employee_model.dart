@@ -14,8 +14,8 @@ class LoginEmployeeModel {
   LoginEmployeeModel.fromJson(Map<String, dynamic> json) {
     message = json['message'];
     data = json['data'] != null ? new Data.fromJson(json['data']) : null;
-    statuscode = json['statuscode'];
-    totalCount = json['totalCount'];
+    statuscode = _toInt(json['statuscode']);
+    totalCount = _toInt(json['totalCount']);
   }
 
   Map<String, dynamic> toJson() {
@@ -138,57 +138,57 @@ class Data {
   });
 
   Data.fromJson(Map<String, dynamic> json) {
-    employeeId = json['EmployeeId'];
-    employeeId1 = json['EmployeeId1'];
-    employeeName = json['EmployeeName'];
-    employeeName1 = json['EmployeeName1'];
-    createBy = json['CreateBy'];
-    updateBy = json['UpdateBy'];
-    fatherName = json['FatherName'];
-    contactNo = json['ContactNo'];
-    dateOfBirth = json['DateOfBirth'];
-    joinDate = json['JoinDate'];
-    dateOfBirth1 = json['DateOfBirth1'];
-    joinDate1 = json['JoinDate1'];
-    gender = json['Gender'];
-    maritalStatus = json['MaritalStatus'];
-    bloodGroup = json['BloodGroup'];
-    email = json['Email'];
-    presentAddress = json['PresentAddress'];
-    permanentAddress = json['PermanentAddress'];
-    aadhaarNo = json['AadhaarNo'];
-    aadhaarPic = json['AadhaarPic'];
-    resume = json['Resume'];
-    photo = json['Photo'];
-    employeeCode = json['EmployeeCode'];
-    employeeCode1 = json['EmployeeCode1'];
-    password = json['Password'];
-    newPassword = json['NewPassword'];
-    confirmPassword = json['ConfirmPassword'];
-    oldPassword = json['OldPassword'];
-    createDate = json['CreateDate'];
-    updateDate = json['UpdateDate'];
-    action = json['Action'];
-    designationId = json['DesignationId'];
-    designation = json['Designation'];
-    roleId = json['RoleId'];
-    roleType = json['RoleType'];
-    assignBy = json['AssignBy'];
-    assignedStatus = json['AssignedStatus'];
-    assignedId = json['AssignedId'];
-    assignById = json['AssignById'];
-    totalProjects = json['TotalProjects'];
-    totalPending = json['TotalPending'];
-    totalComplete = json['TotalComplete'];
-    totalHold = json['TotalHold'];
-    totalRunning = json['TotalRunning'];
-    cId = json['CId'];
-    isActive = json['IsActive'];
-    createdDate = json['CreatedDate'];
-    date = json['Date'];
-    modifiedDate = json['ModifiedDate'];
-    createdby = json['Createdby'];
-    updatedby = json['Updatedby'];
+    employeeId = _toInt(json['EmployeeId']);
+    employeeId1 = _toStr(json['EmployeeId1']);
+    employeeName = _toStr(json['EmployeeName']);
+    employeeName1 = _toStr(json['EmployeeName1']);
+    createBy = _toStr(json['CreateBy']);
+    updateBy = _toStr(json['UpdateBy']);
+    fatherName = _toStr(json['FatherName']);
+    contactNo = _toStr(json['ContactNo']);
+    dateOfBirth = _toStr(json['DateOfBirth']);
+    joinDate = _toStr(json['JoinDate']);
+    dateOfBirth1 = _toStr(json['DateOfBirth1']);
+    joinDate1 = _toStr(json['JoinDate1']);
+    gender = _toStr(json['Gender']);
+    maritalStatus = _toStr(json['MaritalStatus']);
+    bloodGroup = _toStr(json['BloodGroup']);
+    email = _toStr(json['Email']);
+    presentAddress = _toStr(json['PresentAddress']);
+    permanentAddress = _toStr(json['PermanentAddress']);
+    aadhaarNo = _toStr(json['AadhaarNo']);
+    aadhaarPic = _toStr(json['AadhaarPic']);
+    resume = _toStr(json['Resume']);
+    photo = _toStr(json['Photo']);
+    employeeCode = _toStr(json['EmployeeCode']);
+    employeeCode1 = _toStr(json['EmployeeCode1']);
+    password = _toStr(json['Password']);
+    newPassword = _toStr(json['NewPassword']);
+    confirmPassword = _toStr(json['ConfirmPassword']);
+    oldPassword = _toStr(json['OldPassword']);
+    createDate = _toStr(json['CreateDate']);
+    updateDate = _toStr(json['UpdateDate']);
+    action = _toStr(json['Action']);
+    designationId = _toInt(json['DesignationId']);
+    designation = _toStr(json['Designation']);
+    roleId = _toInt(json['RoleId']);
+    roleType = _toStr(json['RoleType']);
+    assignBy = _toStr(json['AssignBy']);
+    assignedStatus = _toInt(json['AssignedStatus']);
+    assignedId = _toInt(json['AssignedId']);
+    assignById = _toInt(json['AssignById']);
+    totalProjects = _toInt(json['TotalProjects']);
+    totalPending = _toInt(json['TotalPending']);
+    totalComplete = _toInt(json['TotalComplete']);
+    totalHold = _toInt(json['TotalHold']);
+    totalRunning = _toInt(json['TotalRunning']);
+    cId = _toInt(json['CId']);
+    isActive = _toBool(json['IsActive']);
+    createdDate = _toStr(json['CreatedDate']);
+    date = _toStr(json['Date']);
+    modifiedDate = _toStr(json['ModifiedDate']);
+    createdby = _toInt(json['Createdby']);
+    updatedby = _toInt(json['Updatedby']);
   }
 
   Map<String, dynamic> toJson() {
@@ -246,4 +246,18 @@ class Data {
     data['Updatedby'] = this.updatedby;
     return data;
   }
+}
+
+// The API is inconsistent about types (e.g. EmployeeId can arrive as "12"),
+// so coerce instead of assigning directly.
+int? _toInt(dynamic v) => v is int ? v : int.tryParse(v?.toString() ?? '');
+
+String? _toStr(dynamic v) => v?.toString();
+
+bool? _toBool(dynamic v) {
+  if (v is bool) return v;
+  final s = v?.toString().toLowerCase();
+  if (s == 'true' || s == '1') return true;
+  if (s == 'false' || s == '0') return false;
+  return null;
 }

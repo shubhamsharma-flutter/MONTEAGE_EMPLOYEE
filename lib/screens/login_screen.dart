@@ -274,6 +274,7 @@ class _ModernButton extends StatelessWidget {
 */
 import 'package:monteage_employee/utils/constants/color_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -289,90 +290,342 @@ class LoginScreen extends StatelessWidget {
         ? Get.find<LoginController>()
         : Get.put(LoginController());
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: AppColor.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.fromLTRB(24.w, 48.h, 24.w, 24.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: AppColor.background,
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Stack(
             children: [
-              Image.asset(
-                "assets/images/monteage_logo.png",
-                height: 52.h,
-                fit: BoxFit.contain,
-              ),
-              SizedBox(height: 40.h),
-              Text(
-                "Sign in",
-                style: GoogleFonts.inter(
-                  fontSize: 26.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColor.textPrimary,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                "Monteage Corporate World",
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  color: AppColor.textMuted,
-                ),
-              ),
-              SizedBox(height: 28.h),
-              const AppFieldLabel("User ID"),
-              TextField(
-                controller: controller.userIdController,
-                keyboardType: TextInputType.text,
-                textInputAction: TextInputAction.next,
-                style: GoogleFonts.inter(
-                  fontSize: 15.sp,
-                  color: AppColor.textPrimary,
-                ),
-                decoration: const InputDecoration(
-                  hintText: "Enter your employee code",
-                  prefixIcon: Icon(Icons.person_outline_rounded),
-                ),
-              ),
-              SizedBox(height: 16.h),
-              const AppFieldLabel("Password"),
-              Obx(() => TextField(
-                controller: controller.passwordController,
-                obscureText: controller.isPasswordHidden.value,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => controller.login(),
-                style: GoogleFonts.inter(
-                  fontSize: 15.sp,
-                  color: AppColor.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  hintText: "Enter your password",
-                  prefixIcon: const Icon(Icons.lock_outline_rounded),
-                  suffixIcon: IconButton(
-                    tooltip: controller.isPasswordHidden.value
-                        ? "Show password"
-                        : "Hide password",
-                    onPressed: controller.togglePasswordVisibility,
-                    icon: Icon(
-                      controller.isPasswordHidden.value
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
+              const _BrandBackdrop(),
+              SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.fromLTRB(20.w, 32.h, 20.w, 24.h),
+                    child: ConstrainedBox(
+                      // Keeps the form a sensible width on tablets.
+                      constraints: const BoxConstraints(maxWidth: 440),
+                      child: Column(
+                        children: [
+                          const _BrandHeader(),
+                          SizedBox(height: 28.h),
+                          _LoginCard(controller: controller),
+                          SizedBox(height: 24.h),
+                          const _Footer(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              )),
-              SizedBox(height: 24.h),
-              Obx(() => AppPrimaryButton(
-                label: "Sign In",
-                isLoading: controller.isLoading.value,
-                onPressed: controller.isLoading.value ? null : controller.login,
-              )),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Navy gradient band behind the top half of the screen.
+class _BrandBackdrop extends StatelessWidget {
+  const _BrandBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      height: MediaQuery.of(context).size.height * 0.46,
+      child: Container(
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColor.primaryDark, AppColor.primary],
+          ),
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(32.r)),
+        ),
+        child: Stack(
+          children: [
+            // Soft decorative rings for depth.
+            Positioned(
+              top: -60.h,
+              right: -50.w,
+              child: _Ring(size: 200.w),
+            ),
+            Positioned(
+              bottom: -80.h,
+              left: -60.w,
+              child: _Ring(size: 220.w),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Ring extends StatelessWidget {
+  const _Ring({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+          width: 28,
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: AppColor.surface,
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 24,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Image.asset(
+            "assets/images/monteage_logo.png",
+            height: 44.h,
+            fit: BoxFit.contain,
+          ),
+        ),
+        SizedBox(height: 20.h),
+        Text(
+          "Employee Portal",
+          style: GoogleFonts.inter(
+            fontSize: 22.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: -0.2,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          "Monteage Corporate World",
+          style: GoogleFonts.inter(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.75),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LoginCard extends StatelessWidget {
+  const _LoginCard({required this.controller});
+
+  final LoginController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 24.h),
+      decoration: BoxDecoration(
+        color: AppColor.surface,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: AppColor.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x140F172A),
+            blurRadius: 32,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Sign in",
+              style: GoogleFonts.inter(
+                fontSize: 22.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColor.textPrimary,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              "Use your employee code and password to continue.",
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                height: 1.4,
+                color: AppColor.textMuted,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            const AppFieldLabel("Employee Code"),
+            TextField(
+              controller: controller.userIdController,
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.username],
+              autocorrect: false,
+              onChanged: (_) => controller.clearError(),
+              style: GoogleFonts.inter(
+                fontSize: 15.sp,
+                color: AppColor.textPrimary,
+              ),
+              decoration: const InputDecoration(
+                hintText: "Enter your employee code",
+                prefixIcon: Icon(Icons.badge_outlined),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            const AppFieldLabel("Password"),
+            Obx(() => TextField(
+                  controller: controller.passwordController,
+                  obscureText: controller.isPasswordHidden.value,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.password],
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  onChanged: (_) => controller.clearError(),
+                  onSubmitted: (_) => controller.login(),
+                  style: GoogleFonts.inter(
+                    fontSize: 15.sp,
+                    color: AppColor.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: "Enter your password",
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: controller.isPasswordHidden.value
+                          ? "Show password"
+                          : "Hide password",
+                      onPressed: controller.togglePasswordVisibility,
+                      icon: Icon(
+                        controller.isPasswordHidden.value
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                    ),
+                  ),
+                )),
+            Obx(() {
+              final error = controller.errorMessage.value;
+              return AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: error == null
+                    ? SizedBox(height: 24.h)
+                    : Padding(
+                        key: ValueKey(error),
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                        child: _ErrorBanner(message: error),
+                      ),
+              );
+            }),
+            Obx(() => AppPrimaryButton(
+                  label: "Sign In",
+                  icon: Icons.arrow_forward_rounded,
+                  isLoading: controller.isLoading.value,
+                  onPressed:
+                      controller.isLoading.value ? null : controller.login,
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: AppColor.dangerTint,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: AppColor.danger.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.error_outline_rounded,
+              size: 18.sp, color: AppColor.danger),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+                color: AppColor.danger,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Footer extends StatelessWidget {
+  const _Footer();
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = GoogleFonts.inter(fontSize: 12.sp, color: AppColor.textMuted);
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.verified_user_outlined,
+                size: 14.sp, color: AppColor.textMuted),
+            SizedBox(width: 6.w),
+            Text("Secure access for Monteage employees", style: muted),
+          ],
+        ),
+        SizedBox(height: 6.h),
+        Text(
+          "Trouble signing in? Contact your HR administrator.",
+          textAlign: TextAlign.center,
+          style: muted.copyWith(color: AppColor.textDisabled),
+        ),
+      ],
     );
   }
 }

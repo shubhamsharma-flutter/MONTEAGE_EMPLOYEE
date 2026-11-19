@@ -180,7 +180,9 @@ class LoginController extends GetxController {
     super.onClose();
   }
 }*/
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -196,8 +198,29 @@ class LoginController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isPasswordHidden = true.obs;
 
+  /// Shown inline above the Sign In button; cleared as soon as the user edits.
+  final RxnString errorMessage = RxnString();
+
   void togglePasswordVisibility() {
     isPasswordHidden.value = !isPasswordHidden.value;
+  }
+
+  void clearError() {
+    if (errorMessage.value != null) errorMessage.value = null;
+  }
+
+  String _friendlyError(Object e) {
+    if (e is TimeoutException) {
+      return "The server is taking too long to respond. Please try again.";
+    }
+    if (e is SocketException || e is http.ClientException) {
+      return "No internet connection. Check your network and try again.";
+    }
+    final message = e.toString().replaceFirst("Exception: ", "").trim();
+    if (message.isEmpty || message == "null") {
+      return "Invalid employee code or password.";
+    }
+    return message;
   }
 
   final GetStorage box = GetStorage();
@@ -214,11 +237,12 @@ class LoginController extends GetxController {
     final password = passwordController.text.trim();
 
     if (userId.isEmpty || password.isEmpty) {
-      Get.snackbar("Error", "Enter Employee Code & Password");
+      errorMessage.value = "Enter your employee code and password.";
       return;
     }
 
     if (isLoading.value) return;
+    errorMessage.value = null;
     isLoading.value = true;
 
     try {
@@ -252,7 +276,8 @@ class LoginController extends GetxController {
 
         if (emp.data == null) {
           debugPrint("FULL RESPONSE: $jsonData");
-          Get.snackbar("Error", "User data missing from API");
+          errorMessage.value =
+              "We couldn't load your profile. Please contact HR.";
           return;
         }
 
@@ -286,13 +311,7 @@ class LoginController extends GetxController {
       debugPrint("ERROR: $e");
       debugPrint("STACK TRACE: $stack");
 
-      Get.snackbar(
-        "Login Failed",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      errorMessage.value = _friendlyError(e);
     } finally {
       isLoading.value = false; // ✅ Always resets no matter what
     }

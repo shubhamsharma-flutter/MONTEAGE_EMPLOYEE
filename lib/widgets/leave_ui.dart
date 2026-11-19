@@ -138,8 +138,14 @@ class LeaveScaffold extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(title, style: LeaveText.heading(20)),
-              Text(subtitle, style: LeaveText.body(12)),
+              Text(title, style: LeaveText.heading(20, color: Colors.white)),
+              Text(
+                subtitle,
+                style: LeaveText.body(
+                  12,
+                  color: Colors.white.withValues(alpha: 0.8),
+                ),
+              ),
             ],
           ),
         ),

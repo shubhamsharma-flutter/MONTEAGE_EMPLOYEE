@@ -105,7 +105,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
                     title: 'Today\'s Attendance',
                     subtitle: 'Check your current shift status',
                     icon: Icons.fact_check_rounded,
-                    accent: const Color.fromARGB(255, 240, 118, 118),
+                    accent: AppColor.success,
                     isActive: currentRoute == AdminRoutes.attendanceToday,
                     onTap: () =>
                         _openRoute(context, AdminRoutes.attendanceToday),
@@ -115,7 +115,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
                     title: 'Leave/WFH Approval',
                     subtitle: 'Apply and track your leave and WFH requests',
                     icon: Icons.check_circle_rounded,
-                    accent: const Color.fromARGB(255, 221, 233, 111),
+                    accent: AppColor.warning,
                     isActive: currentRoute == AdminRoutes.leaveManagement,
                     onTap: () =>
                         _openRoute(context, AdminRoutes.leaveManagement),
@@ -138,7 +138,7 @@ class _AdminDrawerState extends State<AdminDrawer> {
                       title: 'All Employee Attendance',
                       subtitle: 'View attendance for all employees',
                       icon: Icons.people_rounded,
-                      accent: const Color.fromARGB(255, 111, 233, 231),
+                      accent: AppColor.accent,
                       isActive:
                           currentRoute == AdminRoutes.allEmployeeAttendance,
                       onTap: () => _openRoute(

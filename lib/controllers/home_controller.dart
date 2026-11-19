@@ -48,10 +48,7 @@ class HomeController extends GetxController {
           'Please update to get the latest features and fixes.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Later'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Later')),
           FilledButton(
             onPressed: () {
               Get.back();

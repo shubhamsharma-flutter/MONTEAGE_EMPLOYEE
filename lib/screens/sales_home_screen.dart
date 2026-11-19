@@ -18,14 +18,14 @@ class SalesHomeScreen extends GetView<SalesController> {
   static const _tiles = <(SalesListType, IconData, Color)>[
     (
       SalesListType.todayFollowups,
-      Icons.phone_callback_rounded,
+      Icons.phone_in_talk_rounded,
       AppColor.primary,
     ),
-    (SalesListType.todayVisits, Icons.place_rounded, AppColor.accent),
+    (SalesListType.todayVisits, Icons.location_on_rounded, AppColor.accent),
     (SalesListType.completedToday, Icons.task_alt_rounded, AppColor.success),
-    (SalesListType.nextDay, Icons.today_rounded, AppColor.warning),
+    (SalesListType.nextDay, Icons.event_rounded, AppColor.warning),
     (SalesListType.nextWeek, Icons.date_range_rounded, AppColor.info),
-    (SalesListType.allVisits, Icons.storefront_rounded, AppColor.textSecondary),
+    (SalesListType.allVisits, Icons.map_rounded, Color(0xFF7C3AED)),
   ];
 
   @override
@@ -75,16 +75,19 @@ class SalesHomeScreen extends GetView<SalesController> {
             padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 96.h),
             children: [
               _SummaryHeader(controller: controller),
-              SizedBox(height: 20.h),
-              const AppSectionTitle(title: 'Your lists'),
-              SizedBox(height: 10.h),
+              SizedBox(height: 24.h),
+              const AppSectionTitle(
+                title: 'Your lists',
+                subtitle: 'Tap a list to see its leads',
+              ),
+              SizedBox(height: 12.h),
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 mainAxisSpacing: 10.h,
                 crossAxisSpacing: 10.w,
-                childAspectRatio: 1.45,
+                childAspectRatio: 1.35,
                 children: [
                   for (final (type, icon, color) in _tiles)
                     _ListTile(
@@ -99,12 +102,14 @@ class SalesHomeScreen extends GetView<SalesController> {
               AppSectionTitle(
                 title: 'Today\'s follow-ups',
                 subtitle: 'Leads to contact today',
-                trailing: TextButton(
+                trailing: TextButton.icon(
                   onPressed: () => _openList(SalesListType.todayFollowups),
-                  child: const Text('See all'),
+                  iconAlignment: IconAlignment.end,
+                  icon: Icon(Icons.arrow_forward_rounded, size: 16.sp),
+                  label: const Text('See all'),
                 ),
               ),
-              SizedBox(height: 10.h),
+              SizedBox(height: 12.h),
               _TodayPreview(controller: controller),
             ],
           ),
@@ -117,6 +122,11 @@ class SalesHomeScreen extends GetView<SalesController> {
 void _openList(SalesListType type) =>
     Get.toNamed(AdminRoutes.salesLeads, arguments: type);
 
+String _countText(SalesListState state) {
+  if (!state.hasLoaded.value) return state.isLoading.value ? '…' : '-';
+  return state.leads.length.toString();
+}
+
 class _SummaryHeader extends StatelessWidget {
   const _SummaryHeader({required this.controller});
 
@@ -127,93 +137,205 @@ class _SummaryHeader extends StatelessWidget {
 
   Widget _build() {
     final name = controller.salesName.value.trim();
-    final followups = controller.stateOf(SalesListType.todayFollowups);
-    final visits = controller.stateOf(SalesListType.todayVisits);
-    final done = controller.stateOf(SalesListType.completedToday);
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Good morning'
+        : hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(18.w),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColor.primary, AppColor.primaryDark],
+          colors: [AppColor.primaryLight, AppColor.primary, AppColor.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(14.r),
+        borderRadius: BorderRadius.circular(18.r),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColor.primaryGlow,
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Text(
-            DateFormat('EEEE, dd MMM').format(DateTime.now()),
-            style: GoogleFonts.inter(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.8),
+          // Soft decorative circles.
+          Positioned(right: -40.w, top: -50.h, child: _circle(150.w)),
+          Positioned(right: 50.w, bottom: -70.h, child: _circle(120.w)),
+          Padding(
+            padding: EdgeInsets.all(18.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 3.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 11.sp,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 5.w),
+                                Text(
+                                  DateFormat('EEEE, dd MMM')
+                                      .format(DateTime.now()),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 10.h),
+                          Text(
+                            name.isEmpty
+                                ? greeting
+                                : '$greeting, ${name.split(' ').first}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 19.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Here\'s your sales day at a glance',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5.sp,
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 48.w,
+                      height: 48.w,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                      child: Icon(
+                        Icons.insights_rounded,
+                        color: Colors.white,
+                        size: 26.sp,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 18.h),
+                Row(
+                  children: [
+                    _HeaderStat(
+                      icon: Icons.phone_in_talk_rounded,
+                      label: 'Follow-ups',
+                      state: controller.stateOf(SalesListType.todayFollowups),
+                    ),
+                    SizedBox(width: 8.w),
+                    _HeaderStat(
+                      icon: Icons.location_on_rounded,
+                      label: 'Visits today',
+                      state: controller.stateOf(SalesListType.todayVisits),
+                    ),
+                    SizedBox(width: 8.w),
+                    _HeaderStat(
+                      icon: Icons.task_alt_rounded,
+                      label: 'Completed',
+                      state: controller.stateOf(SalesListType.completedToday),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            name.isEmpty
-                ? 'Your sales day'
-                : 'Hi ${name.split(' ').first}, here\'s your day',
-            style: GoogleFonts.inter(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              _HeaderStat(label: 'Follow-ups due', state: followups),
-              _HeaderStat(label: 'Visits today', state: visits),
-              _HeaderStat(label: 'Completed', state: done),
-            ],
           ),
         ],
       ),
     );
   }
+
+  Widget _circle(double size) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: Colors.white.withValues(alpha: 0.06),
+    ),
+  );
 }
 
 class _HeaderStat extends StatelessWidget {
-  const _HeaderStat({required this.label, required this.state});
+  const _HeaderStat({
+    required this.icon,
+    required this.label,
+    required this.state,
+  });
 
+  final IconData icon;
   final String label;
   final SalesListState state;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _countText(state),
-            style: GoogleFonts.inter(
-              fontSize: 22.sp,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+      child: Container(
+        padding: EdgeInsets.all(10.w),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 16.sp, color: Colors.white.withValues(alpha: 0.9)),
+            SizedBox(height: 6.h),
+            Text(
+              _countText(state),
+              style: GoogleFonts.inter(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
-          ),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11.5.sp,
-              color: Colors.white.withValues(alpha: 0.85),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 11.sp,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
-
-String _countText(SalesListState state) {
-  if (!state.hasLoaded.value) return state.isLoading.value ? '…' : '-';
-  return state.leads.length.toString();
 }
 
 class _ListTile extends StatelessWidget {
@@ -243,14 +365,14 @@ class _ListTile extends StatelessWidget {
                 icon: icon,
                 color: color,
                 background: color.withValues(alpha: 0.10),
-                size: 36,
+                size: 38,
               ),
               const Spacer(),
               Obx(
                 () => Text(
                   _countText(state),
                   style: GoogleFonts.inter(
-                    fontSize: 20.sp,
+                    fontSize: 22.sp,
                     fontWeight: FontWeight.w800,
                     color: AppColor.textPrimary,
                   ),
@@ -259,15 +381,27 @@ class _ListTile extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          Text(
-            type.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              fontSize: 13.5.sp,
-              fontWeight: FontWeight.w600,
-              color: AppColor.textPrimary,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  type.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 13.sp,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20.sp,
+                color: AppColor.textDisabled,
+              ),
+            ],
           ),
         ],
       ),
@@ -300,9 +434,10 @@ class _TodayPreview extends StatelessWidget {
     }
     if (state.leads.isEmpty) {
       return const AppMessageState(
-        icon: Icons.event_available_rounded,
+        icon: Icons.celebration_rounded,
         title: 'No follow-ups today',
         message: 'You\'re all caught up. Add a visit to start a new lead.',
+        color: AppColor.success,
       );
     }
     return Column(
