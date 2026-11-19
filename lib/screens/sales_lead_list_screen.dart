@@ -50,8 +50,8 @@ class _SalesLeadListScreenState extends State<SalesLeadListScreen> {
     return SalesScaffold(
       title: type.title,
       subtitle: 'Pull down to refresh',
-      floatingActionButton: type == SalesListType.todayVisits ||
-              type == SalesListType.allVisits
+      floatingActionButton:
+          type == SalesListType.todayVisits || type == SalesListType.allVisits
           ? FloatingActionButton.extended(
               onPressed: () => Get.toNamed(AdminRoutes.salesAddVisit),
               icon: const Icon(Icons.add_location_alt_rounded),

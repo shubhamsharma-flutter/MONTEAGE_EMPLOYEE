@@ -315,8 +315,11 @@ Future<void> _openUrl(String url) async {
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
-void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
-    {bool isPM = false}) {
+void _showProjectDetailsDialog(
+  BuildContext context,
+  ProjectModel project, {
+  bool isPM = false,
+}) {
   final people = project.assignedTo
       .split(',')
       .map((e) => e.trim())
@@ -390,20 +393,23 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
                   children: [
                     if (project.projectDate.isNotEmpty)
                       _MetaChip(
-                          icon: Icons.event_rounded,
-                          label: 'Started',
-                          value: _fmtDate(project.projectDate)),
+                        icon: Icons.event_rounded,
+                        label: 'Started',
+                        value: _fmtDate(project.projectDate),
+                      ),
                     if (project.assignDate.isNotEmpty)
                       _MetaChip(
-                          icon: Icons.calendar_today_rounded,
-                          label: 'Assigned',
-                          value: _fmtDate(project.assignDate)),
+                        icon: Icons.calendar_today_rounded,
+                        label: 'Assigned',
+                        value: _fmtDate(project.assignDate),
+                      ),
                     if (project.deliveryDate.isNotEmpty)
                       _MetaChip(
-                          icon: Icons.flag_rounded,
-                          label: 'Due',
-                          value: _fmtDate(project.deliveryDate),
-                          highlight: true),
+                        icon: Icons.flag_rounded,
+                        label: 'Due',
+                        value: _fmtDate(project.deliveryDate),
+                        highlight: true,
+                      ),
                   ],
                 ),
               ],
@@ -571,9 +577,10 @@ void _showProjectDetailsDialog(BuildContext context, ProjectModel project,
 // client info on a task at all, so nothing to hide here. ────────────────────
 
 void _showTaskDetailsDialog(BuildContext context, given.Data task) {
-  final service = [task.productService, task.subProductService]
-      .where((s) => s != null && s.toString().trim().isNotEmpty)
-      .join(' • ');
+  final service = [
+    task.productService,
+    task.subProductService,
+  ].where((s) => s != null && s.toString().trim().isNotEmpty).join(' • ');
   final title = task.projectName ?? task.taskTittle ?? 'Task';
   final status = task.aStatus ?? '';
 
@@ -595,26 +602,34 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(title,
-                        style: GoogleFonts.inter(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w700,
-                            color: _kTextPrimary)),
+                    child: Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: _kTextPrimary,
+                      ),
+                    ),
                   ),
                   if (status.isNotEmpty) ...[
                     SizedBox(width: 8.w),
                     Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: _statusColor(status).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
-                      child: Text(status,
-                          style: GoogleFonts.inter(
-                              fontSize: 10.5.sp,
-                              fontWeight: FontWeight.w700,
-                              color: _statusColor(status))),
+                      child: Text(
+                        status,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: _statusColor(status),
+                        ),
+                      ),
                     ),
                   ],
                 ],
@@ -628,15 +643,17 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                   children: [
                     if ((task.allocateDate ?? '').isNotEmpty)
                       _MetaChip(
-                          icon: Icons.calendar_today_rounded,
-                          label: 'Start',
-                          value: _fmtDate(task.allocateDate)),
+                        icon: Icons.calendar_today_rounded,
+                        label: 'Start',
+                        value: _fmtDate(task.allocateDate),
+                      ),
                     if ((task.endDeliveryEstimateDate ?? '').isNotEmpty)
                       _MetaChip(
-                          icon: Icons.flag_rounded,
-                          label: 'Delivery',
-                          value: _fmtDate(task.endDeliveryEstimateDate),
-                          highlight: true),
+                        icon: Icons.flag_rounded,
+                        label: 'Delivery',
+                        value: _fmtDate(task.endDeliveryEstimateDate),
+                        highlight: true,
+                      ),
                   ],
                 ),
               ],
@@ -649,18 +666,25 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                       if ((task.proDescription ?? '').isNotEmpty)
                         _DetailSection(
                           label: 'Description',
-                          child: Text(task.proDescription!,
-                              style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  color: _kTextSecondary,
-                                  height: 1.5)),
+                          child: Text(
+                            task.proDescription!,
+                            style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              color: _kTextSecondary,
+                              height: 1.5,
+                            ),
+                          ),
                         ),
                       if (service.isNotEmpty)
                         _DetailSection(
                           label: 'Service',
-                          child: Text(service,
-                              style: GoogleFonts.inter(
-                                  fontSize: 13.sp, color: _kTextSecondary)),
+                          child: Text(
+                            service,
+                            style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              color: _kTextSecondary,
+                            ),
+                          ),
                         ),
                       if ((task.priority ?? '').isNotEmpty ||
                           (task.recurrence ?? '').isNotEmpty)
@@ -672,14 +696,16 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                             children: [
                               if ((task.priority ?? '').isNotEmpty)
                                 _MetaChip(
-                                    icon: Icons.flag_outlined,
-                                    label: 'Priority',
-                                    value: task.priority!),
+                                  icon: Icons.flag_outlined,
+                                  label: 'Priority',
+                                  value: task.priority!,
+                                ),
                               if ((task.recurrence ?? '').isNotEmpty)
                                 _MetaChip(
-                                    icon: Icons.repeat_rounded,
-                                    label: 'Recurrence',
-                                    value: task.recurrence!),
+                                  icon: Icons.repeat_rounded,
+                                  label: 'Recurrence',
+                                  value: task.recurrence!,
+                                ),
                             ],
                           ),
                         ),
@@ -692,11 +718,14 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                           task.progress.toString().trim().isNotEmpty)
                         _DetailSection(
                           label: 'Progress',
-                          child: Text('${task.progress}%',
-                              style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: _kTextSecondary)),
+                          child: Text(
+                            '${task.progress}%',
+                            style: GoogleFonts.inter(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w700,
+                              color: _kTextSecondary,
+                            ),
+                          ),
                         ),
                       if ((task.uploadAllotFile ?? '').isNotEmpty)
                         _DetailSection(
@@ -705,9 +734,10 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                             icon: Icons.attach_file_rounded,
                             label: task.uploadAllotFile!,
                             onTap: () => _openUrl(
-                                task.uploadAllotFile!.startsWith('http')
-                                    ? task.uploadAllotFile!
-                                    : 'https://montempep.eduagentapp.com/${task.uploadAllotFile}'),
+                              task.uploadAllotFile!.startsWith('http')
+                                  ? task.uploadAllotFile!
+                                  : 'https://montempep.eduagentapp.com/${task.uploadAllotFile}',
+                            ),
                           ),
                         ),
                     ],
@@ -719,9 +749,13 @@ void _showTaskDetailsDialog(BuildContext context, given.Data task) {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text('Close',
-                      style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w700, color: _kBrand)),
+                  child: Text(
+                    'Close',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w700,
+                      color: _kBrand,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1010,103 +1044,105 @@ class TaskScreen extends GetView<TaskController> {
         body: AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle.light,
           child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverToBoxAdapter(
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [_kBrand, _kBrandDark],
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [_kBrand, _kBrandDark],
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(16),
+                    ),
                   ),
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(16),
-                  ),
-                ),
-                padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 40.w,
-                            height: 40.w,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.16),
-                              borderRadius: BorderRadius.circular(12.r),
+                  padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 16.h),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 40.w,
+                              height: 40.w,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Icon(
+                                Icons.task_alt_rounded,
+                                color: Colors.white,
+                                size: 22.sp,
+                              ),
                             ),
-                            child: Icon(
-                              Icons.task_alt_rounded,
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Task Management',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2.h),
+                                  Text(
+                                    'Track and manage your work',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.75,
+                                      ),
+                                      fontSize: 12.sp,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 18.h),
+                        Container(
+                          height: 46.h,
+                          padding: EdgeInsets.all(4.w),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: TabBar(
+                            indicator: BoxDecoration(
                               color: Colors.white,
-                              size: 22.sp,
+                              borderRadius: BorderRadius.circular(11.r),
                             ),
-                          ),
-                          SizedBox(width: 12.w),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Task Management',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontSize: 18.sp,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                SizedBox(height: 2.h),
-                                Text(
-                                  'Track and manage your work',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white.withValues(alpha: 0.75),
-                                    fontSize: 12.sp,
-                                  ),
-                                ),
-                              ],
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            dividerColor: Colors.transparent,
+                            splashBorderRadius: BorderRadius.circular(11.r),
+                            labelColor: _kBrand,
+                            unselectedLabelColor: Colors.white,
+                            labelStyle: GoogleFonts.inter(
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w700,
                             ),
+                            unselectedLabelStyle: GoogleFonts.inter(
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            tabs: tabs,
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 18.h),
-                      Container(
-                        height: 46.h,
-                        padding: EdgeInsets.all(4.w),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(12.r),
                         ),
-                        child: TabBar(
-                          indicator: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(11.r),
-                          ),
-                          indicatorSize: TabBarIndicatorSize.tab,
-                          dividerColor: Colors.transparent,
-                          splashBorderRadius: BorderRadius.circular(11.r),
-                          labelColor: _kBrand,
-                          unselectedLabelColor: Colors.white,
-                          labelStyle: GoogleFonts.inter(
-                            fontSize: 12.5.sp,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          unselectedLabelStyle: GoogleFonts.inter(
-                            fontSize: 12.5.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          tabs: tabs,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-          body: TabBarView(children: tabViews),
-        ),
+            ],
+            body: TabBarView(children: tabViews),
+          ),
         ),
       ),
     );

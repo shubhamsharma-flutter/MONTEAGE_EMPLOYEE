@@ -39,7 +39,7 @@ class SalesAddVisitScreen extends GetView<SalesAddVisitController> {
             const AppSectionTitle(title: 'Visit'),
             SizedBox(height: 12.h),
             const AppFieldLabel('Visit type *'),
-            Obx(() => _VisitTypeField(controller: controller)),
+            _VisitTypeField(controller: controller),
             SizedBox(height: 14.h),
             _field(
               label: 'Organization name *',
@@ -156,7 +156,9 @@ class _VisitTypeField extends StatelessWidget {
   final SalesAddVisitController controller;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Obx(_build);
+
+  Widget _build() {
     if (controller.isLoadingTypes.value) {
       return const InputDecorator(
         decoration: InputDecoration(prefixIcon: Icon(Icons.category_outlined)),

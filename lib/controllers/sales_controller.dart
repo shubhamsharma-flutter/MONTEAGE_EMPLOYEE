@@ -41,17 +41,15 @@ class SalesController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    cId.value = SalesApi.storedCId();
-    salesName.value = (GetStorage().read(SalesApi.nameKey) ?? '').toString();
-    refreshAll();
+    relink();
   }
 
   SalesListState stateOf(SalesListType type) => lists[type]!;
 
-  /// Re-reads the stored sales account, which login links in the background.
+  /// Re-reads the CRM id saved at login, then reloads every list.
   Future<void> relink() {
     cId.value = SalesApi.storedCId();
-    salesName.value = (GetStorage().read(SalesApi.nameKey) ?? '').toString();
+    salesName.value = (GetStorage().read("EmployeeName") ?? '').toString();
     return refreshAll();
   }
 

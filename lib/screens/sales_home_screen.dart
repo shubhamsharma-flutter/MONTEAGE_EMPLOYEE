@@ -16,7 +16,11 @@ class SalesHomeScreen extends GetView<SalesController> {
   const SalesHomeScreen({super.key});
 
   static const _tiles = <(SalesListType, IconData, Color)>[
-    (SalesListType.todayFollowups, Icons.phone_callback_rounded, AppColor.primary),
+    (
+      SalesListType.todayFollowups,
+      Icons.phone_callback_rounded,
+      AppColor.primary,
+    ),
     (SalesListType.todayVisits, Icons.place_rounded, AppColor.accent),
     (SalesListType.completedToday, Icons.task_alt_rounded, AppColor.success),
     (SalesListType.nextDay, Icons.today_rounded, AppColor.warning),
@@ -36,13 +40,15 @@ class SalesHomeScreen extends GetView<SalesController> {
           onPressed: controller.relink,
         ),
       ],
-      floatingActionButton: Obx(() => controller.isLinked
-          ? FloatingActionButton.extended(
-              onPressed: () => Get.toNamed(AdminRoutes.salesAddVisit),
-              icon: const Icon(Icons.add_location_alt_rounded),
-              label: const Text('Add Visit'),
-            )
-          : const SizedBox.shrink()),
+      floatingActionButton: Obx(
+        () => controller.isLinked
+            ? FloatingActionButton.extended(
+                onPressed: () => Get.toNamed(AdminRoutes.salesAddVisit),
+                icon: const Icon(Icons.add_location_alt_rounded),
+                label: const Text('Add Visit'),
+              )
+            : const SizedBox.shrink(),
+      ),
       body: Obx(() {
         if (!controller.isLinked) {
           return ListView(
@@ -52,10 +58,9 @@ class SalesHomeScreen extends GetView<SalesController> {
                 icon: Icons.link_off_rounded,
                 title: 'Sales account not linked',
                 message:
-                    'Your sales account is linked when you sign in, using your '
-                    'registered mobile number and password. Log out and sign in '
-                    'again. If it still does not appear, ask your admin to '
-                    'create a sales account for your mobile number.',
+                    'Your employee profile has no CRM id yet. Ask your admin '
+                    'to link your sales account, then log out and sign in '
+                    'again.',
                 actionLabel: 'Check again',
                 onAction: controller.relink,
                 color: AppColor.warning,
@@ -150,7 +155,9 @@ class _SummaryHeader extends StatelessWidget {
           ),
           SizedBox(height: 4.h),
           Text(
-            name.isEmpty ? 'Your sales day' : 'Hi ${name.split(' ').first}, here\'s your day',
+            name.isEmpty
+                ? 'Your sales day'
+                : 'Hi ${name.split(' ').first}, here\'s your day',
             style: GoogleFonts.inter(
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
@@ -239,14 +246,16 @@ class _ListTile extends StatelessWidget {
                 size: 36,
               ),
               const Spacer(),
-              Obx(() => Text(
-                    _countText(state),
-                    style: GoogleFonts.inter(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColor.textPrimary,
-                    ),
-                  )),
+              Obx(
+                () => Text(
+                  _countText(state),
+                  style: GoogleFonts.inter(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColor.textPrimary,
+                  ),
+                ),
+              ),
             ],
           ),
           const Spacer(),

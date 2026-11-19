@@ -176,13 +176,13 @@ class AppPrimaryButton extends StatelessWidget {
               ),
             )
           : icon == null
-              ? FilledButton(onPressed: onPressed, style: style, child: text)
-              : FilledButton.icon(
-                  onPressed: onPressed,
-                  style: style,
-                  icon: Icon(icon, size: 20.sp),
-                  label: text,
-                ),
+          ? FilledButton(onPressed: onPressed, style: style, child: text)
+          : FilledButton.icon(
+              onPressed: onPressed,
+              style: style,
+              icon: Icon(icon, size: 20.sp),
+              label: text,
+            ),
     );
   }
 }
@@ -252,7 +252,11 @@ class AppMessageState extends StatelessWidget {
 }
 
 class AppNavItem {
-  const AppNavItem({required this.icon, required this.label, required this.onTap});
+  const AppNavItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;

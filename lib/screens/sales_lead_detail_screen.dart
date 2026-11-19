@@ -210,11 +210,11 @@ class _DetailsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget call(String number) => IconButton(
-          tooltip: 'Call $number',
-          visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.call_rounded, size: 18.sp, color: AppColor.primary),
-          onPressed: () => callSalesNumber(number),
-        );
+      tooltip: 'Call $number',
+      visualDensity: VisualDensity.compact,
+      icon: Icon(Icons.call_rounded, size: 18.sp, color: AppColor.primary),
+      onPressed: () => callSalesNumber(number),
+    );
 
     final rows = <Widget>[
       SalesInfoRow(
@@ -254,11 +254,11 @@ class _DetailsCard extends StatelessWidget {
           value: lead.currentAddress,
           maxLines: 4,
         ),
-      SalesInfoRow(
-        icon: Icons.event_outlined,
-        label: 'Next follow-up',
-        value: formatSalesDate(lead.followupDate),
-      ),
+      // SalesInfoRow(
+      //   icon: Icons.event_outlined,
+      //   label: 'Next follow-up',
+      //   value: formatSalesDate(lead.followupDate),
+      // ),
       if (lead.updateDate.isNotEmpty || lead.createDate.isNotEmpty)
         SalesInfoRow(
           icon: Icons.update_rounded,
@@ -317,9 +317,7 @@ class _HistoryTile extends StatelessWidget {
                   ),
                 ),
                 if (!isLast)
-                  Expanded(
-                    child: Container(width: 2, color: AppColor.border),
-                  ),
+                  Expanded(child: Container(width: 2, color: AppColor.border)),
               ],
             ),
           ),

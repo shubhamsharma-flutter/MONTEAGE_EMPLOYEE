@@ -31,52 +31,32 @@ enum SalesListType {
   final String endpoint;
 }
 
-/// Client for the sales CRM backend. It is a separate system from the
-/// employee ERP: it identifies the salesperson by the `CId` returned from
-/// SalesLogins, which is stored under [cIdKey] when the employee logs in.
+/// Client for the sales CRM backend. It identifies the salesperson by the
+/// `CId` from the employee login response, stored under [cIdKey].
 class SalesApi {
   static const String _baseUrl =
       'https://montcrm.eduagentapp.com/api/EducationCRM';
   static const Duration _timeout = Duration(seconds: 20);
 
-  static const String cIdKey = 'sales_cid';
-  static const String nameKey = 'sales_name';
+  static const String cIdKey = 'empidcrm';
 
-  static String storedCId() =>
-      (GetStorage().read(cIdKey) ?? '').toString().trim();
+  /// The employee's CRM id, or '' if they have none (null or 0).
+  static String storedCId() {
+    final box = GetStorage();
+    var cId = box.read(cIdKey);
 
-  /// Signs in to the sales CRM with the employee's mobile number and the
-  /// password they just used for the employee app, and stores the sales
-  /// CId. Returns false (and stores nothing) if no matching sales account
-  /// exists, so callers can ignore failures.
-  static Future<bool> linkAccount({
-    required String mobile,
-    required String password,
-  }) async {
-    // ContactNo may carry a +91 prefix or spaces; sales logins use 10 digits.
-    var digits = mobile.replaceAll(RegExp(r'\D'), '');
-    if (digits.length > 10) digits = digits.substring(digits.length - 10);
-    if (digits.isEmpty || password.isEmpty) return false;
-    try {
-      final body = await _post('SalesLogins', {
-        'Mobile': digits,
-        'Password': password,
-      });
-      final data = body['data'];
-      final cId = data is Map ? (data['CId'] ?? '').toString().trim() : '';
-      if (cId.isEmpty || cId == '0') return false;
-
-      final box = GetStorage();
-      await box.write(cIdKey, cId);
-      await box.write(
-        nameKey,
-        '${data['FirstName'] ?? ''} ${data['LastName'] ?? ''}'.trim(),
-      );
-      return true;
-    } catch (e) {
-      debugPrint('Sales account link failed: $e');
-      return false;
+    // Sessions from before cIdKey was stored still have it in employee_data.
+    if (cId == null) {
+      try {
+        final raw = box.read('employee_data');
+        final Map<String, dynamic> json = raw is String ? jsonDecode(raw) : {};
+        final data = json['data'];
+        cId = data is Map ? data['CId'] : json['CId'];
+      } catch (_) {}
     }
+
+    final value = (cId ?? '').toString().trim();
+    return value == '0' ? '' : value;
   }
 
   static Future<List<SalesLead>> fetchLeads(
@@ -119,8 +99,9 @@ class SalesApi {
   // ---------------------------------------------------------------------------
 
   static Future<Map<String, dynamic>> _get(String path) {
-    return _send(() => http.get(
-          Uri.parse('$_baseUrl/$path'),
+    final url = '$_baseUrl/$path';
+    return _send('GET', url, null, () => http.get(
+          Uri.parse(url),
           headers: const {'Accept': 'application/json'},
         ));
   }
@@ -129,8 +110,9 @@ class SalesApi {
     String path,
     Map<String, dynamic> payload,
   ) {
-    return _send(() => http.post(
-          Uri.parse('$_baseUrl/$path'),
+    final url = '$_baseUrl/$path';
+    return _send('POST', url, payload, () => http.post(
+          Uri.parse(url),
           headers: const {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -140,16 +122,24 @@ class SalesApi {
   }
 
   static Future<Map<String, dynamic>> _send(
+    String method,
+    String url,
+    Map<String, dynamic>? payload,
     Future<http.Response> Function() request,
   ) async {
+    _log('➡️ $method $url', payload);
+    final stopwatch = Stopwatch()..start();
+
     final http.Response response;
     try {
       response = await request().timeout(_timeout);
-    } on SocketException {
+    } on SocketException catch (e) {
+      _log('❌ $method $url — no connection: $e');
       throw const SalesApiException(
         'No internet connection. Check your network and try again.',
       );
     } on TimeoutException {
+      _log('❌ $method $url — timed out after ${_timeout.inSeconds}s');
       throw const SalesApiException(
         'The server took too long to respond. Please try again.',
       );
@@ -161,6 +151,13 @@ class SalesApi {
       if (decoded is Map<String, dynamic>) body = decoded;
     } catch (_) {}
 
+    final count = body?['data'] is List ? ' (${body!['data'].length} items)' : '';
+    _log(
+      '⬅️ ${response.statusCode} $method $url '
+      '[${stopwatch.elapsedMilliseconds} ms]$count',
+      body ?? response.body,
+    );
+
     if (response.statusCode == 200 && body != null) return body;
 
     // "No records" comes back as 404 with an empty data field.
@@ -168,10 +165,24 @@ class SalesApi {
       return body;
     }
 
-    debugPrint('Sales API ${response.statusCode}: ${response.body}');
     throw SalesApiException(
       _message(body, 'Server error (${response.statusCode}). Please try again.'),
     );
+  }
+
+  /// Prints a request/response to the debug console (debug builds only).
+  /// Long JSON is printed line by line so logcat does not cut it off.
+  static void _log(String title, [Object? data]) {
+    if (!kDebugMode) return;
+    debugPrint('[SalesApi] $title');
+    if (data == null) return;
+
+    final text = data is String
+        ? data
+        : const JsonEncoder.withIndent('  ').convert(data);
+    for (final line in const LineSplitter().convert(text)) {
+      debugPrint(line, wrapWidth: 800);
+    }
   }
 
   static List<Map<String, dynamic>> _list(Map<String, dynamic> body) {

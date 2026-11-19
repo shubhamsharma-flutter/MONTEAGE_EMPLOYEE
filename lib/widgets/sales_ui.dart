@@ -25,8 +25,9 @@ DateTime? parseSalesDate(String raw) {
 String formatSalesDate(String raw, {bool withTime = true}) {
   final date = parseSalesDate(raw);
   if (date == null) return raw.trim().isEmpty ? '-' : raw.trim();
-  return DateFormat(withTime ? 'dd MMM yyyy, h:mm a' : 'dd MMM yyyy')
-      .format(date);
+  return DateFormat(
+    withTime ? 'dd MMM yyyy, h:mm a' : 'dd MMM yyyy',
+  ).format(date);
 }
 
 Color salesStatusColor(String action) {
@@ -51,8 +52,11 @@ Color salesStatusColor(String action) {
 Future<void> _launch(Uri uri) async {
   final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!ok) {
-    Get.snackbar('Not available', 'No app found to open this.',
-        snackPosition: SnackPosition.BOTTOM);
+    Get.snackbar(
+      'Not available',
+      'No app found to open this.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
 }
 
@@ -62,8 +66,11 @@ void callSalesNumber(String number) =>
 void emailSalesContact(String email) =>
     _launch(Uri(scheme: 'mailto', path: email.trim()));
 
-void openSalesLocation(SalesLead lead) => _launch(Uri.parse(
-    'https://www.google.com/maps/search/?api=1&query=${lead.latitude},${lead.longitude}'));
+void openSalesLocation(SalesLead lead) => _launch(
+  Uri.parse(
+    'https://www.google.com/maps/search/?api=1&query=${lead.latitude},${lead.longitude}',
+  ),
+);
 
 // ---------------------------------------------------------------------------
 // Layout pieces
@@ -298,7 +305,8 @@ class SalesLeadCard extends StatelessWidget {
                 ],
                 SalesInfoRow(
                   icon: Icons.event_outlined,
-                  value: 'Follow-up: ${formatSalesDate(lead.followupDate)}',
+                  value:
+                      'Last Update Date: ${formatSalesDate(lead.updateDate)}',
                   maxLines: 1,
                 ),
                 if (lead.remarks.isNotEmpty) ...[
@@ -339,7 +347,10 @@ class SalesLeadCard extends StatelessWidget {
 
 /// Asks for the new status, next follow-up time and remarks, then saves
 /// them. Resolves to true when the follow-up was saved.
-Future<bool> showSalesFollowupSheet(BuildContext context, SalesLead lead) async {
+Future<bool> showSalesFollowupSheet(
+  BuildContext context,
+  SalesLead lead,
+) async {
   final saved = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -350,8 +361,11 @@ Future<bool> showSalesFollowupSheet(BuildContext context, SalesLead lead) async 
     builder: (_) => _FollowupSheet(lead: lead),
   );
   if (saved == true) {
-    Get.snackbar('Follow-up updated', 'Your changes were saved.',
-        snackPosition: SnackPosition.BOTTOM);
+    Get.snackbar(
+      'Follow-up updated',
+      'Your changes were saved.',
+      snackPosition: SnackPosition.BOTTOM,
+    );
   }
   return saved == true;
 }
@@ -403,8 +417,13 @@ class _FollowupSheetState extends State<_FollowupSheet> {
     );
     if (time == null) return;
     setState(() {
-      _followupAt =
-          DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _followupAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
       _error = null;
     });
   }
@@ -532,12 +551,14 @@ class _FollowupSheetState extends State<_FollowupSheet> {
               ),
             ],
             SizedBox(height: 20.h),
-            Obx(() => AppPrimaryButton(
-                  label: 'Save follow-up',
-                  icon: Icons.check_rounded,
-                  isLoading: _sales.isSaving.value,
-                  onPressed: _save,
-                )),
+            Obx(
+              () => AppPrimaryButton(
+                label: 'Save follow-up',
+                icon: Icons.check_rounded,
+                isLoading: _sales.isSaving.value,
+                onPressed: _save,
+              ),
+            ),
           ],
         ),
       ),

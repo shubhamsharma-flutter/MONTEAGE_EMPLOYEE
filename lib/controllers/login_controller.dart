@@ -268,7 +268,7 @@ class LoginController extends GetxController {
         box.write("Designation", emp.data!.designation);
         box.write("designation", emp.data!.designation);
         box.write("contact_no", emp.data!.contactNo);
-        box.write("empidcrm", emp.data!.cId);
+        box.write(SalesApi.cIdKey, emp.data!.cId);
         box.write("photo", emp.data!.photo);
         box.write("is_logged_in", true);
 
@@ -276,13 +276,6 @@ class LoginController extends GetxController {
           PushNotificationService.topicForEmployee(
             emp.data!.employeeId.toString(),
           ),
-        );
-
-        // Sales module lives on a separate CRM backend; link its account in
-        // the background with the same credentials. Never blocks login.
-        SalesApi.linkAccount(
-          mobile: emp.data!.contactNo.toString(),
-          password: password,
         );
 
         Get.offAllNamed("/main");
