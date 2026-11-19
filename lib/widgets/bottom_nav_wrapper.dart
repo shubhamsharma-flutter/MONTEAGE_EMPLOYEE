@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/employee_data_controller.dart';
 import '../infrastructure/routes/admin_routes.dart';
 import 'app_ui.dart';
 
@@ -13,6 +14,9 @@ class BottomNavWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSalesUser = Get.isRegistered<EmployeeDataController>() &&
+        Get.find<EmployeeDataController>().isSalesUser;
+
     return Scaffold(
       body: child,
       bottomNavigationBar: AppBottomNav(
@@ -22,14 +26,16 @@ class BottomNavWrapper extends StatelessWidget {
             label: 'Home',
             onTap: () => Get.offAllNamed(AdminRoutes.mainScreen),
           ),
-          AppNavItem(
-            icon: Icons.task_alt_rounded,
-            label: 'Tasks',
-            onTap: () => Get.offAllNamed(
-              AdminRoutes.mainScreen,
-              arguments: {'tab': 1},
+          // Sales users have no Tasks tab.
+          if (!isSalesUser)
+            AppNavItem(
+              icon: Icons.task_alt_rounded,
+              label: 'Tasks',
+              onTap: () => Get.offAllNamed(
+                AdminRoutes.mainScreen,
+                arguments: {'tab': 1},
+              ),
             ),
-          ),
           AppNavItem(
             icon: Icons.calendar_month_outlined,
             label: 'Calendar',

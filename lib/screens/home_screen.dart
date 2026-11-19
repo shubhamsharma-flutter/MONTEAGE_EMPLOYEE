@@ -110,7 +110,9 @@ class HomeScreen extends StatelessWidget {
                             _buildShortcuts(),
                             SizedBox(height: 20.h),
                             _buildMonthSummary(),
-                            if (!employeeC.isHrManager && _taskC != null) ...[
+                            if (!employeeC.isHrManager &&
+                                !employeeC.isSalesUser &&
+                                _taskC != null) ...[
                               SizedBox(height: 20.h),
                               const AppSectionTitle(title: 'My work'),
                               SizedBox(height: 10.h),
@@ -285,11 +287,17 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.groups_rounded,
                   onTap: () => Get.toNamed(AdminRoutes.allEmployeeAttendance),
                 )
-              : _Shortcut(
-                  label: 'Tasks',
-                  icon: Icons.task_alt_rounded,
-                  onTap: _openTasks,
-                ),
+              : employeeC.isSalesUser
+                  ? _Shortcut(
+                      label: 'Sales',
+                      icon: Icons.storefront_rounded,
+                      onTap: () => Get.toNamed(AdminRoutes.salesHome),
+                    )
+                  : _Shortcut(
+                      label: 'Tasks',
+                      icon: Icons.task_alt_rounded,
+                      onTap: _openTasks,
+                    ),
         ),
         Expanded(
           child: _Shortcut(
@@ -416,15 +424,7 @@ class HomeScreen extends StatelessWidget {
               onTap: () => Get.toNamed(AdminRoutes.registerScreen),
             ),
           ],
-          if (employeeC.isSales) ...[
-            const Divider(height: 1),
-            _LinkRow(
-              icon: Icons.handshake_outlined,
-              title: 'CRM',
-              onTap: () => Get.toNamed(AdminRoutes.crmHome),
-            ),
-          ],
-          if (employeeC.isSales || employeeC.hasSalesAccount) ...[
+          if (employeeC.isSalesUser) ...[
             const Divider(height: 1),
             _LinkRow(
               icon: Icons.storefront_outlined,

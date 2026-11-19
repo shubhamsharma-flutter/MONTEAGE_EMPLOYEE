@@ -35,4 +35,7 @@ class EmployeeDataController extends GetxController {
   bool get isHrManager => designation.toLowerCase() == "hr manager";
   bool get isSales => designation.toLowerCase().contains("sales");
   bool get hasSalesAccount => SalesApi.storedCId().isNotEmpty;
+
+  /// Sales staff get the Sales module instead of Tasks.
+  bool get isSalesUser => isSales || hasSalesAccount;
 }

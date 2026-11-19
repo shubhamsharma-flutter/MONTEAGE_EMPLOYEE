@@ -31,7 +31,7 @@ class SalesHomeScreen extends GetView<SalesController> {
   @override
   Widget build(BuildContext context) {
     return SalesScaffold(
-      title: 'Sales',
+      title: 'CRM',
       subtitle: 'Visits & follow-ups',
       actions: [
         IconButton(
@@ -58,7 +58,7 @@ class SalesHomeScreen extends GetView<SalesController> {
                 icon: Icons.link_off_rounded,
                 title: 'Sales account not linked',
                 message:
-                    'Your employee profile has no CRM id yet. Ask your admin '
+                    'Your employee profile has no sales id yet. Ask your admin '
                     'to link your sales account, then log out and sign in '
                     'again.',
                 actionLabel: 'Check again',

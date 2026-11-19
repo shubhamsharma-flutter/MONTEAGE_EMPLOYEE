@@ -147,22 +147,10 @@ class _AdminDrawerState extends State<AdminDrawer> {
                       ),
                     ),
                   ],
-                  // CRM is only for sales employees.
-                  if (employeeC.isSales) ...[
+                  if (employeeC.isSalesUser) ...[
                     SizedBox(height: 10.h),
                     _DrawerNavItem(
                       title: 'CRM',
-                      subtitle: 'Manage & Schedule',
-                      icon: Icons.handshake_rounded,
-                      accent: const Color.fromARGB(255, 62, 68, 240),
-                      isActive: currentRoute == AdminRoutes.crmHome,
-                      onTap: () => _openRoute(context, AdminRoutes.crmHome),
-                    ),
-                  ],
-                  if (employeeC.isSales || employeeC.hasSalesAccount) ...[
-                    SizedBox(height: 10.h),
-                    _DrawerNavItem(
-                      title: 'Sales',
                       subtitle: 'Visits & follow-ups',
                       icon: Icons.storefront_rounded,
                       accent: AppColor.accent,

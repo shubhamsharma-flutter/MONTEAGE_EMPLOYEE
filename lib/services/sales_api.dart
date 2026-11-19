@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:monteage_employee/infrastructure/routes/admin_routes.dart';
 import 'package:monteage_employee/models/sales_lead_model.dart';
 
 /// Error with a message that can be shown to the user as-is.
@@ -127,19 +129,19 @@ class SalesApi {
     Map<String, dynamic>? payload,
     Future<http.Response> Function() request,
   ) async {
-    _log('➡️ $method $url', payload);
     final stopwatch = Stopwatch()..start();
 
     final http.Response response;
     try {
       response = await request().timeout(_timeout);
     } on SocketException catch (e) {
-      _log('❌ $method $url — no connection: $e');
+      _logCall(method, url, payload, '❌ no connection: $e');
       throw const SalesApiException(
         'No internet connection. Check your network and try again.',
       );
     } on TimeoutException {
-      _log('❌ $method $url — timed out after ${_timeout.inSeconds}s');
+      _logCall(method, url, payload,
+          '❌ timed out after ${_timeout.inSeconds}s');
       throw const SalesApiException(
         'The server took too long to respond. Please try again.',
       );
@@ -152,9 +154,11 @@ class SalesApi {
     } catch (_) {}
 
     final count = body?['data'] is List ? ' (${body!['data'].length} items)' : '';
-    _log(
-      '⬅️ ${response.statusCode} $method $url '
-      '[${stopwatch.elapsedMilliseconds} ms]$count',
+    _logCall(
+      method,
+      url,
+      payload,
+      '⬅️ ${response.statusCode} [${stopwatch.elapsedMilliseconds} ms]$count',
       body ?? response.body,
     );
 
@@ -170,10 +174,44 @@ class SalesApi {
     );
   }
 
-  /// Prints a request/response to the debug console (debug builds only).
+  /// Prints a request and its result to the debug console (debug builds
+  /// only), but only when the API belongs to the screen currently open.
+  static void _logCall(
+    String method,
+    String url,
+    Map<String, dynamic>? payload,
+    String result, [
+    Object? response,
+  ]) {
+    if (!kDebugMode) return;
+    final endpoint = url.substring(_baseUrl.length + 1).split('/').first;
+    if (!_isCurrentScreenApi(endpoint)) return;
+
+    _log('━━━━ ${Get.currentRoute} ━━━━');
+    _log('➡️ $method $url', payload);
+    _log(result, response);
+  }
+
+  /// The endpoints each Sales screen calls for itself.
+  static bool _isCurrentScreenApi(String endpoint) {
+    switch (Get.currentRoute) {
+      case AdminRoutes.salesHome:
+        return SalesListType.values.any((t) => t.endpoint == endpoint);
+      case AdminRoutes.salesLeads:
+        final type = Get.arguments;
+        return type is SalesListType && type.endpoint == endpoint;
+      case AdminRoutes.salesLeadDetail:
+        return endpoint == 'GetCommunicateSales' ||
+            endpoint == 'UpdateSalesLead';
+      case AdminRoutes.salesAddVisit:
+        return endpoint == 'SalesCourse' || endpoint == 'AddSalesLead';
+      default:
+        return false;
+    }
+  }
+
   /// Long JSON is printed line by line so logcat does not cut it off.
   static void _log(String title, [Object? data]) {
-    if (!kDebugMode) return;
     debugPrint('[SalesApi] $title');
     if (data == null) return;
 
