@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'infrastructure/routes/admin_routes.dart';
 import 'services/attendance_sync_service.dart';
+import 'services/push_notification_service.dart';
 import 'utils/constants/app_theme.dart';
 
 @pragma('vm:entry-point')
@@ -22,8 +23,26 @@ Future<void> firebaseInit() async {
   final messaging = FirebaseMessaging.instance;
   await messaging.requestPermission(alert: true, badge: true, sound: true);
 
+  // Re-subscribe on every launch so users who stay logged in (or logged in
+  // before topics existed) still receive their per-user notifications.
+  final employeeId = GetStorage().read("EmployeeId")?.toString();
+  if (employeeId != null && employeeId.isNotEmpty) {
+    messaging
+        .subscribeToTopic(PushNotificationService.topicForEmployee(employeeId))
+        .catchError((e) => debugPrint('FCM subscribe error: $e'));
+  }
+
+  // Android doesn't display notifications while the app is open, so show them
+  // in-app instead.
   FirebaseMessaging.onMessage.listen((message) {
-    debugPrint('Foreground FCM message: ${message.notification?.title}');
+    final notification = message.notification;
+    if (notification == null) return;
+    Get.snackbar(
+      notification.title ?? 'Notification',
+      notification.body ?? '',
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 4),
+    );
   });
 }
 

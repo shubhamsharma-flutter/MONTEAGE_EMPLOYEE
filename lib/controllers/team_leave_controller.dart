@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart' hide Data;
@@ -80,8 +81,7 @@ class TeamLeaveController extends GetxController {
     try {
       // The API overwrites all three approval slots, so reload first to avoid
       // wiping a decision HR or the Project Manager made after this list loaded.
-      await fetchTeamLeaves();
-      if (errorMessage.value.isNotEmpty) return;
+      if (!await fetchTeamLeaves()) return;
 
       final latest = leaves.firstWhereOrNull((l) => l.eLeaveAId == leaveId);
       if (latest == null || !canDecide(latest)) {
@@ -135,7 +135,17 @@ class TeamLeaveController extends GetxController {
         colorText: approved ? Colors.green.shade800 : Colors.red.shade800,
         snackPosition: SnackPosition.TOP,
       );
-      await fetchTeamLeaves();
+
+      // Show the decision straight away; the background reload confirms it.
+      latest
+        ..approveStatus1 = statusAt(0)
+        ..approveStatus2 = statusAt(1)
+        ..approveStatus3 = statusAt(2)
+        ..approveby1 = approverAt(0)
+        ..approveby2 = approverAt(1)
+        ..approveby3 = approverAt(2);
+      leaves.refresh();
+      fetchTeamLeaves();
     } catch (e) {
       _showError('Could not update leave. Please try again.');
       print('decideLeave error: $e');
@@ -158,32 +168,55 @@ class TeamLeaveController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _loadCachedLeaves();
     fetchTeamLeaves();
   }
 
-  Future<void> fetchTeamLeaves() async {
+  String get _cacheKey => 'team_leaves_$_empId';
+
+  // Shows the last loaded list instantly while the fresh one loads.
+  void _loadCachedLeaves() {
+    final cached = box.read<List>(_cacheKey);
+    if (cached == null) return;
+    leaves.assignAll(
+      cached.map((e) => Data.fromJson(Map<String, dynamic>.from(e as Map))),
+    );
+  }
+
+  // Keeps showing the last loaded list when a refresh fails.
+  void _setLoadError(String message) {
+    if (leaves.isEmpty) {
+      errorMessage.value = message;
+    } else {
+      _showError(message);
+    }
+  }
+
+  /// Returns false when the list couldn't be refreshed.
+  Future<bool> fetchTeamLeaves() async {
     if (_empId.isEmpty) {
       errorMessage.value = 'Employee not found. Please log in again.';
-      return;
+      return false;
     }
 
     isLoading.value = true;
     errorMessage.value = '';
+    final stopwatch = Stopwatch()..start();
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/MobTeamEmployeeLeaveList/$_empId'),
-        headers: _headers,
-      );
+      final response = await http
+          .get(
+            Uri.parse('$_baseUrl/MobTeamEmployeeLeaveList/$_empId'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 20));
+      final requestMs = stopwatch.elapsedMilliseconds;
 
       if (response.statusCode != 200) {
-        errorMessage.value =
-            'Could not load team leaves (${response.statusCode})';
-        return;
+        _setLoadError('Could not load team leaves (${response.statusCode})');
+        return false;
       }
 
-      final body = teameleave.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
+      final body = await compute(_parseTeamLeaves, response.body);
 
       // Rows without real dates are not applied leaves.
       final applied = (body.data ?? [])
@@ -197,12 +230,26 @@ class TeamLeaveController extends GetxController {
         (a, b) =>
             parseLeaveDate(b.fromDate)!.compareTo(parseLeaveDate(a.fromDate)!),
       );
+      logLeaveApi(
+        'TEAM LEAVES for $_empId: statuscode=${body.statuscode} '
+        'message=${body.message} rows=${body.data?.length ?? 0} '
+        'kept=${applied.length} bytes=${response.bodyBytes.length} '
+        'request=${requestMs}ms total=${stopwatch.elapsedMilliseconds}ms '
+        'sampleDates=${body.data?.take(3).map((l) => '${l.fromDate}|${l.toDate}').toList()}',
+      );
       leaves.assignAll(applied);
+      box.write(_cacheKey, applied.map((l) => l.toJson()).toList());
+      return true;
     } catch (e) {
-      errorMessage.value = 'Could not load team leaves. Please try again.';
+      _setLoadError('Could not load team leaves. Please try again.');
       print('fetchTeamLeaves error: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
   }
 }
+
+// Top-level so compute() can decode large responses off the UI thread.
+teameleave _parseTeamLeaves(String body) =>
+    teameleave.fromJson(jsonDecode(body) as Map<String, dynamic>);

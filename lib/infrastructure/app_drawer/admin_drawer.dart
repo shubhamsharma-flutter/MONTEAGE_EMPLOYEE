@@ -1,4 +1,5 @@
 import 'package:monteage_employee/utils/constants/color_constants.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -6,6 +7,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:monteage_employee/controllers/employee_data_controller.dart';
 import 'package:monteage_employee/infrastructure/utils/pref_manager.dart';
+import 'package:monteage_employee/services/push_notification_service.dart';
 
 import '../../infrastructure/routes/admin_routes.dart';
 
@@ -438,6 +440,14 @@ class _AdminDrawerState extends State<AdminDrawer> {
   Future<void> _logout(BuildContext context) async {
     Navigator.of(context).pop();
     await PrefManager().clearPref();
+
+    // Stop this device receiving the logged-out user's notifications.
+    final employeeId = GetStorage().read("EmployeeId")?.toString();
+    if (employeeId != null && employeeId.isNotEmpty) {
+      FirebaseMessaging.instance.unsubscribeFromTopic(
+        PushNotificationService.topicForEmployee(employeeId),
+      );
+    }
 
     // Clear all storage
     GetStorage().erase();
