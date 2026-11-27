@@ -37,8 +37,8 @@ android {
         applicationId = "com.myattendance.monteage"
         minSdk = 26
         targetSdk = 37
-        versionCode = 30
-        versionName = "1.0.23"
+        versionCode = 32
+        versionName = "1.0.25"
         multiDexEnabled = true
     }
 

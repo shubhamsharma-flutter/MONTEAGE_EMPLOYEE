@@ -165,11 +165,14 @@ class TeamLeaveController extends GetxController {
     );
   }
 
+  /// The first fetch, so callers can wait for fresh data instead of the cache.
+  late final Future<bool> initialLoad;
+
   @override
   void onInit() {
     super.onInit();
     _loadCachedLeaves();
-    fetchTeamLeaves();
+    initialLoad = fetchTeamLeaves();
   }
 
   String get _cacheKey => 'team_leaves_$_empId';

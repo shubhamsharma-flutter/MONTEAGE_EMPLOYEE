@@ -40,8 +40,10 @@ class HomeScreen extends StatelessWidget {
   Future<void> _refresh() async {
     employeeC.loadEmployee();
     final taskC = _taskC;
+    final teamLeaveC = controller.teamLeaveC;
     await Future.wait([
       historyC.fetchHistory(),
+      if (teamLeaveC != null) teamLeaveC.fetchTeamLeaves(),
       if (taskC != null) ...[
         taskC.fetchProjects(),
         taskC.fetchTaskWorks(),
@@ -106,6 +108,7 @@ class HomeScreen extends StatelessWidget {
                           children: [
                             SizedBox(height: 14.h),
                             _buildPunchCard(),
+                            _buildPendingTeamLeave(),
                             SizedBox(height: 18.h),
                             _buildShortcuts(),
                             SizedBox(height: 20.h),
@@ -315,6 +318,71 @@ class HomeScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget _buildPendingTeamLeave() {
+    final teamLeaveC = controller.teamLeaveC;
+    if (teamLeaveC == null) return const SizedBox.shrink();
+
+    return Obx(() {
+      final count = teamLeaveC.awaitingDecisionCount;
+      if (count == 0) return const SizedBox.shrink();
+
+      return Padding(
+        padding: EdgeInsets.only(top: 14.h),
+        child: Material(
+          color: AppColor.warningTint,
+          borderRadius: BorderRadius.circular(12.r),
+          child: InkWell(
+            onTap: () => Get.toNamed(AdminRoutes.teamLeave),
+            borderRadius: BorderRadius.circular(12.r),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.notifications_active_rounded,
+                    size: 22.sp,
+                    color: AppColor.warning,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          count == 1
+                              ? '1 team leave pending'
+                              : '$count team leaves pending',
+                          style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColor.warning,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Tap to review and approve',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.sp,
+                            color: AppColor.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 22.sp,
+                    color: AppColor.warning,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildMonthSummary() {

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../infrastructure/routes/admin_routes.dart';
+import 'leave_list_controller.dart';
+import 'team_leave_controller.dart';
 
 class HomeController extends GetxController {
   static const String _playStoreUrl =
       'https://play.google.com/store/apps/details?id=com.myattendance.monteage';
 
-  // HomeController can be re-created while the app runs, so this is static to
-  // keep the alert to once per app launch.
+  // HomeController can be re-created while the app runs, so these are static
+  // to keep each alert to once per app launch.
   static bool _updateAlertShown = false;
+  static bool _pendingLeaveAlertShown = false;
 
   // ✅ Fixed current date
   final selectedDate = DateFormat("dd-MM-yyyy").format(DateTime.now()).obs;
@@ -33,6 +39,46 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     _showUpdateAlertIfAvailable();
+    if (approverIndex(GetStorage()) != null) _showPendingLeaveAlert();
+  }
+
+  /// Shared with the Team Leave screen, so decisions made there update the
+  /// dashboard count. Only approvers get one.
+  TeamLeaveController? get teamLeaveC =>
+      Get.isRegistered<TeamLeaveController>()
+          ? Get.find<TeamLeaveController>()
+          : null;
+
+  Future<void> _showPendingLeaveAlert() async {
+    final teamLeaveC =
+        this.teamLeaveC ?? Get.put<TeamLeaveController>(TeamLeaveController());
+    // Wait for fresh data so the alert doesn't count leaves already decided.
+    if (!await teamLeaveC.initialLoad || _pendingLeaveAlertShown) return;
+    final count = teamLeaveC.awaitingDecisionCount;
+    if (count == 0) return;
+    _pendingLeaveAlertShown = true;
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Team Leave Pending'),
+        content: Text(
+          count == 1
+              ? '1 leave request from your team is waiting for your decision.'
+              : '$count leave requests from your team are waiting for your '
+                    'decision.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('Later')),
+          FilledButton(
+            onPressed: () {
+              Get.back();
+              Get.toNamed(AdminRoutes.teamLeave);
+            },
+            child: const Text('Review'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showUpdateAlertIfAvailable() async {
